@@ -17,6 +17,7 @@ public class SellerRegistrationDTO extends UserRegistrationDTO {
     private String companyName;
 
     @NotBlank(message = "Company contact is mandatory")
+    @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid phone number. Must be a 10-digit Indian number starting with 6-9")
     private String companyContact;
 
     @NotBlank(message = "Company address is mandatory")

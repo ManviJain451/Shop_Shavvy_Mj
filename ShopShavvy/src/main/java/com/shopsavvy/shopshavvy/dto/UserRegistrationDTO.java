@@ -15,10 +15,6 @@ public class UserRegistrationDTO {
     @NotBlank(message = "Email is mandatory")
     private String email;
 
-    @NotBlank(message = "Phone number is mandatory")
-    @Pattern(regexp = "\\d{10}", message = "Phone number should be valid")
-    private String phoneNumber;
-
     @NotBlank(message = "Password is mandatory")
     @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters long")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",

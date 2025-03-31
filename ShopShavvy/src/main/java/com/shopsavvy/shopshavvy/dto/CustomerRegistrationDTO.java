@@ -10,6 +10,6 @@ import lombok.Setter;
 public class CustomerRegistrationDTO extends UserRegistrationDTO{
 
     @NotBlank(message = "Contact is mandatory")
-    @Pattern(regexp = "\\d{10}", message = "Contact should be a valid 10-digit phone number")
+    @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid phone number. Must be a 10-digit Indian number starting with 6-9")
     private String contact;
 }
