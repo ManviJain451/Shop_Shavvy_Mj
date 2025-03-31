@@ -32,7 +32,6 @@ public class Category {
     private Set<Category> subCategories;
 
     @CreatedDate
-    @Column(name = "date_created", nullable = false)
     private LocalDateTime dateCreated;
 
 }
