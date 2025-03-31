@@ -1,0 +1,65 @@
+package com.shopsavvy.shopshavvy.model.products;
+
+import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.categories.Category;
+import jakarta.persistence.*;
+import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Entity
+@Table(name = "products")
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+
+    @ManyToOne
+    @JoinColumn(name = "seller_user_id", nullable = false)
+    private User seller;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = false)
+    private String description;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category;
+
+    @Column(name = "is_cancellable", nullable = false)
+    private Boolean isCancellable;
+
+    @Column(name = "is_returnable", nullable = false)
+    private Boolean isReturnable;
+
+    @Column(nullable = false)
+    private String brand;
+
+    @Column(name = "is_active", nullable = false)
+    private Boolean isActive;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted;
+
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariation> productVariations;
+
+    @CreatedDate
+    @Column(name = "date_created", nullable = false)
+    private LocalDateTime dateCreated;
+
+    @LastModifiedDate
+    @Column(name = "last_updated_date", nullable = false)
+    private LocalDateTime lastUpdated;
+}
