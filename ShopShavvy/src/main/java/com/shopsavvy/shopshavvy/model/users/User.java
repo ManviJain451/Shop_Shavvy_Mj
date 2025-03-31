@@ -29,23 +29,15 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Email(message = "Email should be valid")
-    @NotBlank(message = "Email is mandatory")
     @Column(unique = true)
     private String email;
 
-    @NotBlank(message = "First name is mandatory")
     private String firstName;
 
     private String middleName;
 
-    @NotBlank(message = "Last name is mandatory")
     private String lastName;
 
-    @NotBlank(message = "Password is mandatory")
-    @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters long")
-    @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
-            message = "Password must contain at least one lowercase letter, one uppercase letter, one special character, and one number")
     private String password;
 
     private boolean isDeleted;
