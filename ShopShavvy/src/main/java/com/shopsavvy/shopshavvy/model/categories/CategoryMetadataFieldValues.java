@@ -27,6 +27,7 @@ public class CategoryMetadataFieldValues {
     @JoinColumn(name = "category_metadata_field_id")
     private CategoryMetadataField categoryMetadataField;
 
+    @Column(name = "metadataFieldValues")
     private String values;
 }
 
