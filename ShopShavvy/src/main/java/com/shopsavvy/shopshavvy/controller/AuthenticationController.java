@@ -47,19 +47,19 @@ public class AuthenticationController {
 
     @GetMapping("/activate")
     public String activateUser(@RequestHeader("Authorization") String token, @RequestParam("email") String email) {
-        System.out.println("🔹 Received activation request");
-        System.out.println("🔹 Raw Authorization Header: " + token);
+        System.out.println("Received activation request");
+        System.out.println("Raw Authorization Header: " + token);
 
         try {
             // Remove "Bearer " prefix if present
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
-            System.out.println("🔹 Extracted Token: " + token);
+            System.out.println("Extracted Token: " + token);
 
             Claims claims = jwtService.extractAllClaims(token);
             String tokenEmail = claims.getSubject();
-            System.out.println("🔹 Extracted Email from Token: " + tokenEmail);
+            System.out.println("Extracted Email from Token: " + tokenEmail);
 
             if (!tokenEmail.equals(email)) {
                 System.out.println("❌ Email mismatch: Token email does not match provided email.");
