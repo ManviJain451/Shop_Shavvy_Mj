@@ -10,7 +10,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
 
@@ -37,6 +36,18 @@ public class SellerAuthenticationService {
     }
 
     public User signup(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
+
+        if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
+            throw new Exception("Email already exists");
+        }
+        if (userRepository.existsByCompanyNameIgnoreCase(sellerRegistrationDTO.getCompanyName())) {
+            throw new Exception("Company name already exists.");
+        }
+
+        if (userRepository.existsByGst(sellerRegistrationDTO.getGst())) {
+            throw new Exception("GST already exists.");
+        }
+
         Seller seller = new Seller();
         seller.setEmail(sellerRegistrationDTO.getEmail());
         seller.setFirstName(sellerRegistrationDTO.getFirstName());
@@ -45,6 +56,10 @@ public class SellerAuthenticationService {
         seller.setCompanyContact(sellerRegistrationDTO.getCompanyContact());
         seller.setCompanyName(sellerRegistrationDTO.getCompanyName());
         seller.setGst(sellerRegistrationDTO.getGst());
+
+        if (sellerRegistrationDTO.getMiddleName() != null && !sellerRegistrationDTO.getMiddleName().isBlank()) {
+            seller.setMiddleName(sellerRegistrationDTO.getMiddleName());
+        }
 
         Address address = new Address();
         address.setCity(sellerRegistrationDTO.getCity());
@@ -55,8 +70,8 @@ public class SellerAuthenticationService {
         seller.setAdresses(Set.of(address));
 
 
-        if(sellerRegistrationDTO.getConfirmPassword() != sellerRegistrationDTO.getPassword()){
-            throw  new Exception("Confirm Password is not same as Password.");
+        if (!sellerRegistrationDTO.getConfirmPassword().equals(sellerRegistrationDTO.getPassword())) {
+            throw new Exception("Confirm Password is not same as Password.");
         }
 
         userRepository.save(seller);

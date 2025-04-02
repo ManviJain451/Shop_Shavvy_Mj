@@ -39,16 +39,14 @@ public class CustomerAuthenticationService {
         customer.setFirstName(customerRegistrationDTO.getFirstName());
         customer.setLastName(customerRegistrationDTO.getLastName());
         customer.setPassword(passwordEncoder.encode(customerRegistrationDTO.getPassword()));
-        customer.setIsActive(false);
-        customer.setExpired(false);
-        customer.setLocked(false);
-        customer.setCredentialsExpired(false);
-        customer.setDateCreated(LocalDateTime.now());
-        customer.setLastUpdated(LocalDateTime.now());
         customer.setContact(customerRegistrationDTO.getContact());
 
-        if(customerRegistrationDTO.getConfirmPassword() != customerRegistrationDTO.getPassword()){
-            throw  new Exception("Confirm Password is not same as Password.");
+        if (customerRegistrationDTO.getMiddleName() != null && !customerRegistrationDTO.getMiddleName().isBlank()) {
+            customer.setMiddleName(customerRegistrationDTO.getMiddleName());
+        }
+
+        if (!customerRegistrationDTO.getConfirmPassword().equals(customerRegistrationDTO.getPassword())) {
+            throw new Exception("Confirm Password is not same as Password.");
         }
 
         userRepository.save(customer);
