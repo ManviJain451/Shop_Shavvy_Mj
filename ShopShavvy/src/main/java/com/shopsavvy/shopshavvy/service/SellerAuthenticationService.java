@@ -82,7 +82,7 @@ public class SellerAuthenticationService {
         try {
             emailService.sendActivationLink(sellerRegistrationDTO, token);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new Exception("Mail for activating the account is not send");
         }
 
         return seller;

@@ -46,47 +46,37 @@ public class AuthenticationController {
 
 
     @GetMapping("/activate")
-    public String activateUser(@RequestHeader("Authorization") String token, @RequestParam("email") String email) {
-        System.out.println("Received activation request");
-        System.out.println("Raw Authorization Header: " + token);
+    public ResponseEntity<User> activateUser(@RequestHeader("Authorization") String token, @RequestParam("email") String email) throws Exception {
 
         try {
-            // Remove "Bearer " prefix if present
             if (token.startsWith("Bearer ")) {
                 token = token.substring(7);
             }
-            System.out.println("Extracted Token: " + token);
 
             Claims claims = jwtService.extractAllClaims(token);
             String tokenEmail = claims.getSubject();
-            System.out.println("Extracted Email from Token: " + tokenEmail);
 
             if (!tokenEmail.equals(email)) {
-                System.out.println("❌ Email mismatch: Token email does not match provided email.");
-                return "Email in the token does not match the provided email.";
+                throw new Exception("Email in the token does not match the provided email.");
             }
 
             User user = userRepository.findByEmail(email);
             if (user == null) {
-                System.out.println("❌ User not found for email: " + email);
-                return "Invalid activation token.";
+                throw new Exception("Invalid activation token.");
             }
 
             UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
             if (jwtService.isTokenValid(token, userDetailsImpl)) {
-                System.out.println("Token is valid. Activating user...");
                 user.setIsActive(true);
                 userRepository.save(user);
-                return "Account activated successfully.";
-            } else {
-                System.out.println("❌ Token is invalid or expired.");
+                return ResponseEntity.ok(user);
+            }else{
+                throw new Exception("Invalid or expired activation token.");
             }
 
-            return "Invalid or expired activation token.";
+
         } catch (Exception e) {
-            System.out.println("❌ Exception occurred: " + e.getMessage());
-            e.printStackTrace();
-            return "Invalid or expired activation token.";
+            throw new Exception("Invalid or expired activation token.");
         }
     }
 

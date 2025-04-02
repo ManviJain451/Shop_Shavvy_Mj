@@ -5,6 +5,7 @@ import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.UserDetailsImpl;
+import jakarta.mail.MessagingException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -34,6 +35,11 @@ public class CustomerAuthenticationService {
     }
 
     public User signup(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
+
+        if(userRepository.existsByEmail(customerRegistrationDTO.getEmail())){
+            throw new Exception("Email already exists");
+        }
+
         Customer customer = new Customer();
         customer.setEmail(customerRegistrationDTO.getEmail());
         customer.setFirstName(customerRegistrationDTO.getFirstName());
@@ -57,7 +63,7 @@ public class CustomerAuthenticationService {
         try {
             emailService.sendActivationLink(customerRegistrationDTO, token);
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new MessagingException("Activation Link not send");
         }
 
         return customer;
