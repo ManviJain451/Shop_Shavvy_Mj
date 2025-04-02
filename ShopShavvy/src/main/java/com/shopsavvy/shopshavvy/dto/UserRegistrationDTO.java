@@ -29,4 +29,6 @@ public class UserRegistrationDTO {
 
     @NotBlank(message = "Last name is mandatory")
     private String lastName;
+
+    private String middleName;
 }
