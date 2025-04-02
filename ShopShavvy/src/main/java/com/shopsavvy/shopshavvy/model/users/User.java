@@ -1,10 +1,6 @@
 package com.shopsavvy.shopshavvy.model.users;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
@@ -14,6 +10,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Getter
@@ -41,9 +38,9 @@ public class User {
 
     private String password;
 
-    private boolean isDeleted=false;
+    private Boolean isDeleted=false;
 
-    private boolean isActive=false;
+    private Boolean isActive=false;
 
     private boolean isExpired=false;
 
@@ -58,7 +55,7 @@ public class User {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
-    private List<Address> adresses;
+    private Set<Address> adresses;
 
 
     @ManyToMany(cascade = CascadeType.ALL)
@@ -67,7 +64,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private List<Role> roles;
+    private Set<Role> roles;
 
     @CreatedDate
     private LocalDateTime dateCreated;
@@ -77,5 +74,7 @@ public class User {
 
     @LastModifiedBy
     private String updatedBy;
+
+    private String verificationCode;
 }
 
