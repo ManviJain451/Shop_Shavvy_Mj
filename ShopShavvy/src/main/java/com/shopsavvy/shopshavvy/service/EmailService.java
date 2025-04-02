@@ -1,0 +1,46 @@
+package com.shopsavvy.shopshavvy.service;
+
+import com.shopsavvy.shopshavvy.dto.UserRegistrationDTO;
+import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.repository.UserRepository;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.util.UUID;
+
+@Service
+public class EmailService {
+
+    @Autowired
+    private JavaMailSender emailSender;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    public void sendVerificationEmail(String to, String subject, String text) throws MessagingException {
+        MimeMessage message = emailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+        helper.setTo(to);
+        helper.setSubject(subject);
+        helper.setText(text, true);
+
+        emailSender.send(message);
+    }
+
+    public void  sendActivationLink(UserRegistrationDTO userRegistrationDTO, String jwtToken) throws MessagingException {
+        String activationLink = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/shop-shavvy/activate")
+                .queryParam("token", jwtToken)
+                .toUriString();
+
+        String subject = "Activate your account";
+        String text = "Please activate your account by clicking the link: " + activationLink;
+
+        sendVerificationEmail(userRegistrationDTO.getEmail(), subject, text);
+    }
+}
