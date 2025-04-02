@@ -14,6 +14,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -26,8 +27,8 @@ import java.util.List;
 public class User {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @Column(unique = true)
     private String email;
@@ -40,16 +41,19 @@ public class User {
 
     private String password;
 
-    private boolean isDeleted;
+    private boolean isDeleted=false;
 
-    private boolean isActive;
+    private boolean isActive=false;
 
-    private boolean isExpired;
+    private boolean isExpired=false;
 
-    private boolean isLocked;
+    private boolean isLocked=false;
+
+    private boolean isCredentialsExpired=false;
 
     private int invalidAttemptCount;
 
+    @LastModifiedDate
     private LocalDateTime passwordUpdateDate;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
