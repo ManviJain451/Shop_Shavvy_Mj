@@ -35,7 +35,7 @@ public class EmailService {
         emailSender.send(message);
     }
 
-    public void  sendActivationLink(UserRegistrationDTO userRegistrationDTO, String jwtToken) throws MessagingException {
+    public void  sendActivationLink(String email, String jwtToken) throws MessagingException {
         String activationLink = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/shop-shavvy/activate")
                 .queryParam("token", jwtToken)
                 .toUriString();
@@ -43,6 +43,6 @@ public class EmailService {
         String subject = "Activate your account";
         String text = "Please activate your account by clicking the link: " + activationLink;
 
-        sendVerificationEmail(userRegistrationDTO.getEmail(), subject, text);
+        sendVerificationEmail(email, subject, text);
     }
 }

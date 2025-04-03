@@ -6,6 +6,7 @@ import com.shopsavvy.shopshavvy.Exception.PasswordMismatchException;
 import com.shopsavvy.shopshavvy.dto.SellerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
+import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
@@ -13,6 +14,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.management.relation.RoleNotFoundException;
 import java.util.Set;
 
 
@@ -24,6 +26,7 @@ public class SellerAuthenticationService {
     private final EmailService emailService;
     private final JwtService jwtService;
     private final AuthTokenRepository authTokenRepository;
+    private final RoleRepository roleRepository;
 
     public SellerAuthenticationService(
             UserRepository userRepository,
@@ -31,7 +34,8 @@ public class SellerAuthenticationService {
             PasswordEncoder passwordEncoder,
             EmailService emailService,
             JwtService jwtService,
-            AuthTokenRepository authTokenRepository
+            AuthTokenRepository authTokenRepository,
+            RoleRepository roleRepository
     ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -39,9 +43,10 @@ public class SellerAuthenticationService {
         this.emailService = emailService;
         this.jwtService = jwtService;
         this.authTokenRepository = authTokenRepository;
+        this.roleRepository = roleRepository;
     }
 
-    public User signup(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
+    public User registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
             throw new EmailAlreadyExistsException("Email already exists");
@@ -80,22 +85,14 @@ public class SellerAuthenticationService {
             throw new PasswordMismatchException("Confirm Password is not same as Password.");
         }
 
+        Role role = roleRepository.findByAuthority("ROLE_SELLER");
+        seller.addRole(role);
         userRepository.save(seller);
 
-        UserDetailsImpl userDetails = new UserDetailsImpl(seller);
-        String token = jwtService.generateToken(userDetails, "activation");
-        Claims claims = jwtService.extractAllClaims(token);
-        AuthToken authToken = new AuthToken();
-        authToken.setUserEmail(seller.getEmail());
-        authToken.setToken(token);
-        authToken.setTokenType(TokenType.ACTIVATION);
-        authToken.setExpirationTime(claims.getExpiration());
-        authTokenRepository.save(authToken);
-
         try {
-            emailService.sendActivationLink(sellerRegistrationDTO, token);
+            emailService.sendVerificationEmail(seller.getEmail(), "Account Created", "Seller Account has been created. Waiting for Approval");
         } catch (Exception e) {
-            throw new Exception("Mail for activating the account is not send");
+            throw new Exception("Confirmation mail for account creation is not send.");
         }
 
         return seller;

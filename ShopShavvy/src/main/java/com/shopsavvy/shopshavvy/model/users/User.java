@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -64,7 +65,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles;
+    private Set<Role> roles = new HashSet<>();
 
     @CreatedDate
     private LocalDateTime dateCreated;
@@ -74,5 +75,9 @@ public class User {
 
     @LastModifiedBy
     private String updatedBy;
+
+    public void addRole(Role role){
+        this.roles.add(role);
+    }
 }
 

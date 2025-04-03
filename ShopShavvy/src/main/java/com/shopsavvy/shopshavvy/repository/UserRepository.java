@@ -20,4 +20,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     @Query("select COUNT(*) > 0 from Seller where gst = :gst")
     boolean existsByGst(@Param("gst") String gst);
 
+    @Query("SELECT u.isActive FROM User u WHERE u.email = :email")
+    Boolean findIsActiveByEmail(@Param("email") String email);
+
 }

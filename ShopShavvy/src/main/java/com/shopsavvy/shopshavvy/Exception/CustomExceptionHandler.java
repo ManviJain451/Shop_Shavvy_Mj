@@ -1,6 +1,5 @@
 package com.shopsavvy.shopshavvy.Exception;
 
-import org.springframework.boot.autoconfigure.amqp.RabbitStreamTemplateConfigurer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -36,8 +35,8 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorDetails> handleIllegalArgumentException(IllegalArgumentException exception, WebRequest request) {
+    @ExceptionHandler(AlreadyActivatedException.class)
+    public ResponseEntity<ErrorDetails> handleAlreadyActivatedException(AlreadyActivatedException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
         return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.BAD_REQUEST);
