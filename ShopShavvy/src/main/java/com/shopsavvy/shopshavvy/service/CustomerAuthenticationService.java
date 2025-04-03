@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.Exception.DuplicateEntryExistsException;
+
 import com.shopsavvy.shopshavvy.Exception.EmailAlreadyExistsException;
 import com.shopsavvy.shopshavvy.Exception.PasswordMismatchException;
 import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
@@ -16,7 +16,6 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 
 @Service
 public class CustomerAuthenticationService {
@@ -81,6 +80,7 @@ public class CustomerAuthenticationService {
         } catch (Exception e) {
             throw new MessagingException("Activation Link not send");
         }
+
 
         return customer;
     }
