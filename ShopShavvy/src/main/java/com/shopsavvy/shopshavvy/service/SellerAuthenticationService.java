@@ -46,7 +46,7 @@ public class SellerAuthenticationService {
         this.roleRepository = roleRepository;
     }
 
-    public User registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
+    public String registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
             throw new EmailAlreadyExistsException("Email already exists");
@@ -95,6 +95,6 @@ public class SellerAuthenticationService {
             throw new Exception("Confirmation mail for account creation is not send.");
         }
 
-        return seller;
+        return "Seller has been registered";
     }
 }

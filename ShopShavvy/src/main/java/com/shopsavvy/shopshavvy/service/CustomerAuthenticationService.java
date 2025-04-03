@@ -52,7 +52,7 @@ public class CustomerAuthenticationService {
         this.roleRepository = roleRepository;
     }
 
-    public User registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
+    public String registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(customerRegistrationDTO.getEmail())){
             throw new EmailAlreadyExistsException("Email already exists");
@@ -95,7 +95,7 @@ public class CustomerAuthenticationService {
         }
 
 
-        return customer;
+        return "Customer has been registered";
     }
 
 

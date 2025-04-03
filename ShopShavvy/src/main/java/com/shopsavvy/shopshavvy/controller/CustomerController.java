@@ -48,9 +48,9 @@ public class CustomerController {
     }
 
     @PostMapping("/customer/signup")
-    public ResponseEntity<User> registerCustomer(@Valid @RequestBody CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
-        User registeredCustomer = customerAuthenticationService.registerCustomer(customerRegistrationDTO);
-        return ResponseEntity.status(HttpStatus.CREATED).body(registeredCustomer);
+    public ResponseEntity<String> registerCustomer(@Valid @RequestBody CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
+        String message = customerAuthenticationService.registerCustomer(customerRegistrationDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
     @PutMapping("/customer/activate")
