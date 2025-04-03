@@ -1,6 +1,5 @@
 package com.shopsavvy.shopshavvy.service;
 
-
 import com.shopsavvy.shopshavvy.Exception.EmailAlreadyExistsException;
 import com.shopsavvy.shopshavvy.Exception.PasswordMismatchException;
 import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
@@ -11,6 +10,7 @@ import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.UserDetailsImpl;
+import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -67,18 +67,19 @@ public class CustomerAuthenticationService {
 
         UserDetailsImpl userDetails = new UserDetailsImpl(customer);
         String token = jwtService.generateToken(userDetails, "activation");
-
+        Claims claims = jwtService.extractAllClaims(token);
         AuthToken authToken = new AuthToken();
         authToken.setUserEmail(customer.getEmail());
         authToken.setToken(token);
         authToken.setTokenType(TokenType.ACTIVATION);
+        authToken.setExpirationTime(claims.getExpiration());
         authTokenRepository.save(authToken);
 
 
         try {
             emailService.sendActivationLink(customerRegistrationDTO, token);
         } catch (Exception e) {
-            throw new MessagingException("Activation Link not send");
+            throw new Exception("Mail for activating the account is not send");
         }
 
 

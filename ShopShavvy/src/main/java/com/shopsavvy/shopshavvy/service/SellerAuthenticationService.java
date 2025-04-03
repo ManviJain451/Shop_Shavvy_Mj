@@ -8,6 +8,7 @@ import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.UserDetailsImpl;
+import io.jsonwebtoken.Claims;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -83,11 +84,12 @@ public class SellerAuthenticationService {
 
         UserDetailsImpl userDetails = new UserDetailsImpl(seller);
         String token = jwtService.generateToken(userDetails, "activation");
-
+        Claims claims = jwtService.extractAllClaims(token);
         AuthToken authToken = new AuthToken();
         authToken.setUserEmail(seller.getEmail());
         authToken.setToken(token);
         authToken.setTokenType(TokenType.ACTIVATION);
+        authToken.setExpirationTime(claims.getExpiration());
         authTokenRepository.save(authToken);
 
         try {
