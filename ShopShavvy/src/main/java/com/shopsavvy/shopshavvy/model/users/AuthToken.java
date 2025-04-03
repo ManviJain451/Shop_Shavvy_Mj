@@ -4,7 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Getter
 @Setter
@@ -22,6 +24,6 @@ public class AuthToken {
     @Enumerated(EnumType.STRING)
     private TokenType tokenType;
 
-    private LocalDateTime expirationTime;
+    private Date expirationTime;
 
 }
