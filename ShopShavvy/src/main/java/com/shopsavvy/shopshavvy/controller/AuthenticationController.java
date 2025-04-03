@@ -7,6 +7,7 @@ import com.shopsavvy.shopshavvy.dto.SellerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CustomerAuthenticationService;
 import com.shopsavvy.shopshavvy.service.JwtService;
 import com.shopsavvy.shopshavvy.service.SellerAuthenticationService;
@@ -21,18 +22,23 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/shop-shavvy")
 public class AuthenticationController {
 
-    @Autowired
-    private UserRepository userRepository;
-
+    private final UserRepository userRepository;
     private final JwtService jwtService;
-
     private final CustomerAuthenticationService customerAuthenticationService;
     private final SellerAuthenticationService sellerAuthenticationService;
+    private final AuthenticationService authenticationService;
 
-    public AuthenticationController(JwtService jwtService, CustomerAuthenticationService customerAuthenticationService, SellerAuthenticationService sellerAuthenticationService) {
+    @Autowired
+    public AuthenticationController(JwtService jwtService,
+                                    UserRepository userRepository,
+                                    CustomerAuthenticationService customerAuthenticationService,
+                                    SellerAuthenticationService sellerAuthenticationService,
+                                    AuthenticationService authenticationService) {
         this.jwtService = jwtService;
         this.customerAuthenticationService = customerAuthenticationService;
         this.sellerAuthenticationService = sellerAuthenticationService;
+        this.userRepository = userRepository;
+        this.authenticationService = authenticationService;
     }
 
     @PostMapping("/customer/signup")
@@ -69,11 +75,14 @@ public class AuthenticationController {
             if (jwtService.isTokenValid(token, userDetailsImpl)) {
                 user.setIsActive(true);
                 userRepository.save(user);
+
+                //sends verified user mail
+                authenticationService.verifyUser(user.getEmail());
+
                 return ResponseEntity.ok().build();
             }else{
                 throw new InvalidTokenOrExpiredException("Invalid or expired activation token.");
             }
-
 
 
 
