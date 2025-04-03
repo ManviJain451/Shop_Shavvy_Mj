@@ -1,9 +1,11 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.Exception.DuplicateEntryExistsException;
+import com.shopsavvy.shopshavvy.Exception.EmailAlreadyExistsException;
+import com.shopsavvy.shopshavvy.Exception.PasswordMismatchException;
 import com.shopsavvy.shopshavvy.dto.SellerRegistrationDTO;
-import com.shopsavvy.shopshavvy.model.users.Address;
-import com.shopsavvy.shopshavvy.model.users.Seller;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.users.*;
+import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.UserDetailsImpl;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -20,32 +22,35 @@ public class SellerAuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final JwtService jwtService;
+    private final AuthTokenRepository authTokenRepository;
 
     public SellerAuthenticationService(
             UserRepository userRepository,
             AuthenticationManager authenticationManager,
             PasswordEncoder passwordEncoder,
             EmailService emailService,
-            JwtService jwtService
+            JwtService jwtService,
+            AuthTokenRepository authTokenRepository
     ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.jwtService = jwtService;
+        this.authTokenRepository = authTokenRepository;
     }
 
     public User signup(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
-            throw new Exception("Email already exists");
+            throw new EmailAlreadyExistsException("Email already exists");
         }
-        if (userRepository.existsByCompanyNameIgnoreCase(sellerRegistrationDTO.getCompanyName())) {
-            throw new Exception("Company name already exists.");
+        if (userRepository.existsByCompanyName(sellerRegistrationDTO.getCompanyName())) {
+            throw new DuplicateEntryExistsException("Company name already exists.");
         }
 
         if (userRepository.existsByGst(sellerRegistrationDTO.getGst())) {
-            throw new Exception("GST already exists.");
+            throw new DuplicateEntryExistsException("GST Number already exists.");
         }
 
         Seller seller = new Seller();
@@ -71,13 +76,19 @@ public class SellerAuthenticationService {
 
 
         if (!sellerRegistrationDTO.getConfirmPassword().equals(sellerRegistrationDTO.getPassword())) {
-            throw new Exception("Confirm Password is not same as Password.");
+            throw new PasswordMismatchException("Confirm Password is not same as Password.");
         }
 
         userRepository.save(seller);
 
         UserDetailsImpl userDetails = new UserDetailsImpl(seller);
         String token = jwtService.generateToken(userDetails, "activation");
+
+        AuthToken authToken = new AuthToken();
+        authToken.setUserEmail(seller.getEmail());
+        authToken.setToken(token);
+        authToken.setTokenType(TokenType.ACTIVATION);
+        authTokenRepository.save(authToken);
 
         try {
             emailService.sendActivationLink(sellerRegistrationDTO, token);

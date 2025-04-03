@@ -74,7 +74,5 @@ public class User {
 
     @LastModifiedBy
     private String updatedBy;
-
-    private String verificationCode;
 }
 

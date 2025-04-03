@@ -13,10 +13,11 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Boolean existsByEmail(String email);
 
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN TRUE ELSE FALSE END FROM User u WHERE LOWER(u.companyName) = LOWER(:companyName)")
-    public Boolean existsByCompanyNameIgnoreCase(@Param("companyName") String companyName);
+    @Query("select COUNT(*) > 0 from Seller where LOWER(companyName) = LOWER(:companyName)")
+    boolean existsByCompanyName(@Param("companyName") String companyName);
 
-    @Query("SELECT CASE WHEN COUNT(u) > 0 THEN TRUE ELSE FALSE END FROM User u WHERE u.gst = :gst")
-    public Boolean existsByGst(@Param("gst") String gst);
+
+    @Query("select COUNT(*) > 0 from Seller where gst = :gst")
+    boolean existsByGst(@Param("gst") String gst);
 
 }

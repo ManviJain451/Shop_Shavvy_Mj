@@ -40,7 +40,7 @@ public class Order {
 
     private String customerAddressCountry;
 
-    private String customerAddressAddressLine;
+    private String customerAddressLine;
 
     private String customerAddressZipCode;
 
