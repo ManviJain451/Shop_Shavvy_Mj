@@ -49,7 +49,7 @@ public class User {
 
     private boolean isCredentialsExpired=false;
 
-    private int invalidAttemptCount;
+    private int invalidAttemptCount=0;
 
     @LastModifiedDate
     private LocalDateTime passwordUpdateDate;
