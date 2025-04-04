@@ -4,6 +4,7 @@ import com.shopsavvy.shopshavvy.Exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.Exception.InvalidTokenOrExpiredException;
 import com.shopsavvy.shopshavvy.Exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
 import com.shopsavvy.shopshavvy.dto.SellerRegistrationDTO;
 import com.shopsavvy.shopshavvy.dto.UserLoginDTO;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
@@ -68,9 +69,9 @@ public class AuthenticationController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> authenticate(@RequestBody UserLoginDTO userLoginDTO){
-        String accessToken = authenticationService.authenticate(userLoginDTO);
-        return ResponseEntity.ok().body(accessToken);
+    public ResponseEntity<LoginResponseDTO> authenticate(@RequestBody UserLoginDTO userLoginDTO){
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO);
+        return ResponseEntity.ok().body(loginResponseDTO);
     }
 
 
