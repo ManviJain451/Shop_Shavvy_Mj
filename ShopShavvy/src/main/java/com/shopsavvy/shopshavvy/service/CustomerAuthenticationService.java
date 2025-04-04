@@ -2,13 +2,14 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.Exception.*;
 import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
+import com.shopsavvy.shopshavvy.model.token.AuthToken;
+import com.shopsavvy.shopshavvy.model.token.TokenType;
 import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
-import com.shopsavvy.shopshavvy.security.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.securityConfigurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -16,9 +17,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import javax.management.relation.RoleNotFoundException;
-import java.rmi.AlreadyBoundException;
 
 
 @Service
@@ -118,6 +116,7 @@ public class CustomerAuthenticationService {
             UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
             if (jwtService.isTokenValid(token, userDetailsImpl)) {
                 user.setIsActive(true);
+//                user.setLocked(false);
                 userRepository.save(user);
 
                 //sends verified user mail
@@ -145,7 +144,6 @@ public class CustomerAuthenticationService {
 
     @Transactional
     public ResponseEntity<String> resendActivationLink(@RequestParam String email) throws Exception {
-        System.out.println(userRepository.existsByEmail(email));
         if (!userRepository.existsByEmail(email)) {
             throw new UserNotFoundException("User not found");
         }
@@ -180,4 +178,7 @@ public class CustomerAuthenticationService {
 
 
     }
+
+
+
 }

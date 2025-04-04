@@ -1,6 +1,7 @@
-package com.shopsavvy.shopshavvy.security;
+package com.shopsavvy.shopshavvy.securityConfigurations;
 
 import com.shopsavvy.shopshavvy.repository.UserRepository;
+import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

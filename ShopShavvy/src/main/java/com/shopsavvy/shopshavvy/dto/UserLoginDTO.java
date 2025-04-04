@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.dto.userDTO;
+package com.shopsavvy.shopshavvy.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;

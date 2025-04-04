@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.security;
+package com.shopsavvy.shopshavvy.configuration;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
