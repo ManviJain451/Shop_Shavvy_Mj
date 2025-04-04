@@ -10,6 +10,7 @@ import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.securityConfigurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,15 +26,18 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthTokenRepository authTokenRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     @Autowired
     public AuthenticationService(UserRepository userRepository,
                                  JwtService jwtService, AuthTokenRepository authTokenRepository,
-                                 PasswordEncoder passwordEncoder){
+                                 PasswordEncoder passwordEncoder,
+                                 EmailService emailService){
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.authTokenRepository = authTokenRepository;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO) {
@@ -59,6 +63,11 @@ public class AuthenticationService {
             user.setInvalidAttemptCount(user.getInvalidAttemptCount() + 1);
             if (user.getInvalidAttemptCount() >= 3) {
                 user.setLocked(true);
+                try {
+                    emailService.sendVerificationEmail(userLoginDTO.getEmail(), " Your ShopShavvy Account has been locked", "Your account has been locked. Please contact support.");
+                } catch (MessagingException e) {
+                    throw new RuntimeException(e);
+                }
             }
             userRepository.save(user);
             throw new BadCredentialsException("Invalid credentials. Please try again.");
