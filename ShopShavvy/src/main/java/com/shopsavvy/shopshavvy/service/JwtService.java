@@ -23,8 +23,14 @@ public class JwtService {
     @Value("${security.jwt.secret-key}")
     private String secretKey;
 
-    @Value("${security.jwt.expiration-time}")
-    private long jwtExpiration;
+    @Value("${jwt.expiration-time.accessToken}")
+    private long accessTokenExpirationTime;
+
+    @Value("${jwt.expiration-time.refreshToken}")
+    private long refreshTokenExpirationTime;
+
+    @Value("${jwt.expiration-time.activationToken}")
+    private long activateTokenExpirationTime;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -44,12 +50,23 @@ public class JwtService {
     }
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails, String tokenType) {
-        return buildToken(extraClaims, userDetails, jwtExpiration, tokenType);
+        long expirationTime;
+        switch (tokenType) {
+            case "refresh":
+                expirationTime = refreshTokenExpirationTime;
+                break;
+            case "activate":
+                expirationTime = activateTokenExpirationTime;
+                break;
+            case "access":
+            default:
+                expirationTime = accessTokenExpirationTime;
+                break;
+        }
+        return buildToken(extraClaims, userDetails, expirationTime, tokenType);
     }
 
-    public long getExpirationTime() {
-        return jwtExpiration;
-    }
+
 
     private String buildToken(
             Map<String, Object> extraClaims,
@@ -77,13 +94,13 @@ public class JwtService {
 //    }
 
     private boolean isTokenExpired(String token) {
-        Instant expirationInstant = extractExpiration(token).toInstant(); // Convert expiry to UTC
-        Instant currentInstant = Instant.now(); // Current time in UTC
+        Instant expirationInstant = extractExpiration(token).toInstant();
+        Instant currentInstant = Instant.now();
 
         System.out.println("Token Expiry (UTC): " + expirationInstant);
         System.out.println("Current Time (UTC): " + currentInstant);
 
-        return expirationInstant.isBefore(currentInstant); // Ensure proper comparison
+        return expirationInstant.isBefore(currentInstant);
     }
 
     private Date extractExpiration(String token) {
