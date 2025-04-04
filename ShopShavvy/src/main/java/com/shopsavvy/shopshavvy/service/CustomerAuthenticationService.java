@@ -100,9 +100,7 @@ public class CustomerAuthenticationService {
     public String activateCustomer(@RequestHeader("Authorization") String token) throws Exception {
 
         try {
-            if (token.startsWith("Bearer ")) {
-                token = token.substring(7);
-            }
+
             Claims claims = jwtService.extractAllClaims(token);
             String tokenEmail = claims.getSubject();
             User user = userRepository.findByEmail(tokenEmail);
@@ -114,7 +112,7 @@ public class CustomerAuthenticationService {
             }
 
             UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
-            if (jwtService.isTokenValid(token, userDetailsImpl)) {
+            if (jwtService.isTokenValid(token, userDetailsImpl, "activation")) {
                 user.setIsActive(true);
 //                user.setLocked(false);
                 userRepository.save(user);
@@ -124,6 +122,7 @@ public class CustomerAuthenticationService {
 
                 return "User is activated.";
             }else{
+                System.out.println(">>>>>>>>token not getting valid>>>>>>>>");
                 throw new InvalidTokenOrExpiredException("Invalid or expired activation token.");
             }
 

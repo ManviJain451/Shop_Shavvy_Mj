@@ -55,7 +55,7 @@ public class JwtService {
             case "refresh":
                 expirationTime = refreshTokenExpirationTime;
                 break;
-            case "activate":
+            case "activation":
                 expirationTime = activateTokenExpirationTime;
                 break;
             case "access":
@@ -84,9 +84,14 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails) {
+    public boolean isTokenValid(String token, UserDetails userDetails, String tokenType) {
         final String username = extractUsername(token);
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        Claims claims = extractAllClaims(token);
+
+        System.out.println(">>>>>>token is validating here");
+        System.out.println(username.equals(userDetails.getUsername()) && !isTokenExpired(token) && tokenType.equals(claims.get(tokenType)));
+        System.out.println(claims.get(tokenType));
+        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && tokenType.equals(claims.get("type"));
     }
 
 //    private boolean isTokenExpired(String token) {
