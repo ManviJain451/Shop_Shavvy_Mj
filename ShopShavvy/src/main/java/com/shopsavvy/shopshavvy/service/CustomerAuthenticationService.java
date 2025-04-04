@@ -178,6 +178,41 @@ public class CustomerAuthenticationService {
 
     }
 
+    @Transactional
+    public String refreshToken(String refreshToken) throws RuntimeException {
+        AuthToken authToken = authTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new TokenNotFoundException("Refresh token not found"));
+
+        if (authToken.getTokenType() != TokenType.REFRESH) {
+            throw new RuntimeException("Invalid token type");
+        }
+
+        if (jwtService.isTokenExpired(refreshToken)) {
+            throw new RuntimeException("Refresh token has expired");
+        }
+
+        Claims claims = jwtService.extractAllClaims(refreshToken);
+        String userEmail = claims.getSubject();
+        authTokenRepository.deleteAccessTokenByEmail(userEmail);
+        User user = userRepository.findByEmail(userEmail);
+
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        String newAccessToken = jwtService.generateToken(userDetailsImpl, "access");
+
+        Claims newAccessTokenclaims = jwtService.extractAllClaims(newAccessToken);
+
+        AuthToken accessToken = new AuthToken();
+        authToken.setUserEmail(userEmail);
+        authToken.setToken(newAccessToken);
+        authToken.setTokenType(TokenType.ACCESS);
+        authToken.setExpirationTime(newAccessTokenclaims.getExpiration());
+        authTokenRepository.save(authToken);
+
+        return newAccessToken;
+
+    }
+
+
 
 
 }
