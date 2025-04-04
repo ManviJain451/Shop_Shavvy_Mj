@@ -1,10 +1,12 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -31,6 +33,9 @@ public class JwtService {
 
     @Value("${jwt.expiration-time.activationToken}")
     private long activateTokenExpirationTime;
+
+    @Autowired
+    private AuthTokenRepository authTokenRepository;
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -88,17 +93,22 @@ public class JwtService {
         final String username = extractUsername(token);
         Claims claims = extractAllClaims(token);
 
-        System.out.println(">>>>>>token is validating here");
-        System.out.println(username.equals(userDetails.getUsername()) && !isTokenExpired(token) && tokenType.equals(claims.get(tokenType)));
-        System.out.println(claims.get(tokenType));
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && tokenType.equals(claims.get("type"));
+//        System.out.println(">>>>>>token is validating here");
+//        System.out.println(username.equals(userDetails.getUsername()) && !isTokenExpired(token) && tokenType.equals(claims.get(tokenType)));
+//        System.out.println(claims.get(tokenType));
+//        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && tokenType.equals(claims.get("type"));
+
+        boolean isTokenInRepository = authTokenRepository.existsByToken(token);
+        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && tokenType.equals(claims.get("type")) && isTokenInRepository;
+
+
     }
 
 //    private boolean isTokenExpired(String token) {
 //        return extractExpiration(token).before(new Date());
 //    }
 
-    private boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         Instant expirationInstant = extractExpiration(token).toInstant();
         Instant currentInstant = Instant.now();
 
