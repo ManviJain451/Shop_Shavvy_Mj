@@ -123,11 +123,11 @@ public class CustomerAuthenticationService {
                 return "User is activated.";
             }else{
                 System.out.println(">>>>>>>>token not getting valid>>>>>>>>");
-                throw new InvalidTokenOrExpiredException("Invalid or expired activation token.");
+                throw new InvalidTokenException("Invalid activation token.");
             }
 
         } catch (Exception e) {
-            throw new InvalidTokenOrExpiredException("Invalid or expired activation token.");
+            throw new InvalidTokenException("Invalid or expired activation token.");
         }
 
     }
@@ -184,11 +184,11 @@ public class CustomerAuthenticationService {
                 .orElseThrow(() -> new TokenNotFoundException("Refresh token not found"));
 
         if (authToken.getTokenType() != TokenType.REFRESH) {
-            throw new RuntimeException("Invalid token type");
+            throw new InvalidTokenException("Invalid token type");
         }
 
         if (jwtService.isTokenExpired(refreshToken)) {
-            throw new RuntimeException("Refresh token has expired");
+            throw new InvalidTokenException("Refresh token has expired");
         }
 
         Claims claims = jwtService.extractAllClaims(refreshToken);
@@ -211,8 +211,5 @@ public class CustomerAuthenticationService {
         return newAccessToken;
 
     }
-
-
-
 
 }

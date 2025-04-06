@@ -1,7 +1,7 @@
 package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.Exception.AlreadyActivatedException;
-import com.shopsavvy.shopshavvy.Exception.InvalidTokenOrExpiredException;
+import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
 import com.shopsavvy.shopshavvy.Exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
 import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
@@ -56,7 +56,7 @@ public class AuthenticationController {
             return ResponseEntity.ok(responseMessage);
         } catch (UserNotFoundException ex) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
-        } catch (InvalidTokenOrExpiredException ex) {
+        } catch (InvalidTokenException ex) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
         } catch (AlreadyActivatedException ex) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
