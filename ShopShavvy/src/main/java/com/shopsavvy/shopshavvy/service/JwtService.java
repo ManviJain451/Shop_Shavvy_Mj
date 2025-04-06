@@ -34,6 +34,9 @@ public class JwtService {
     @Value("${jwt.expiration-time.activationToken}")
     private long activateTokenExpirationTime;
 
+    @Value("${jwt.expiration-time.resetPasswordToken}")
+    private long resetPasswordTokenTime;
+
     @Autowired
     private AuthTokenRepository authTokenRepository;
 
@@ -64,9 +67,12 @@ public class JwtService {
                 expirationTime = activateTokenExpirationTime;
                 break;
             case "access":
-            default:
                 expirationTime = accessTokenExpirationTime;
                 break;
+            default:
+                expirationTime = resetPasswordTokenTime;
+                break;
+
         }
         return buildToken(extraClaims, userDetails, expirationTime, tokenType);
     }
