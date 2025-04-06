@@ -22,5 +22,9 @@ public interface AuthTokenRepository extends JpaRepository<AuthToken, Long> {
     @Modifying
     void deleteAccessTokenByEmail(@Param("email") String email);
 
+    @Query("DELETE FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = com.shopsavvy.shopshavvy.model.token.TokenType.FORGOT_PASSWORD")
+    @Modifying
+    void deleteResetPasswordTokenByEmail(@Param("email") String email);
+
     boolean existsByToken(String token);
 }
