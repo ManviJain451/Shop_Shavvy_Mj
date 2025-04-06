@@ -42,8 +42,8 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(InvalidTokenOrExpiredException.class)
-    public ResponseEntity<ErrorDetails> handleInvalidTokenException(InvalidTokenOrExpiredException exception, WebRequest request) {
+    @ExceptionHandler(InvalidTokenException.class)
+    public ResponseEntity<ErrorDetails> handleInvalidTokenException(InvalidTokenException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
         return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.UNAUTHORIZED);
