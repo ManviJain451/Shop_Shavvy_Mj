@@ -1,9 +1,11 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
+import com.shopsavvy.shopshavvy.Exception.PasswordMismatchException;
 import com.shopsavvy.shopshavvy.Exception.TokenNotFoundException;
 import com.shopsavvy.shopshavvy.Exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
+import com.shopsavvy.shopshavvy.dto.ResetPasswordResponseDTO;
 import com.shopsavvy.shopshavvy.dto.UserLoginDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.token.TokenType;
@@ -15,6 +17,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -135,6 +138,58 @@ public class AuthenticationService {
         authTokenRepository.deleteAccessTokenByEmail(email);
 
         return ResponseEntity.ok("You are logged out.");
+    }
+
+    public ResponseEntity<String> forgotPassword(String email) throws MessagingException {
+        User user = userRepository.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("Email is invalid.");
+        }
+
+        if(!user.getIsActive()){
+            throw new RuntimeException("Account is not activated.");
+        }
+
+        authTokenRepository.deleteResetPasswordTokenByEmail(email);
+
+
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(userRepository.findByEmail(email));
+
+        String resetPasswordToken = jwtService.generateToken(userDetailsImpl, "forgotPassword");
+
+        emailService.sendVerificationEmail(email,"Password Reset Request", "To reset your password, click the link below:\n" + "http://localhost:8080/reset-password?token=" + resetPasswordToken);
+
+        return ResponseEntity.ok("Password reset link has been sent to your email.");
+    }
+
+
+    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(String token, String password, String confirmPassword) throws MessagingException {
+        AuthToken authToken = authTokenRepository.findByToken(token)
+                .orElseThrow(() -> new TokenNotFoundException("Token not found"));
+
+        if(authToken.getTokenType() != TokenType.FORGOT_PASSWORD){
+            throw new InvalidTokenException("Invalid token.");
+        }
+
+        if (jwtService.isTokenExpired(token)) {
+            authTokenRepository.delete(authToken);
+            throw new InvalidTokenException("Token is expired. Password is not updated.");
+        }
+
+        if (!password.equals(confirmPassword)) {
+            throw new PasswordMismatchException("Confirm Passowrd is not same as Password.");
+        }
+
+        User user = userRepository.findByEmail(authToken.getUserEmail());
+        user.setPassword(passwordEncoder.encode(password));
+        userRepository.save(user);
+
+        authTokenRepository.delete(authToken);
+
+        emailService.sendVerificationEmail(user.getEmail(), "Password Reset Successful", "Your password has been successfully reset.");
+
+        return ResponseEntity.ok(new ResetPasswordResponseDTO(token, password, confirmPassword));
+
     }
 
 }
