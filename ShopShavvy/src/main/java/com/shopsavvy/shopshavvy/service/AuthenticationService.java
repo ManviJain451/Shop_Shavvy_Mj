@@ -16,6 +16,8 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -54,7 +56,7 @@ public class AuthenticationService {
             throw new RuntimeException("Account is locked. Please contact support.");
         }
 
-        if(user.isCredentialsExpired()){
+        if(isPasswordCredentialExpired(userLoginDTO.getEmail())){
             throw new RuntimeException("Your password has been expired.");
         }
 
@@ -100,6 +102,18 @@ public class AuthenticationService {
                 .collect(Collectors.toSet());
 
         return new LoginResponseDTO(accessToken, refreshToken, userLoginDTO.getEmail(), roles);
+    }
+
+
+    public boolean isPasswordCredentialExpired(String email){
+        LocalDateTime passwordLastUpdateDate = userRepository.findPasswordUpdateDateByEmail(email);
+        User user = userRepository.findByEmail(email);
+        if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MONTHS))) {
+            user.setExpired(true);
+            userRepository.save(user);
+            return true;
+        }
+        return false;
     }
 
 }
