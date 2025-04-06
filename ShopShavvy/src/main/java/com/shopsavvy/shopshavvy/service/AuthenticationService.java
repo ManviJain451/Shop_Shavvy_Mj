@@ -1,5 +1,7 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
+import com.shopsavvy.shopshavvy.Exception.TokenNotFoundException;
 import com.shopsavvy.shopshavvy.Exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
 import com.shopsavvy.shopshavvy.dto.UserLoginDTO;
@@ -12,6 +14,7 @@ import com.shopsavvy.shopshavvy.securityConfigurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -114,6 +117,24 @@ public class AuthenticationService {
             return true;
         }
         return false;
+    }
+
+    public ResponseEntity<String> userLogout(String accessToken){
+        AuthToken authToken = authTokenRepository.findByToken(accessToken)
+                .orElseThrow(() -> new TokenNotFoundException("Access token not found"));
+
+        if (authToken.getTokenType() != TokenType.ACCESS) {
+            throw new InvalidTokenException("Invalid token.");
+        }
+
+        if (jwtService.isTokenExpired(accessToken)) {
+            throw new InvalidTokenException("Access token has expired");
+        }
+
+        String email = jwtService.extractUsername(accessToken);
+        authTokenRepository.deleteAccessTokenByEmail(email);
+
+        return ResponseEntity.ok("You are logged out.");
     }
 
 }
