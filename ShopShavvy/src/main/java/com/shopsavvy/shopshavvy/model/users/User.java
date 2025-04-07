@@ -47,8 +47,6 @@ public class User {
 
     private boolean isLocked=false;
 
-    private boolean isCredentialsExpired=false;
-
     private int invalidAttemptCount=0;
 
     @LastModifiedDate

@@ -4,6 +4,7 @@ import com.shopsavvy.shopshavvy.Exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
 import com.shopsavvy.shopshavvy.Exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.dto.*;
+import com.shopsavvy.shopshavvy.model.token.AccessRefreshToken;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CustomerAuthenticationService;
@@ -73,11 +74,28 @@ public class AuthenticationController {
         return customerAuthenticationService.resendActivationLink(email);
     }
 
+    @PostMapping("/customer/login")
+    public ResponseEntity<LoginResponseDTO> authenticateCustomer(@Valid @RequestBody UserLoginDTO userLoginDTO){
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO);
+        return ResponseEntity.ok().body(loginResponseDTO);
+    }
+
+    @PostMapping("/seller/login")
+    public ResponseEntity<LoginResponseDTO> authenticateSeller(@Valid @RequestBody UserLoginDTO userLoginDTO){
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO);
+        return ResponseEntity.ok().body(loginResponseDTO);
+    }
+
+    @PostMapping("/admin/login")
+    public ResponseEntity<LoginResponseDTO> authenticateAdmin(@Valid @RequestBody UserLoginDTO userLoginDTO){
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO);
+        return ResponseEntity.ok().body(loginResponseDTO);
+    }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<String> refreshToken(@RequestParam String refreshToken) {
-        String newAccessToken = customerAuthenticationService.refreshToken(refreshToken);
-        return ResponseEntity.ok().body(newAccessToken);
+    public ResponseEntity<AccessRefreshToken> refreshToken(@RequestParam String refreshToken) {
+        AccessRefreshToken newAccessRefreshToken = customerAuthenticationService.refreshToken(refreshToken);
+        return ResponseEntity.ok().body(newAccessRefreshToken);
     }
 
     @PostMapping("/forgot-password")
@@ -86,8 +104,8 @@ public class AuthenticationController {
     }
 
     @PutMapping("/reset-password")
-    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(@RequestParam String token, @Valid @RequestParam String password, @RequestParam String confirmPassword) throws MessagingException {
-        return authenticationService.resetPassword(token, password, confirmPassword);
+    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(@RequestParam String resetPasswordtoken, @Valid @RequestParam String password, @RequestParam String confirmPassword) throws MessagingException {
+        return authenticationService.resetPassword(resetPasswordtoken, password, confirmPassword);
     }
 
 }

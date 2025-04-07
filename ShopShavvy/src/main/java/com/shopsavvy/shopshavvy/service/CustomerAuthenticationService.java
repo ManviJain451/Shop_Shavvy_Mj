@@ -2,9 +2,10 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.Exception.*;
 import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
+import com.shopsavvy.shopshavvy.model.token.AccessRefreshToken;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
-import com.shopsavvy.shopshavvy.model.token.TokenType;
 import com.shopsavvy.shopshavvy.model.users.*;
+import com.shopsavvy.shopshavvy.repository.AccessRefreshTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
@@ -29,6 +30,7 @@ public class CustomerAuthenticationService {
     private final AuthTokenRepository authTokenRepository;
     private final AuthenticationService authenticationService;
     private final RoleRepository roleRepository;
+    private final AccessRefreshTokenRepository accessRefreshTokenRepository;
 
     public CustomerAuthenticationService(
             UserRepository userRepository,
@@ -38,7 +40,8 @@ public class CustomerAuthenticationService {
             JwtService jwtService,
             AuthTokenRepository authTokenRepository,
             AuthenticationService authenticationService,
-            RoleRepository roleRepository
+            RoleRepository roleRepository,
+            AccessRefreshTokenRepository accessRefreshTokenRepository
     ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -48,6 +51,7 @@ public class CustomerAuthenticationService {
         this.authTokenRepository = authTokenRepository;
         this.authenticationService = authenticationService;
         this.roleRepository = roleRepository;
+        this.accessRefreshTokenRepository = accessRefreshTokenRepository;
     }
 
     public String registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
@@ -81,7 +85,7 @@ public class CustomerAuthenticationService {
         AuthToken authToken = new AuthToken();
         authToken.setUserEmail(customer.getEmail());
         authToken.setToken(token);
-        authToken.setTokenType(TokenType.ACTIVATION);
+        authToken.setTokenType("activation");
         authToken.setExpirationTime(claims.getExpiration());
         authTokenRepository.save(authToken);
 
@@ -114,7 +118,6 @@ public class CustomerAuthenticationService {
             UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
             if (jwtService.isTokenValid(token, userDetailsImpl, "activation")) {
                 user.setIsActive(true);
-//                user.setLocked(false);
                 userRepository.save(user);
 
                 //sends verified user mail
@@ -122,7 +125,7 @@ public class CustomerAuthenticationService {
 
                 return "User is activated.";
             }else{
-                System.out.println(">>>>>>>>token not getting valid>>>>>>>>");
+
                 throw new InvalidTokenException("Invalid activation token.");
             }
 
@@ -151,7 +154,7 @@ public class CustomerAuthenticationService {
             throw new AlreadyActivatedException("Account is already activated");
         }
 
-        authTokenRepository.deleteTokenByEmail(email);
+        authTokenRepository.deleteActivationTokenByEmail(email);
 
         User user = userRepository.findByEmail(email);
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
@@ -163,7 +166,7 @@ public class CustomerAuthenticationService {
         AuthToken authToken = new AuthToken();
         authToken.setUserEmail(email);
         authToken.setToken(token);
-        authToken.setTokenType(TokenType.ACTIVATION);
+        authToken.setTokenType("activation");
         authToken.setExpirationTime(claims.getExpiration());
         authTokenRepository.save(authToken);
 
@@ -179,11 +182,13 @@ public class CustomerAuthenticationService {
     }
 
     @Transactional
-    public String refreshToken(String refreshToken) throws RuntimeException {
-        AuthToken authToken = authTokenRepository.findByToken(refreshToken)
+    public AccessRefreshToken refreshToken(String refreshToken) throws RuntimeException {
+        AccessRefreshToken accessRefreshToken = accessRefreshTokenRepository.findByRefreshToken(refreshToken)
                 .orElseThrow(() -> new TokenNotFoundException("Refresh token not found"));
 
-        if (authToken.getTokenType() != TokenType.REFRESH) {
+        Claims claims = jwtService.extractAllClaims(refreshToken);
+
+        if (claims.get("type").equals("refresh")) {
             throw new InvalidTokenException("Invalid token type");
         }
 
@@ -191,24 +196,22 @@ public class CustomerAuthenticationService {
             throw new InvalidTokenException("Refresh token has expired");
         }
 
-        Claims claims = jwtService.extractAllClaims(refreshToken);
+
         String userEmail = claims.getSubject();
-        authTokenRepository.deleteAccessTokenByEmail(userEmail);
+        accessRefreshTokenRepository.deleteByUserEmail(userEmail);
         User user = userRepository.findByEmail(userEmail);
 
         UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
         String newAccessToken = jwtService.generateToken(userDetailsImpl, "access");
+        String newRefreshToken = jwtService.generateToken(userDetailsImpl, "refresh");
 
-        Claims newAccessTokenclaims = jwtService.extractAllClaims(newAccessToken);
+        AccessRefreshToken newAccessRefreshToken = new AccessRefreshToken();
+        newAccessRefreshToken.setAccessToken(newAccessToken);
+        newAccessRefreshToken.setRefreshToken(refreshToken);
+        newAccessRefreshToken.setUserEmail(userEmail);
+        accessRefreshTokenRepository.save(newAccessRefreshToken);
 
-        AuthToken accessToken = new AuthToken();
-        authToken.setUserEmail(userEmail);
-        authToken.setToken(newAccessToken);
-        authToken.setTokenType(TokenType.ACCESS);
-        authToken.setExpirationTime(newAccessTokenclaims.getExpiration());
-        authTokenRepository.save(authToken);
-
-        return newAccessToken;
+        return newAccessRefreshToken;
 
     }
 

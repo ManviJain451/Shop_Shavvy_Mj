@@ -19,8 +19,7 @@ public class AuthToken {
 
     private String token;
 
-    @Enumerated(EnumType.STRING)
-    private TokenType tokenType;
+    private String tokenType;
 
     private Date expirationTime;
 

@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 public class ResetPasswordResponseDTO {
-    private String token;
+    private String resetPasswordToken;
 
     @NotBlank(message = "Password is mandatory")
     @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters long")

@@ -19,15 +19,9 @@ public class SellerController {
         this.authenticationService = authenticationService;
     }
 
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> authenticate(@Valid @RequestBody UserLoginDTO userLoginDTO){
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO);
-        return ResponseEntity.ok().body(loginResponseDTO);
-    }
-
     @GetMapping("/hello")
     public String sayHello( String token){
-        return "hello";
+        return "hello seller";
     }
 
     @PostMapping("/logout")

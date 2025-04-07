@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
+import com.shopsavvy.shopshavvy.repository.AccessRefreshTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -35,11 +35,18 @@ public class JwtService {
     @Value("${jwt.expiration-time.activationToken}")
     private long activateTokenExpirationTime;
 
-    @Value("${jwt.expiration-time.forgotPasswordToken}")
+    @Value("${jwt.expiration-time.resetPasswordToken}")
     private long resetPasswordTokenTime;
 
-    @Autowired
     private AuthTokenRepository authTokenRepository;
+    private AccessRefreshTokenRepository accessRefreshTokenRepository;
+
+    @Autowired
+    public JwtService(AuthTokenRepository authTokenRepository,
+                      AccessRefreshTokenRepository accessRefreshTokenRepository){
+        this.accessRefreshTokenRepository = accessRefreshTokenRepository;
+        this.authTokenRepository = authTokenRepository;
+    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -57,6 +64,7 @@ public class JwtService {
                 .collect(Collectors.toList()));
         return generateToken(claims, userDetails, tokenType);
     }
+
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails, String tokenType) {
         long expirationTime;
@@ -100,28 +108,30 @@ public class JwtService {
         final String username = extractUsername(token);
         Claims claims = extractAllClaims(token);
 
-//        System.out.println(">>>>>>token is validating here");
-//        System.out.println(username.equals(userDetails.getUsername()) && !isTokenExpired(token) && tokenType.equals(claims.get(tokenType)));
-//        System.out.println(claims.get(tokenType));
-//        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && tokenType.equals(claims.get("type"));
+        boolean isTokenInRepository;
+        switch (tokenType) {
+            case "activation":
+                isTokenInRepository = authTokenRepository.existsByToken(token);
+                break;
+            case "resetPassword":
+                isTokenInRepository = authTokenRepository.existsByToken(token);
+                break;
+            case "access":
+                isTokenInRepository = accessRefreshTokenRepository.existsByAccessToken(token);
+                break;
+            default:
+                isTokenInRepository = accessRefreshTokenRepository.existsByRefreshToken(token);
+                break;
+        }
 
-        boolean isTokenInRepository = authTokenRepository.existsByToken(token);
         return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && tokenType.equals(claims.get("type")) && isTokenInRepository;
 
 
     }
 
-//    private boolean isTokenExpired(String token) {
-//        return extractExpiration(token).before(new Date());
-//    }
-
     public boolean isTokenExpired(String token) {
         Instant expirationInstant = extractExpiration(token).toInstant();
         Instant currentInstant = Instant.now();
-
-        System.out.println("Token Expiry (UTC): " + expirationInstant);
-        System.out.println("Current Time (UTC): " + currentInstant);
-
         return expirationInstant.isBefore(currentInstant);
     }
 
@@ -136,8 +146,6 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
-
-
     }
 
 

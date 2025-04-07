@@ -12,24 +12,18 @@ import java.util.Optional;
 @Repository
 public interface AuthTokenRepository extends JpaRepository<AuthToken, Long> {
 
-    @Query("DELETE FROM AuthToken a WHERE a.userEmail = :email")
+    @Query("DELETE FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = 'activation'")
     @Modifying
-    void deleteTokenByEmail(@Param("email") String email);
-
-    Optional<AuthToken> findByToken(String token);
-
-    @Query("DELETE FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = com.shopsavvy.shopshavvy.model.token.TokenType.ACCESS")
-    @Modifying
-    void deleteAccessTokenByEmail(@Param("email") String email);
+    void deleteActivationTokenByEmail(@Param("email") String email);
 
     boolean existsByToken(String token);
 
-    @Query("SELECT COUNT(a) > 0 FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = com.shopsavvy.shopshavvy.model.token.TokenType.FORGOT_PASSWORD")
-    boolean existsForgotPasswordTokenByEmail(@Param("email") String email);
+    @Query("SELECT COUNT(a) > 0 FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = 'reset_password'")
+    boolean existsResetPasswordTokenByEmail(@Param("email") String email);
 
-    @Query("DELETE FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = com.shopsavvy.shopshavvy.model.token.TokenType.FORGOT_PASSWORD")
+    @Query("DELETE FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = 'reset_password'")
     @Modifying
-    void deleteForgotPasswordTokenByEmail(@Param("email") String email);
+    void deleteResetPasswordTokenByEmail(@Param("email") String email);
 
     @Query("DELETE FROM AuthToken a WHERE a.token = :token")
     @Modifying
