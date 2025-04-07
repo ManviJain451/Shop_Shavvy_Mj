@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -34,7 +35,7 @@ public class JwtService {
     @Value("${jwt.expiration-time.activationToken}")
     private long activateTokenExpirationTime;
 
-    @Value("${jwt.expiration-time.resetPasswordToken}")
+    @Value("${jwt.expiration-time.forgotPasswordToken}")
     private long resetPasswordTokenTime;
 
     @Autowired
@@ -135,6 +136,8 @@ public class JwtService {
                 .build()
                 .parseClaimsJws(token)
                 .getBody();
+
+
     }
 
 

@@ -1,16 +1,16 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
-import com.shopsavvy.shopshavvy.Exception.PasswordMismatchException;
-import com.shopsavvy.shopshavvy.Exception.TokenNotFoundException;
-import com.shopsavvy.shopshavvy.Exception.UserNotFoundException;
+import com.shopsavvy.shopshavvy.Exception.*;
 import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
 import com.shopsavvy.shopshavvy.dto.ResetPasswordResponseDTO;
 import com.shopsavvy.shopshavvy.dto.UserLoginDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.token.TokenType;
+import com.shopsavvy.shopshavvy.model.users.Customer;
+import com.shopsavvy.shopshavvy.model.users.Role;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
+import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.securityConfigurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
@@ -21,6 +21,7 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -35,17 +36,57 @@ public class AuthenticationService {
     private final AuthTokenRepository authTokenRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final RoleRepository roleRepository;
 
     @Autowired
     public AuthenticationService(UserRepository userRepository,
                                  JwtService jwtService, AuthTokenRepository authTokenRepository,
                                  PasswordEncoder passwordEncoder,
-                                 EmailService emailService){
+                                 EmailService emailService,
+                                 RoleRepository roleRepository){
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.authTokenRepository = authTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
+        this.roleRepository = roleRepository;
+    }
+
+    public String registerAdmin(User user) throws MessagingException {
+
+
+        User use = new User();
+        user.setEmail(user.getEmail());
+        user.setFirstName(user.getFirstName());
+        user.setLastName(user.getLastName());
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+
+        if (user.getMiddleName() != null && !user.getMiddleName().isBlank()) {
+            user.setMiddleName(user.getMiddleName());
+        }
+
+
+        Role role = roleRepository.findByAuthority("ROLE_ADMIN");
+        user.addRole(role);
+        user.setIsActive(true);
+        userRepository.save(user);
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(user);
+        String token = jwtService.generateToken(userDetails, "activation");
+        Claims claims = jwtService.extractAllClaims(token);
+        AuthToken authToken = new AuthToken();
+        authToken.setUserEmail(user.getEmail());
+        authToken.setToken(token);
+        authToken.setTokenType(TokenType.ACTIVATION);
+        authToken.setExpirationTime(claims.getExpiration());
+        authTokenRepository.save(authToken);
+
+
+
+        emailService.sendVerificationEmail(user.getEmail(), "Admin Account Created", "Admin account has been created. Admin account has been activated.");
+
+
+        return "Admin has been registered";
     }
 
     public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO) {
@@ -122,6 +163,7 @@ public class AuthenticationService {
         return false;
     }
 
+    @Transactional
     public ResponseEntity<String> userLogout(String accessToken){
         AuthToken authToken = authTokenRepository.findByToken(accessToken)
                 .orElseThrow(() -> new TokenNotFoundException("Access token not found"));
@@ -140,6 +182,7 @@ public class AuthenticationService {
         return ResponseEntity.ok("You are logged out.");
     }
 
+    @Transactional
     public ResponseEntity<String> forgotPassword(String email) throws MessagingException {
         User user = userRepository.findByEmail(email);
         if (user == null) {
@@ -150,46 +193,61 @@ public class AuthenticationService {
             throw new RuntimeException("Account is not activated.");
         }
 
-        authTokenRepository.deleteResetPasswordTokenByEmail(email);
-
+        if(authTokenRepository.existsForgotPasswordTokenByEmail(email)){
+            authTokenRepository.deleteForgotPasswordTokenByEmail(email);
+        }
 
         UserDetailsImpl userDetailsImpl = new UserDetailsImpl(userRepository.findByEmail(email));
 
-        String resetPasswordToken = jwtService.generateToken(userDetailsImpl, "forgotPassword");
+        String forgotPasswordToken = jwtService.generateToken(userDetailsImpl, "forgotPassword");
 
-        emailService.sendVerificationEmail(email,"Password Reset Request", "To reset your password, click the link below:\n" + "http://localhost:8080/reset-password?token=" + resetPasswordToken);
+        Claims claimsforForgotPasswordToken = jwtService.extractAllClaims(forgotPasswordToken);
+
+        AuthToken forgotPasswordAuthToken = new AuthToken();
+        forgotPasswordAuthToken.setUserEmail(email);
+        forgotPasswordAuthToken.setToken(forgotPasswordToken);
+        forgotPasswordAuthToken.setTokenType(TokenType.FORGOT_PASSWORD);
+        forgotPasswordAuthToken.setExpirationTime(claimsforForgotPasswordToken.getExpiration());
+        authTokenRepository.save(forgotPasswordAuthToken);
+
+        emailService.sendVerificationEmail(email,"Password Reset Request", "To reset your password, click the link below:\n" + "http://localhost:8080/shop-shavvy/auth/reset-password?token=" + forgotPasswordToken);
 
         return ResponseEntity.ok("Password reset link has been sent to your email.");
     }
 
-
+    @Transactional
     public ResponseEntity<ResetPasswordResponseDTO> resetPassword(String token, String password, String confirmPassword) throws MessagingException {
-        AuthToken authToken = authTokenRepository.findByToken(token)
-                .orElseThrow(() -> new TokenNotFoundException("Token not found"));
+        if(!authTokenRepository.existsByToken(token)){
+            throw new InvalidTokenException("Token is not found");
+        }
+        Claims claims = jwtService.extractAllClaims(token);
 
-        if(authToken.getTokenType() != TokenType.FORGOT_PASSWORD){
+        if (!"forgotPassword".equals(claims.get("type"))) {
             throw new InvalidTokenException("Invalid token.");
         }
 
         if (jwtService.isTokenExpired(token)) {
-            authTokenRepository.delete(authToken);
             throw new InvalidTokenException("Token is expired. Password is not updated.");
         }
 
         if (!password.equals(confirmPassword)) {
-            throw new PasswordMismatchException("Confirm Passowrd is not same as Password.");
+            throw new PasswordMismatchException("Confirm Password is not same as Password.");
         }
 
-        User user = userRepository.findByEmail(authToken.getUserEmail());
-        user.setPassword(passwordEncoder.encode(password));
-        userRepository.save(user);
+        User user = userRepository.findByEmail(jwtService.extractUsername(token));
+        if (user == null) {
+            throw new UserNotFoundException("User not found.");
+        }
 
-        authTokenRepository.delete(authToken);
+        String encodedPassword = passwordEncoder.encode(password);
+        user.setPassword(encodedPassword);
+
+        userRepository.save(user);
+        authTokenRepository.deleteByToken(token);
 
         emailService.sendVerificationEmail(user.getEmail(), "Password Reset Successful", "Your password has been successfully reset.");
 
         return ResponseEntity.ok(new ResetPasswordResponseDTO(token, password, confirmPassword));
-
     }
 
 }

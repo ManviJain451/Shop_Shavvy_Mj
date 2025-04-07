@@ -4,6 +4,7 @@ import com.shopsavvy.shopshavvy.Exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.Exception.InvalidTokenException;
 import com.shopsavvy.shopshavvy.Exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.dto.*;
+import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CustomerAuthenticationService;
 import com.shopsavvy.shopshavvy.service.JwtService;
@@ -36,7 +37,7 @@ public class AuthenticationController {
     }
 
     @PostMapping("/signup/customer")
-    public ResponseEntity<String> registerCustomer(@Valid @RequestBody CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
+    public ResponseEntity<String> registerCustomer(@RequestBody CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
         String message = customerAuthenticationService.registerCustomer(customerRegistrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
@@ -44,6 +45,12 @@ public class AuthenticationController {
     @PostMapping("/signup/seller")
     public ResponseEntity<String> registerSeller(@Valid @RequestBody SellerRegistrationDTO sellerRegistrationDTO) throws Exception{
         String message = sellerAuthenticationService.registerSeller(sellerRegistrationDTO);
+        return ResponseEntity.status(HttpStatus.CREATED).body(message);
+    }
+
+    @PostMapping("/signup/admin")
+    public ResponseEntity<String> registerAdmin(@Valid @RequestBody User user) throws Exception{
+        String message = authenticationService.registerAdmin(user);
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
@@ -64,12 +71,6 @@ public class AuthenticationController {
     @PostMapping("/resend-ActivationLink/customer")
     public ResponseEntity<String> resendActivationLink(@Valid @RequestParam String email) throws Exception {
         return customerAuthenticationService.resendActivationLink(email);
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> authenticate(@Valid @RequestBody UserLoginDTO userLoginDTO){
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO);
-        return ResponseEntity.ok().body(loginResponseDTO);
     }
 
 

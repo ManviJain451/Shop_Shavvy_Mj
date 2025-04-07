@@ -35,6 +35,7 @@ public class EmailService {
         emailSender.send(message);
     }
 
+    @Async
     public void  sendActivationLink(String email, String jwtToken) throws MessagingException {
         String activationLink = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/shop-shavvy/activate")
                 .queryParam("token", jwtToken)

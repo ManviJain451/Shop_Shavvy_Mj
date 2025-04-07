@@ -1,6 +1,9 @@
 package com.shopsavvy.shopshavvy.controller;
 
+import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
+import com.shopsavvy.shopshavvy.dto.UserLoginDTO;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,13 +19,19 @@ public class SellerController {
         this.authenticationService = authenticationService;
     }
 
+    @PostMapping("/login")
+    public ResponseEntity<LoginResponseDTO> authenticate(@Valid @RequestBody UserLoginDTO userLoginDTO){
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO);
+        return ResponseEntity.ok().body(loginResponseDTO);
+    }
+
     @GetMapping("/hello")
     public String sayHello( String token){
         return "hello";
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(String accessToken){
+    public ResponseEntity<String> logout(@RequestParam String accessToken){
         return authenticationService.userLogout(accessToken);
     }
 
