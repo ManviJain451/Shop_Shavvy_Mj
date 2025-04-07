@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.Exception;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,6 +23,15 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
                 exception.getMessage(), request.getDescription(false));
 
         return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+
+    }
+
+    @ExceptionHandler(LockedException.class)
+    public final ResponseEntity<ErrorDetails> handleLockedExceptions(Exception exception, WebRequest request) throws Exception {
+        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
+                exception.getMessage(), request.getDescription(false));
+
+        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.LOCKED);
 
     }
 
@@ -56,6 +66,19 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.NOT_FOUND);
     }
 
+    @ExceptionHandler(InvalidEmailException.class)
+    public ResponseEntity<ErrorDetails> handleInvalidEmailException(InvalidEmailException exception, WebRequest request) {
+        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
+                exception.getMessage(), request.getDescription(false));
+        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(DeactivatedAccountException.class)
+    public ResponseEntity<ErrorDetails> handleDeactivatedAccountException(DeactivatedAccountException exception, WebRequest request) {
+        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
+                exception.getMessage(), request.getDescription(false));
+        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.FORBIDDEN);
+    }
 
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
