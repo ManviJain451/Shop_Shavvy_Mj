@@ -35,6 +35,9 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByEmailAndRoles(String email, Set<Role> roles);
 
-    Page<User> findByEmailContainingIgnoreCase(String email, Pageable pageable);
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.authority = :role AND LOWER(u.email) LIKE LOWER(CONCAT('%', :email, '%'))")
+    Page<User> findByEmailContainingIgnoreCaseAndRoles(@Param("email") String email, @Param("role") String role, Pageable pageable);
 
+    @Query("SELECT u FROM User u JOIN u.roles r WHERE r.authority = :role")
+    Page<User> findByRoles(@Param("role") String role, Pageable pageable);
 }

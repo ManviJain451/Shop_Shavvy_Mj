@@ -2,6 +2,7 @@ package com.shopsavvy.shopshavvy.controller;
 
 
 import com.shopsavvy.shopshavvy.dto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import jakarta.mail.MessagingException;
@@ -43,5 +44,15 @@ public class AdminController {
             @RequestParam(required = false) String email) {
         Page<CustomerResponseDTO> customers = adminService.getAllCustomers(pageSize, pageOffset, sort, email);
         return ResponseEntity.ok(customers);
+    }
+
+    @GetMapping("/registered-sellers")
+    public ResponseEntity<Page<SellerResponseDTO>> getAllSellers(
+            @RequestParam(defaultValue = "10") int pageSize,
+            @RequestParam(defaultValue = "0") int pageOffset,
+            @RequestParam(defaultValue = "id") String sort,
+            @RequestParam(required = false) String email) {
+        Page<SellerResponseDTO> sellers = adminService.getAllSellers(pageSize, pageOffset, sort, email);
+        return ResponseEntity.ok(sellers);
     }
 }

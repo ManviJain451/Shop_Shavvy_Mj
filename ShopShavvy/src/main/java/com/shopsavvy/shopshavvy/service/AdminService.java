@@ -1,6 +1,8 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,19 +24,43 @@ public class AdminService {
 
     public Page<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
-        Page<User> users;
+        Page<User> customers;
 
         if (email != null && !email.isEmpty()) {
-            users = userRepository.findByEmailContainingIgnoreCase(email, pageable);
+            customers = userRepository.findByEmailContainingIgnoreCaseAndRoles(email, "ROLE_CUSTOMER", pageable);
         } else {
-            users = userRepository.findAll(pageable);
+            customers = userRepository.findByRoles("ROLE_CUSTOMER", pageable);
         }
 
-        return users.map(user -> new CustomerResponseDTO(
+        return customers.map(user -> new CustomerResponseDTO(
                 user.getId(),
                 user.getFirstName() + " " + (user.getMiddleName() != null ? user.getMiddleName() + " " : "") + user.getLastName(),
                 user.getEmail(),
                 user.getIsActive()
         ));
+    }
+
+    public Page<SellerResponseDTO> getAllSellers(int pageSize, int pageOffset, String sort, String email) {
+        Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
+        Page<User> sellers;
+
+        if (email != null && !email.isEmpty()) {
+            sellers = userRepository.findByEmailContainingIgnoreCaseAndRoles(email, "ROLE_SELLER", pageable);
+        } else {
+            sellers = userRepository.findByRoles("ROLE_SELLER", pageable);
+        }
+
+        return sellers.map(user -> {
+            Seller seller = (Seller) user;
+            return new SellerResponseDTO(
+                    seller.getId(),
+                    seller.getFirstName() + " " + (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") + seller.getLastName(),
+                    seller.getEmail(),
+                    seller.getIsActive(),
+                    seller.getCompanyName(),
+                    seller.getAdresses(),
+                    seller.getCompanyContact()
+            );
+        });
     }
 }
