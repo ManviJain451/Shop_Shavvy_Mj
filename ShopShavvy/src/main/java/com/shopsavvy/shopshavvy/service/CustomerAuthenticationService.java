@@ -1,16 +1,23 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.Exception.*;
+import com.shopsavvy.shopshavvy.exception.*;
 import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
-import com.shopsavvy.shopshavvy.model.token.AccessRefreshToken;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
+import com.shopsavvy.shopshavvy.model.token.BlackListedToken;
 import com.shopsavvy.shopshavvy.model.users.*;
-import com.shopsavvy.shopshavvy.repository.AccessRefreshTokenRepository;
+import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
-import com.shopsavvy.shopshavvy.securityConfigurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,9 +26,21 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import javax.management.relation.RoleNotFoundException;
+import java.util.Date;
+import java.util.Optional;
+import java.util.Set;
+
 
 @Service
 public class CustomerAuthenticationService {
+
+    @Value("${jwt.expiration-time.accessToken}")
+    private long accessTokenExpirationTime;
+
+    @Value("${jwt.expiration-time.refreshToken}")
+    private long refreshTokenExpirationTime;
+
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -30,7 +49,8 @@ public class CustomerAuthenticationService {
     private final AuthTokenRepository authTokenRepository;
     private final AuthenticationService authenticationService;
     private final RoleRepository roleRepository;
-    private final AccessRefreshTokenRepository accessRefreshTokenRepository;
+    private final BlackListedTokenRepository blackListedTokenRepository;
+    private final BlackListedTokenService blackListedTokenService;
 
     public CustomerAuthenticationService(
             UserRepository userRepository,
@@ -41,7 +61,8 @@ public class CustomerAuthenticationService {
             AuthTokenRepository authTokenRepository,
             AuthenticationService authenticationService,
             RoleRepository roleRepository,
-            AccessRefreshTokenRepository accessRefreshTokenRepository
+            BlackListedTokenRepository blackListedTokenRepository,
+            BlackListedTokenService blackListedTokenService
     ) {
         this.authenticationManager = authenticationManager;
         this.userRepository = userRepository;
@@ -51,7 +72,8 @@ public class CustomerAuthenticationService {
         this.authTokenRepository = authTokenRepository;
         this.authenticationService = authenticationService;
         this.roleRepository = roleRepository;
-        this.accessRefreshTokenRepository = accessRefreshTokenRepository;
+        this.blackListedTokenRepository = blackListedTokenRepository;
+        this.blackListedTokenService = blackListedTokenService;
     }
 
     public String registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
@@ -76,7 +98,10 @@ public class CustomerAuthenticationService {
         }
 
         Role role = roleRepository.findByAuthority("ROLE_CUSTOMER");
-        customer.addRole(role);
+        if(role != null){
+            customer.addRole(role);
+        }
+
         userRepository.save(customer);
 
         UserDetailsImpl userDetails = new UserDetailsImpl(customer);
@@ -101,37 +126,29 @@ public class CustomerAuthenticationService {
     }
 
 
-    public String activateCustomer(@RequestHeader("Authorization") String token) throws Exception {
+    @Transactional
+    public String activateCustomer(@RequestParam String token) throws Exception {
+            String userEmail = jwtService.extractUsername(token);
+            User user = userRepository.findByEmail(userEmail);
 
-        try {
-
-            Claims claims = jwtService.extractAllClaims(token);
-            String tokenEmail = claims.getSubject();
-            User user = userRepository.findByEmail(tokenEmail);
-            if (user == null) {
-                throw new UserNotFoundException("Invalid Token or User Not found Exception");
-            }
             if (user.getIsActive()) {
                 throw new AlreadyActivatedException("User is already activated");
             }
 
             UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+
             if (jwtService.isTokenValid(token, userDetailsImpl, "activation")) {
+
                 user.setIsActive(true);
                 userRepository.save(user);
 
                 //sends verified user mail
                 verifyCustomer(user.getEmail());
+                //activation token is deleted once the user is activated.
+                authTokenRepository.deleteActivationTokenByEmail(userEmail);
 
-                return "User is activated.";
-            }else{
-
-                throw new InvalidTokenException("Invalid activation token.");
             }
-
-        } catch (Exception e) {
-            throw new InvalidTokenException("Invalid or expired activation token.");
-        }
+        return "User is activated.";
 
     }
 
@@ -150,13 +167,20 @@ public class CustomerAuthenticationService {
             throw new UserNotFoundException("User not found");
         }
 
-        if (userRepository.findIsActiveByEmail(email)) {
-            throw new AlreadyActivatedException("Account is already activated");
+        Role role = roleRepository.findByAuthority("ROLE_CUSTOMER");
+        if(role== null){
+            throw new RoleNotFoundException("Role not found");
+        }
+
+        User user = userRepository.findByEmailAndRoles(email, Set.of(role))
+                .orElseThrow(() -> new UserNotFoundException("Customer not found with this email"));
+
+        if (user.getIsActive()) {
+            throw new AlreadyActivatedException("User is already activated.");
         }
 
         authTokenRepository.deleteActivationTokenByEmail(email);
 
-        User user = userRepository.findByEmail(email);
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
 
         String token = jwtService.generateToken(userDetails, "activation");
@@ -176,42 +200,26 @@ public class CustomerAuthenticationService {
             throw new Exception("Mail for activating the account is not send");
         }
 
-        return ResponseEntity.ok().body("User is activated");
-
-
+        return ResponseEntity.ok().body("The activation link is sent to registered email.");
     }
 
     @Transactional
-    public AccessRefreshToken refreshToken(String refreshToken) throws RuntimeException {
-        AccessRefreshToken accessRefreshToken = accessRefreshTokenRepository.findByRefreshToken(refreshToken)
-                .orElseThrow(() -> new TokenNotFoundException("Refresh token not found"));
-
-        Claims claims = jwtService.extractAllClaims(refreshToken);
-
-        if (claims.get("type").equals("refresh")) {
-            throw new InvalidTokenException("Invalid token type");
-        }
-
-        if (jwtService.isTokenExpired(refreshToken)) {
-            throw new InvalidTokenException("Refresh token has expired");
-        }
-
-
-        String userEmail = claims.getSubject();
-        accessRefreshTokenRepository.deleteByUserEmail(userEmail);
+    public String refreshToken(String refreshToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws RuntimeException, MessagingException {
+        String userEmail = jwtService.extractUsername(refreshToken);
         User user = userRepository.findByEmail(userEmail);
-
         UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        jwtService.isTokenValid(refreshToken, userDetailsImpl, "refresh");
+        blackListedTokenService.blacklistAccessToken(httpServletRequest);
         String newAccessToken = jwtService.generateToken(userDetailsImpl, "access");
-        String newRefreshToken = jwtService.generateToken(userDetailsImpl, "refresh");
+        ResponseCookie accessTokencookie = ResponseCookie.from("accessToken", newAccessToken)
+                    .httpOnly(true)
+                    .secure(false)
+                    .path("/")
+                    .maxAge(accessTokenExpirationTime)
+                    .build();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokencookie.toString());
 
-        AccessRefreshToken newAccessRefreshToken = new AccessRefreshToken();
-        newAccessRefreshToken.setAccessToken(newAccessToken);
-        newAccessRefreshToken.setRefreshToken(refreshToken);
-        newAccessRefreshToken.setUserEmail(userEmail);
-        accessRefreshTokenRepository.save(newAccessRefreshToken);
-
-        return newAccessRefreshToken;
+        return newAccessToken;
 
     }
 

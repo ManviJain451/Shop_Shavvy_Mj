@@ -1,21 +1,27 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.Exception.*;
+import com.shopsavvy.shopshavvy.exception.*;
 import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
 import com.shopsavvy.shopshavvy.dto.ResetPasswordResponseDTO;
 import com.shopsavvy.shopshavvy.dto.UserLoginDTO;
-import com.shopsavvy.shopshavvy.model.token.AccessRefreshToken;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.users.Role;
 import com.shopsavvy.shopshavvy.model.users.User;
-import com.shopsavvy.shopshavvy.repository.AccessRefreshTokenRepository;
+import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
-import com.shopsavvy.shopshavvy.securityConfigurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
@@ -29,7 +35,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
+@Transactional
 public class AuthenticationService {
+
+    @Value("${jwt.expiration-time.accessToken}")
+    private long accessTokenExpirationTime;
+
+    @Value("${jwt.expiration-time.refreshToken}")
+    private long refreshTokenExpirationTime;
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
@@ -37,7 +50,8 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final RoleRepository roleRepository;
-    private final AccessRefreshTokenRepository accessRefreshTokenRepository;
+    private final BlackListedTokenRepository blackListedTokenRepository;
+    private  final BlackListedTokenService blackListedTokenService;
 
     @Autowired
     public AuthenticationService(UserRepository userRepository,
@@ -45,14 +59,16 @@ public class AuthenticationService {
                                  PasswordEncoder passwordEncoder,
                                  EmailService emailService,
                                  RoleRepository roleRepository,
-                                 AccessRefreshTokenRepository accessRefreshTokenRepository){
+                                 BlackListedTokenRepository blackListedTokenRepository,
+                                 BlackListedTokenService blackListedTokenService){
         this.userRepository = userRepository;
         this.jwtService = jwtService;
         this.authTokenRepository = authTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.roleRepository = roleRepository;
-        this.accessRefreshTokenRepository = accessRefreshTokenRepository;
+        this.blackListedTokenRepository = blackListedTokenRepository;
+        this.blackListedTokenService = blackListedTokenService;
     }
 
     public String registerAdmin(User user) throws MessagingException {
@@ -92,14 +108,15 @@ public class AuthenticationService {
         return "Admin has been registered";
     }
 
-    public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO) {
+    public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException {
         if (!userRepository.existsByEmail(userLoginDTO.getEmail())) {
             throw new UserNotFoundException("User not found");
         }
 
         User user = userRepository.findByEmail(userLoginDTO.getEmail());
+
         if (!user.getIsActive()) {
-            throw new RuntimeException("Account not verified. Please verify your account.");
+            throw new DeactivatedAccountException("Account is not activated. Please activate your account.");
         }
 
         if (user.isLocked()) {
@@ -133,11 +150,22 @@ public class AuthenticationService {
         Claims claimsForAccessToken = jwtService.extractAllClaims(accessToken);
         Claims claimsForRefreshToken = jwtService.extractAllClaims(refreshToken);
 
-        AccessRefreshToken accessRefreshToken = new AccessRefreshToken();
-        accessRefreshToken.setUserEmail(userLoginDTO.getEmail());
-        accessRefreshToken.setAccessToken(accessToken);
-        accessRefreshToken.setRefreshToken(refreshToken);
-        accessRefreshTokenRepository.save(accessRefreshToken);
+        ResponseCookie accessTokencookie = ResponseCookie.from("accessToken", accessToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(accessTokenExpirationTime)
+                .build();
+
+        ResponseCookie refreshTokencookie = ResponseCookie.from("refreshToken", refreshToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(refreshTokenExpirationTime)
+                .build();
+
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokencookie.toString());
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokencookie.toString());
 
         Set<String> roles = user.getRoles().stream()
                 .map(role -> role.getAuthority())
@@ -158,23 +186,40 @@ public class AuthenticationService {
         return false;
     }
 
-    @Transactional
-    public ResponseEntity<String> userLogout(String accessToken){
-        AccessRefreshToken accessRefreshToken = accessRefreshTokenRepository.findByAccessToken(accessToken)
-                .orElseThrow(() -> new TokenNotFoundException("Access token not found"));
 
-        Claims claims = jwtService.extractAllClaims(accessToken);
-
-        if (!claims.get("type").equals("access")) {
-            throw new InvalidTokenException("Invalid token.");
+    public ResponseEntity<String> userLogout(String accessToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {
+        if(blackListedTokenRepository.existsByToken(accessToken)){
+            throw new TokenNotFoundException("Access token is not found");
         }
 
-        if (jwtService.isTokenExpired(accessToken)) {
+        String userEmail = jwtService.extractUsername(accessToken);
+        User user = userRepository.findByEmail(userEmail);
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        if (!jwtService.isTokenValid(accessToken, userDetailsImpl, "access")) {
             throw new InvalidTokenException("Access token has expired");
         }
 
-        String email = jwtService.extractUsername(accessToken);
-        accessRefreshTokenRepository.deleteByUserEmail(email);
+
+        blackListedTokenService.blacklistAccessToken(httpServletRequest);
+        blackListedTokenService.blacklistRefreshToken(httpServletRequest);
+
+        ResponseCookie accessTokencookie = ResponseCookie.from("accessToken", null)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        ResponseCookie refreshTokencookie = ResponseCookie.from("refreshToken", null)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0)
+                .build();
+
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokencookie.toString());
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokencookie.toString());
+
 
         return ResponseEntity.ok("You are logged out.");
     }
@@ -183,17 +228,14 @@ public class AuthenticationService {
     public ResponseEntity<String> forgotPassword(String email) throws MessagingException {
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new InvalidEmailException("Email is invalid.");
+            throw new UserNotFoundException("User not found.");
         }
 
         if(!user.getIsActive()){
             throw new DeactivatedAccountException("Account is not activated.");
         }
 
-        if(authTokenRepository.existsResetPasswordTokenByEmail(email)){
-            authTokenRepository.deleteResetPasswordTokenByEmail(email);
-        }
-
+        authTokenRepository.deleteResetPasswordTokenByEmail(email);
         UserDetailsImpl userDetailsImpl = new UserDetailsImpl(userRepository.findByEmail(email));
 
         String resetPasswordToken = jwtService.generateToken(userDetailsImpl, "reset_password");
@@ -214,37 +256,24 @@ public class AuthenticationService {
 
     @Transactional
     public ResponseEntity<ResetPasswordResponseDTO> resetPassword(String resetPasswordtoken, String password, String confirmPassword) throws MessagingException {
-        if(!authTokenRepository.existsByToken(resetPasswordtoken)){
-            throw new InvalidTokenException("Token is not found");
-        }
-        Claims claims = jwtService.extractAllClaims(resetPasswordtoken);
 
-        if (!claims.get("type").equals("reset_password")) {
-            throw new InvalidTokenException("Invalid resetPassword token.");
-        }
-
-        if (jwtService.isTokenExpired(resetPasswordtoken)) {
-            throw new InvalidTokenException("Token is expired. Password is not updated.");
-        }
+        String userEmail = jwtService.extractUsername(resetPasswordtoken);
+        User user = userRepository.findByEmail(userEmail);
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        jwtService.isTokenValid(resetPasswordtoken, userDetailsImpl, "reset_password");
 
         if (!password.equals(confirmPassword)) {
-            throw new PasswordMismatchException("Confirm Password is not same as Password.");
+                throw new PasswordMismatchException("Confirm Password is not same as Password.");
         }
-
-        User user = userRepository.findByEmail(jwtService.extractUsername(resetPasswordtoken));
-        if (user == null) {
-            throw new UserNotFoundException("User not found.");
-        }
-
         String encodedPassword = passwordEncoder.encode(password);
         user.setPassword(encodedPassword);
-
         userRepository.save(user);
+
         authTokenRepository.deleteByToken(resetPasswordtoken);
 
         emailService.sendVerificationEmail(user.getEmail(), "Password Reset Successful", "Your password has been successfully reset.");
-
         return ResponseEntity.ok(new ResetPasswordResponseDTO(resetPasswordtoken, password, confirmPassword));
+
     }
 
 }

@@ -1,12 +1,20 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.repository.AccessRefreshTokenRepository;
+import com.shopsavvy.shopshavvy.exception.InvalidTokenException;
+import com.shopsavvy.shopshavvy.exception.TokenExpiredException;
+import com.shopsavvy.shopshavvy.exception.TokenNotFoundException;
+import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
+import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.shopsavvy.shopshavvy.repository.UserRepository;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.mail.MessagingException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.GrantedAuthority;
@@ -39,13 +47,20 @@ public class JwtService {
     private long resetPasswordTokenTime;
 
     private AuthTokenRepository authTokenRepository;
-    private AccessRefreshTokenRepository accessRefreshTokenRepository;
+    private BlackListedTokenRepository blackListedTokenRepository;
+    private UserRepository userRepository;
+    private EmailService emailService;
+    private final Logger logger= LoggerFactory.getLogger(JwtService.class);
 
     @Autowired
     public JwtService(AuthTokenRepository authTokenRepository,
-                      AccessRefreshTokenRepository accessRefreshTokenRepository){
-        this.accessRefreshTokenRepository = accessRefreshTokenRepository;
+                      BlackListedTokenRepository blackListedTokenRepository,
+                      UserRepository userRepository,
+                      EmailService emailService){
+        this.blackListedTokenRepository = blackListedTokenRepository;
         this.authTokenRepository = authTokenRepository;
+        this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
     public String extractUsername(String token) {
@@ -104,30 +119,58 @@ public class JwtService {
                 .compact();
     }
 
-    public boolean isTokenValid(String token, UserDetails userDetails, String tokenType) {
-        final String username = extractUsername(token);
-        Claims claims = extractAllClaims(token);
 
-        boolean isTokenInRepository;
+    public boolean isTokenValid(String token, UserDetails userDetails, String tokenType) throws MessagingException {
+        final String username = extractUsername(token);
+        final Claims claims = extractAllClaims(token);
+
+        if (!username.equals(userDetails.getUsername())) {
+            throw new InvalidTokenException("Token does not match the provided user.");
+        }
+
+        String typeFromToken = (String) claims.get("type");
+        if (!tokenType.equals(typeFromToken)) {
+            throw new InvalidTokenException("Token type mismatch. Expected: " + tokenType + ", but found: " + typeFromToken);
+        }
+
+        if (isTokenExpired(token)) {
+            if ("activation".equals(tokenType)) {
+                User user = userRepository.findByEmail(username);
+                if(user == null){
+                    throw new UserNotFoundException("User not found: " + username);
+                }
+                authTokenRepository.deleteByToken(token);
+                sendActivationLinkIfTokenIsExpired(username);
+
+                throw new TokenExpiredException("Activation token has expired. A new token has been sent to your email.");
+            }
+
+            throw new TokenExpiredException("Token has expired.");
+        }
+
+
+        boolean tokenExists;
         switch (tokenType) {
             case "activation":
-                isTokenInRepository = authTokenRepository.existsByToken(token);
+            case "reset_password":
+                tokenExists = authTokenRepository.existsByToken(token);
+                if (!tokenExists) {
+                    throw new TokenNotFoundException("Token not found in repository.");
+                }
                 break;
-            case "resetPassword":
-                isTokenInRepository = authTokenRepository.existsByToken(token);
-                break;
+
             case "access":
-                isTokenInRepository = accessRefreshTokenRepository.existsByAccessToken(token);
-                break;
             default:
-                isTokenInRepository = accessRefreshTokenRepository.existsByRefreshToken(token);
+                boolean isBlacklisted = blackListedTokenRepository.existsByToken(token);
+                if (isBlacklisted) {
+                    throw new TokenNotFoundException("Token is blacklisted.");
+                }
                 break;
         }
 
-        return (username.equals(userDetails.getUsername())) && !isTokenExpired(token) && tokenType.equals(claims.get("type")) && isTokenInRepository;
-
-
+        return true;
     }
+
 
     public boolean isTokenExpired(String token) {
         Instant expirationInstant = extractExpiration(token).toInstant();
@@ -140,17 +183,32 @@ public class JwtService {
     }
 
     public Claims extractAllClaims(String token) {
-        return Jwts
-                .parserBuilder()
-                .setSigningKey(getSignInKey())
-                .build()
-                .parseClaimsJws(token)
-                .getBody();
+        try{
+            return Jwts
+                    .parserBuilder()
+                    .setSigningKey(getSignInKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+        } catch (ExpiredJwtException e) {
+            return e.getClaims();
+        }catch (JwtException e) {
+            throw new InvalidTokenException("Invalid token");
+        }
     }
 
 
     private SecretKey getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public void sendActivationLinkIfTokenIsExpired(String email) throws MessagingException {
+        User user = userRepository.findByEmail(email);
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        String newActivationToken = generateToken(userDetailsImpl, "activation");
+        emailService.sendActivationLink(email, newActivationToken);
+
     }
 }

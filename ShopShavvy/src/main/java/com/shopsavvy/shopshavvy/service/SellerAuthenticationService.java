@@ -1,8 +1,8 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.Exception.DuplicateEntryExistsException;
-import com.shopsavvy.shopshavvy.Exception.EmailAlreadyExistsException;
-import com.shopsavvy.shopshavvy.Exception.PasswordMismatchException;
+import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
+import com.shopsavvy.shopshavvy.exception.EmailAlreadyExistsException;
+import com.shopsavvy.shopshavvy.exception.PasswordMismatchException;
 import com.shopsavvy.shopshavvy.dto.SellerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;

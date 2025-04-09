@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.Exception;
+package com.shopsavvy.shopshavvy.exception;
 
 import java.time.LocalDateTime;
 

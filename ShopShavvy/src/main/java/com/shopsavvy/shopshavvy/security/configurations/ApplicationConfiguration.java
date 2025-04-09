@@ -1,6 +1,5 @@
-package com.shopsavvy.shopshavvy.securityConfigurations;
+package com.shopsavvy.shopshavvy.security.configurations;
 
-import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -14,13 +13,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 @Configuration
 public class ApplicationConfiguration {
 
-    @Autowired
     private UserDetailsServiceImpl userDetailsServiceImpl;
 
-    private UserRepository userRepository;
     @Autowired
-    public ApplicationConfiguration(UserRepository userRepository) {
-        this.userRepository = userRepository;
+    public ApplicationConfiguration(UserDetailsServiceImpl userDetailsServiceImpl) {
+        this.userDetailsServiceImpl = userDetailsServiceImpl;
     }
 
     @Bean

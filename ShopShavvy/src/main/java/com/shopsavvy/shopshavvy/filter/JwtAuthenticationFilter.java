@@ -1,12 +1,16 @@
 package com.shopsavvy.shopshavvy.filter;
 
+import com.shopsavvy.shopshavvy.exception.InvalidTokenException;
+import com.shopsavvy.shopshavvy.exception.TokenExpiredException;
 import com.shopsavvy.shopshavvy.service.JwtService;
 import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
-import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -26,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
+    private final Logger logger= LoggerFactory.getLogger(HandlerExceptionResolver.class);
 
     @Autowired
     public JwtAuthenticationFilter(
@@ -43,8 +48,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
-    ) throws ServletException, IOException {
-        final String authHeader = request.getHeader("Authorization");
+    ) throws ServletException, IOException, ExpiredJwtException {
+
+
+        String authHeader = request.getHeader("Authorization");
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -54,7 +61,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             final String jwt = authHeader.substring(7);
             final String userEmail = jwtService.extractUsername(jwt);
-            final Claims claims = jwtService.extractAllClaims(jwt);
 
 
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -75,10 +81,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             }
 
             filterChain.doFilter(request, response);
-        } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Token is expired.");
-        } catch (Exception exception) {
+        }
+//        }catch (io.jsonwebtoken.ExpiredJwtException e) {
+//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+//            response.getWriter().write("Token is Expired.");
+//        }
+        catch (Exception exception) {
             handlerExceptionResolver.resolveException(request, response, null, exception);
         }
     }

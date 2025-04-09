@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.securityConfigurations;
+package com.shopsavvy.shopshavvy.security.configurations;
 
 import com.shopsavvy.shopshavvy.filter.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;

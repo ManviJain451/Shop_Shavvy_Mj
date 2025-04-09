@@ -1,11 +1,11 @@
-package com.shopsavvy.shopshavvy.Exception;
+package com.shopsavvy.shopshavvy.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ResponseStatus(code = HttpStatus.NOT_FOUND)
-public class UserNotFoundException extends RuntimeException {
-    public UserNotFoundException(String message) {
+public class TokenNotFoundException extends RuntimeException {
+    public TokenNotFoundException(String message) {
         super(message);
     }
 }

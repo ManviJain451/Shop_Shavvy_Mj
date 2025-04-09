@@ -2,7 +2,7 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
-import com.shopsavvy.shopshavvy.securityConfigurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
