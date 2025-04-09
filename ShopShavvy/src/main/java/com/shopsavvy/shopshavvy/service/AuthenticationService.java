@@ -108,38 +108,37 @@ public class AuthenticationService {
         return "Admin has been registered";
     }
 
-    public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException {
+    public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException, MessagingException {
         if (!userRepository.existsByEmail(userLoginDTO.getEmail())) {
             throw new UserNotFoundException("User not found");
         }
 
         User user = userRepository.findByEmail(userLoginDTO.getEmail());
 
-        if (!user.getIsActive()) {
-            throw new DeactivatedAccountException("Account is not activated. Please activate your account.");
-        }
-
         if (user.isLocked()) {
             throw new LockedException("Account is locked. Please contact support.");
+        }
+
+        if (!user.getIsActive()) {
+            throw new DeactivatedAccountException("Account is not activated. Please activate your account.");
         }
 
         if(isPasswordCredentialExpired(userLoginDTO.getEmail())){
             throw new RuntimeException("Your password has been expired.");
         }
 
-
         if (!passwordEncoder.matches(userLoginDTO.getPassword(), user.getPassword())) {
             user.setInvalidAttemptCount(user.getInvalidAttemptCount() + 1);
             if (user.getInvalidAttemptCount() >= 3) {
                 user.setLocked(true);
-                try {
-                    emailService.sendVerificationEmail(userLoginDTO.getEmail(), " Your ShopShavvy Account has been locked", "Your account has been locked. Please contact support.");
-                } catch (MessagingException e) {
-                    throw new RuntimeException(e);
-                }
+                userRepository.save(user);
+                emailService.sendVerificationEmail(userLoginDTO.getEmail(), " Your ShopShavvy Account has been locked", "Your account has been locked. Please contact support.");
+            } else {
+                throw new BadCredentialsException("Invalid credentials");
             }
             userRepository.save(user);
-            throw new BadCredentialsException("Invalid credentials. Please try again.");
+
+
         }
 
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
@@ -175,7 +174,7 @@ public class AuthenticationService {
     }
 
 
-    public boolean isPasswordCredentialExpired(String email){
+   public boolean isPasswordCredentialExpired(String email){
         LocalDateTime passwordLastUpdateDate = userRepository.findPasswordUpdateDateByEmail(email);
         User user = userRepository.findByEmail(email);
         if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MONTHS))) {

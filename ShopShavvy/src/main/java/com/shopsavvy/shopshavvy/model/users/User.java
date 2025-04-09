@@ -47,6 +47,7 @@ public class User {
 
     private boolean isLocked=false;
 
+    @Column(name = "invalid_attempt_count")
     private int invalidAttemptCount=0;
 
     @LastModifiedDate

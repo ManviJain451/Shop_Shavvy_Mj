@@ -67,13 +67,13 @@ public class AuthenticationController {
     }
 
     @PostMapping("/customer/login")
-    public ResponseEntity<LoginResponseDTO> authenticateCustomer(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse){
+    public ResponseEntity<LoginResponseDTO> authenticateCustomer(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws MessagingException {
         LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO, httpServletResponse);
         return ResponseEntity.ok().body(loginResponseDTO);
     }
 
     @PostMapping("/seller/login")
-    public ResponseEntity<LoginResponseDTO> authenticateSeller(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse){
+    public ResponseEntity<LoginResponseDTO> authenticateSeller(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws MessagingException {
         LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO, httpServletResponse);
         return ResponseEntity.ok().body(loginResponseDTO);
     }
