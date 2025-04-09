@@ -99,11 +99,7 @@ public class AuthenticationService {
         authToken.setTokenType("activation");
         authToken.setExpirationTime(claims.getExpiration());
         authTokenRepository.save(authToken);
-
-
-
         emailService.sendVerificationEmail(user.getEmail(), "Admin Account Created", "Admin account has been created. Admin account has been activated.");
-
 
         return "Admin has been registered";
     }
@@ -132,7 +128,9 @@ public class AuthenticationService {
             if (user.getInvalidAttemptCount() >= 3) {
                 user.setLocked(true);
                 userRepository.save(user);
-                emailService.sendVerificationEmail(userLoginDTO.getEmail(), " Your ShopShavvy Account has been locked", "Your account has been locked. Please contact support.");
+                emailService.sendVerificationEmail(userLoginDTO.getEmail(),
+                        " Your ShopShavvy Account has been locked",
+                        "Your account has been locked. Please contact support.");
             } else {
                 throw new BadCredentialsException("Invalid credentials");
             }

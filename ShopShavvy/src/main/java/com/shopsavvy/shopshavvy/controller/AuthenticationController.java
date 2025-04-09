@@ -47,6 +47,12 @@ public class AuthenticationController {
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
+    @PostMapping("/signup/admin")
+    public ResponseEntity<String> registerAdmin(@Valid @RequestBody User user) throws Exception{
+        String message = authenticationService.registerAdmin(user);
+        return ResponseEntity.status(HttpStatus.CREATED).body(message);
+    }
+
     @PutMapping("/activate/customer")
     public ResponseEntity<String> activateCustomer(@RequestParam String token) throws Exception {
         try {
@@ -74,6 +80,12 @@ public class AuthenticationController {
 
     @PostMapping("/seller/login")
     public ResponseEntity<LoginResponseDTO> authenticateSeller(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws MessagingException {
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO, httpServletResponse);
+        return ResponseEntity.ok().body(loginResponseDTO);
+    }
+
+    @PostMapping("/admin/login")
+    public ResponseEntity<LoginResponseDTO> authenticateAdmin(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws MessagingException {
         LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO, httpServletResponse);
         return ResponseEntity.ok().body(loginResponseDTO);
     }
