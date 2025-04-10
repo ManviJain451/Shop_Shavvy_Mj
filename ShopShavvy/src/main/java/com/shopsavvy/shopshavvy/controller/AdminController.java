@@ -13,6 +13,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/shop-shavvy/admin")
 public class AdminController {
@@ -37,22 +39,22 @@ public class AdminController {
     }
 
     @GetMapping("/registered-customers")
-    public ResponseEntity<Page<CustomerResponseDTO>> getAllCustomers(
+    public ResponseEntity<List<CustomerResponseDTO>> getAllCustomers(
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "0") int pageOffset,
             @RequestParam(defaultValue = "id") String sort,
             @RequestParam(required = false) String email) {
-        Page<CustomerResponseDTO> customers = adminService.getAllCustomers(pageSize, pageOffset, sort, email);
+        List<CustomerResponseDTO> customers = adminService.getAllCustomers(pageSize, pageOffset, sort, email);
         return ResponseEntity.ok(customers);
     }
 
     @GetMapping("/registered-sellers")
-    public ResponseEntity<Page<SellerResponseDTO>> getAllSellers(
+    public ResponseEntity<List<SellerResponseDTO>> getAllSellers(
             @RequestParam(defaultValue = "10") int pageSize,
             @RequestParam(defaultValue = "0") int pageOffset,
             @RequestParam(defaultValue = "id") String sort,
             @RequestParam(required = false) String email) {
-        Page<SellerResponseDTO> sellers = adminService.getAllSellers(pageSize, pageOffset, sort, email);
+        List<SellerResponseDTO> sellers = adminService.getAllSellers(pageSize, pageOffset, sort, email);
         return ResponseEntity.ok(sellers);
     }
 }

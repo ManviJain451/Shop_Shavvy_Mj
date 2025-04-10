@@ -12,6 +12,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Service
 public class AdminService {
 
@@ -22,7 +25,7 @@ public class AdminService {
         this.userRepository = userRepository;
     }
 
-    public Page<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
+    public List<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
         Page<User> customers;
 
@@ -32,15 +35,17 @@ public class AdminService {
             customers = userRepository.findByRoles("ROLE_CUSTOMER", pageable);
         }
 
-        return customers.map(user -> new CustomerResponseDTO(
-                user.getId(),
-                user.getFirstName() + " " + (user.getMiddleName() != null ? user.getMiddleName() + " " : "") + user.getLastName(),
-                user.getEmail(),
-                user.getIsActive()
-        ));
+        return customers.stream()
+                .map(user -> new CustomerResponseDTO(
+                        user.getId(),
+                        user.getFirstName() + " " + (user.getMiddleName() != null ? user.getMiddleName() + " " : "") + user.getLastName(),
+                        user.getEmail(),
+                        user.getIsActive()
+                ))
+                .collect(Collectors.toList());
     }
 
-    public Page<SellerResponseDTO> getAllSellers(int pageSize, int pageOffset, String sort, String email) {
+    public List<SellerResponseDTO> getAllSellers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
         Page<User> sellers;
 
@@ -50,17 +55,19 @@ public class AdminService {
             sellers = userRepository.findByRoles("ROLE_SELLER", pageable);
         }
 
-        return sellers.map(user -> {
-            Seller seller = (Seller) user;
-            return new SellerResponseDTO(
-                    seller.getId(),
-                    seller.getFirstName() + " " + (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") + seller.getLastName(),
-                    seller.getEmail(),
-                    seller.getIsActive(),
-                    seller.getCompanyName(),
-                    seller.getAdresses(),
-                    seller.getCompanyContact()
-            );
-        });
+        return sellers.stream()
+                .map(user -> {
+                    Seller seller = (Seller) user;
+                    return new SellerResponseDTO(
+                            seller.getId(),
+                            seller.getFirstName() + " " + (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") + seller.getLastName(),
+                            seller.getEmail(),
+                            seller.getIsActive(),
+                            seller.getCompanyName(),
+                            seller.getAdresses(),
+                            seller.getCompanyContact()
+                    );
+                })
+                .collect(Collectors.toList());
     }
 }
