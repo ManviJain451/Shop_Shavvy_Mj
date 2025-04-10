@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
@@ -19,7 +20,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email);
         if (user == null) {
-            throw new UsernameNotFoundException("No user found with username: " + email);
+            throw new UserNotFoundException("No user found with username: " + email);
         }
 
 
