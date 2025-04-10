@@ -35,8 +35,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@Transactional
+//@Transactional
 public class AuthenticationService {
+
+
+    private static final int MAX_INVALID_ATTEMPTS = 3;
 
     @Value("${jwt.expiration-time.accessToken}")
     private long accessTokenExpirationTime;
@@ -127,18 +130,16 @@ public class AuthenticationService {
             user.setInvalidAttemptCount(user.getInvalidAttemptCount() + 1);
             if (user.getInvalidAttemptCount() >= 3) {
                 user.setLocked(true);
-                userRepository.save(user);
                 emailService.sendVerificationEmail(userLoginDTO.getEmail(),
-                        " Your ShopShavvy Account has been locked",
+                        "Your ShopShavvy Account has been locked",
                         "Your account has been locked. Please contact support.");
-            } else {
-                throw new BadCredentialsException("Invalid credentials");
             }
             userRepository.save(user);
-
-
+            throw new BadCredentialsException("Invalid credentials");
         }
 
+        user.setInvalidAttemptCount(0);
+        userRepository.save(user);
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
 
         String accessToken = jwtService.generateToken(userDetails, "access");
@@ -172,7 +173,7 @@ public class AuthenticationService {
     }
 
 
-   public boolean isPasswordCredentialExpired(String email){
+    public boolean isPasswordCredentialExpired(String email){
         LocalDateTime passwordLastUpdateDate = userRepository.findPasswordUpdateDateByEmail(email);
         User user = userRepository.findByEmail(email);
         if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MONTHS))) {
