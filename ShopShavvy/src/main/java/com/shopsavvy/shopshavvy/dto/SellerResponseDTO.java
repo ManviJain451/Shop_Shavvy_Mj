@@ -12,7 +12,7 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 public class SellerResponseDTO {
-    private UUID id;
+    private String id;
     private String fullName;
     private String email;
     private Boolean isActive;

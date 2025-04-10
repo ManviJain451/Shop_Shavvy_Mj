@@ -57,4 +57,30 @@ public class AdminController {
         List<SellerResponseDTO> sellers = adminService.getAllSellers(pageSize, pageOffset, sort, email);
         return ResponseEntity.ok(sellers);
     }
+
+    @PutMapping("/activate-customer")
+    public ResponseEntity<String> activateCustomer(@RequestParam String email) throws MessagingException {
+        String responseMessage = adminService.activateCustomer(email);
+        return ResponseEntity.ok(responseMessage);
+    }
+
+    @PutMapping("/activate-seller")
+    public ResponseEntity<String> activateSeller(@RequestParam String email) throws MessagingException {
+        String responseMessage = adminService.activateSeller(email);
+        return ResponseEntity.ok(responseMessage);
+    }
+
+    @PutMapping("/deactivate-customer")
+    public ResponseEntity<String> deactivateCustomer(@RequestParam String email) {
+        String responseMessage = adminService.deactivateCustomer(email);
+        return ResponseEntity.ok(responseMessage);
+    }
+
+    @PutMapping("/deactivate-seller")
+    public ResponseEntity<String> deactivateSeller(@RequestParam String email) {
+        String responseMessage = adminService.deactivateSeller(email);
+        return ResponseEntity.ok(responseMessage);
+    }
+
+
 }

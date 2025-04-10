@@ -2,8 +2,12 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
+import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
+import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.repository.CustomerRepository;
+import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,55 +23,142 @@ import java.util.stream.Collectors;
 public class AdminService {
 
     private  final UserRepository userRepository;
+    private final EmailService emailService;
+    private final CustomerRepository customerRepository;
+    private final SellerRepository sellerRepository;
 
     @Autowired
-    public AdminService(UserRepository userRepository){
+    public AdminService(UserRepository userRepository,
+                        EmailService emailService,
+                        CustomerRepository customerRepository,
+                        SellerRepository sellerRepository){
         this.userRepository = userRepository;
+        this.emailService = emailService;
+        this.customerRepository = customerRepository;
+        this.sellerRepository = sellerRepository;
     }
 
     public List<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
-        Page<User> customers;
+        Page<Customer> customers;
 
         if (email != null && !email.isEmpty()) {
-            customers = userRepository.findByEmailContainingIgnoreCaseAndRoles(email, "ROLE_CUSTOMER", pageable);
+            customers = customerRepository.findByEmailContainingIgnoreCase(email, pageable);
         } else {
-            customers = userRepository.findByRoles("ROLE_CUSTOMER", pageable);
+            customers = customerRepository.findAll(pageable);
         }
 
         return customers.stream()
-                .map(user -> new CustomerResponseDTO(
-                        user.getId(),
-                        user.getFirstName() + " " + (user.getMiddleName() != null ? user.getMiddleName() + " " : "") + user.getLastName(),
-                        user.getEmail(),
-                        user.getIsActive()
+                .map(customer -> new CustomerResponseDTO(
+                        customer.getId(),
+                        customer.getFirstName() + " " + (customer.getMiddleName() != null ? customer.getMiddleName() + " " : "") + customer.getLastName(),
+                        customer.getEmail(),
+                        customer.getIsActive()
                 ))
                 .collect(Collectors.toList());
     }
 
     public List<SellerResponseDTO> getAllSellers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
-        Page<User> sellers;
+        Page<Seller> sellers;
 
         if (email != null && !email.isEmpty()) {
-            sellers = userRepository.findByEmailContainingIgnoreCaseAndRoles(email, "ROLE_SELLER", pageable);
+            sellers = sellerRepository.findByEmailContainingIgnoreCase(email, pageable);
         } else {
-            sellers = userRepository.findByRoles("ROLE_SELLER", pageable);
+            sellers = sellerRepository.findAll(pageable);
         }
 
         return sellers.stream()
-                .map(user -> {
-                    Seller seller = (Seller) user;
-                    return new SellerResponseDTO(
-                            seller.getId(),
-                            seller.getFirstName() + " " + (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") + seller.getLastName(),
-                            seller.getEmail(),
-                            seller.getIsActive(),
-                            seller.getCompanyName(),
-                            seller.getAdresses(),
-                            seller.getCompanyContact()
-                    );
-                })
+                .map(seller -> new SellerResponseDTO(
+                        seller.getId(),
+                        seller.getFirstName() + " " + (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") + seller.getLastName(),
+                        seller.getEmail(),
+                        seller.getIsActive(),
+                        seller.getCompanyName(),
+                        seller.getAdresses(),
+                        seller.getCompanyContact()
+                ))
                 .collect(Collectors.toList());
     }
+
+    public String activateCustomer(String email) {
+        Customer customer = customerRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + email));
+
+        if (customer.getIsActive()) {
+            throw new AlreadyActivatedException("Customer is already activated. No action performed.");
+        }
+
+        customer.setIsActive(true);
+        customerRepository.save(customer);
+
+        try {
+            emailService.sendVerificationEmail(customer.getEmail(), "Account Activated", "Your account has been successfully activated.");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send activation email.");
+        }
+
+        return "Customer account has been successfully activated.";
+    }
+
+    public String activateSeller(String email) {
+        Seller seller = sellerRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + email));
+
+        if (seller.getIsActive()) {
+            throw new AlreadyActivatedException("Seller is already activated. No action performed.");
+        }
+
+        seller.setIsActive(true);
+        sellerRepository.save(seller);
+
+        try {
+            emailService.sendVerificationEmail(seller.getEmail(), "Account Activated", "Your account has been successfully activated.");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send activation email.");
+        }
+
+        return "Seller account has been successfully activated.";
+    }
+
+    public String deactivateCustomer(String email){
+        Customer customer = customerRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + email));
+
+        if (!customer.getIsActive()) {
+            return "Customer is already deactivated. No action performed.";
+        }
+
+        customer.setIsActive(false);
+        customerRepository.save(customer);
+        try {
+            emailService.sendVerificationEmail(customer.getEmail(), "Account Deactivated", "Your account has been successfully deactivated.");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send deactivation email.");
+        }
+
+        return "Customer account has been successfully deactivated.";
+    }
+
+    public String deactivateSeller(String sellerEmail) {
+        Seller seller = sellerRepository.findByEmail(sellerEmail)
+                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + sellerEmail));
+
+        if (!seller.getIsActive()) {
+            return "Seller is already deactivated. No action performed.";
+        }
+
+        seller.setIsActive(false);
+        sellerRepository.save(seller);
+
+        try {
+            emailService.sendVerificationEmail(seller.getEmail(), "Account Deactivated", "Your account has been successfully deactivated.");
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to send deactivation email.");
+        }
+
+        return "Seller account has been successfully deactivated.";
+    }
+
+
 }
