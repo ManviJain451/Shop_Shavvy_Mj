@@ -10,6 +10,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -40,4 +41,6 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     @Query("SELECT u FROM User u JOIN u.roles r WHERE r.authority = :role")
     Page<User> findByRoles(@Param("role") String role, Pageable pageable);
+
+    List<User> findAllByIsLocked(boolean isLocked);
 }
