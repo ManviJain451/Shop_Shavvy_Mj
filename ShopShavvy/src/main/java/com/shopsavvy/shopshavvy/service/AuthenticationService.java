@@ -16,6 +16,7 @@ import io.jsonwebtoken.Claims;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,11 +36,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-//@Transactional
+@RequiredArgsConstructor
 public class AuthenticationService {
 
 
-    private static final int MAX_INVALID_ATTEMPTS = 3;
+    private static int MAX_INVALID_ATTEMPTS = 3;
 
     @Value("${jwt.expiration-time.accessToken}")
     private long accessTokenExpirationTime;
@@ -56,23 +57,6 @@ public class AuthenticationService {
     private final BlackListedTokenRepository blackListedTokenRepository;
     private  final BlackListedTokenService blackListedTokenService;
 
-    @Autowired
-    public AuthenticationService(UserRepository userRepository,
-                                 JwtService jwtService, AuthTokenRepository authTokenRepository,
-                                 PasswordEncoder passwordEncoder,
-                                 EmailService emailService,
-                                 RoleRepository roleRepository,
-                                 BlackListedTokenRepository blackListedTokenRepository,
-                                 BlackListedTokenService blackListedTokenService){
-        this.userRepository = userRepository;
-        this.jwtService = jwtService;
-        this.authTokenRepository = authTokenRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
-        this.roleRepository = roleRepository;
-        this.blackListedTokenRepository = blackListedTokenRepository;
-        this.blackListedTokenService = blackListedTokenService;
-    }
 
     public String registerAdmin(User user) throws MessagingException {
 

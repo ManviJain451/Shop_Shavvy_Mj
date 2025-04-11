@@ -13,6 +13,7 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.mail.MessagingException;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
     @Value("${security.jwt.secret-key}")
     private String secretKey;
@@ -46,22 +48,11 @@ public class JwtService {
     @Value("${jwt.expiration-time.resetPasswordToken}")
     private long resetPasswordTokenTime;
 
-    private AuthTokenRepository authTokenRepository;
-    private BlackListedTokenRepository blackListedTokenRepository;
-    private UserRepository userRepository;
-    private EmailService emailService;
+    private final AuthTokenRepository authTokenRepository;
+    private final BlackListedTokenRepository blackListedTokenRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
     private final Logger logger= LoggerFactory.getLogger(JwtService.class);
-
-    @Autowired
-    public JwtService(AuthTokenRepository authTokenRepository,
-                      BlackListedTokenRepository blackListedTokenRepository,
-                      UserRepository userRepository,
-                      EmailService emailService){
-        this.blackListedTokenRepository = blackListedTokenRepository;
-        this.authTokenRepository = authTokenRepository;
-        this.userRepository = userRepository;
-        this.emailService = emailService;
-    }
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);

@@ -13,27 +13,20 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/shop-shavvy/auth")
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final CustomerAuthenticationService customerAuthenticationService;
     private final SellerAuthenticationService sellerAuthenticationService;
-
-    @Autowired
-    public AuthenticationController(AuthenticationService authenticationService,
-                                    CustomerAuthenticationService customerAuthenticationService,
-                                    SellerAuthenticationService sellerAuthenticationService){
-        this.authenticationService = authenticationService;
-        this.customerAuthenticationService = customerAuthenticationService;
-        this.sellerAuthenticationService = sellerAuthenticationService;
-    }
 
     @PostMapping("/signup/customer")
     public ResponseEntity<String> registerCustomer(@Valid @RequestBody CustomerRegistrationDTO customerRegistrationDTO) throws Exception {

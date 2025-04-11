@@ -8,6 +8,7 @@ import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
@@ -16,17 +17,12 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/shop-shavvy/admin")
 public class AdminController {
 
     private final AuthenticationService authenticationService;
     private final AdminService adminService;
-
-    @Autowired
-    public AdminController(AuthenticationService authenticationService, AdminService adminService){
-        this.authenticationService = authenticationService;
-        this.adminService = adminService;
-    }
 
     @GetMapping("/hello")
     public String sayHello(String token){

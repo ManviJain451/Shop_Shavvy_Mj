@@ -4,19 +4,16 @@ import com.shopsavvy.shopshavvy.model.token.BlackListedToken;
 import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 @Service
+@RequiredArgsConstructor
 public class BlackListedTokenService {
     private final BlackListedTokenRepository blackListedTokenRepository;
-
-    @Autowired
-    public BlackListedTokenService(BlackListedTokenRepository blackListedTokenRepository) {
-        this.blackListedTokenRepository = blackListedTokenRepository;
-    }
 
     public void blacklistRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();

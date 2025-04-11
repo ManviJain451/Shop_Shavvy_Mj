@@ -9,6 +9,7 @@ import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.repository.CustomerRepository;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,23 +21,13 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class AdminService {
 
-    private  final UserRepository userRepository;
+    private final UserRepository userRepository;
     private final EmailService emailService;
     private final CustomerRepository customerRepository;
     private final SellerRepository sellerRepository;
-
-    @Autowired
-    public AdminService(UserRepository userRepository,
-                        EmailService emailService,
-                        CustomerRepository customerRepository,
-                        SellerRepository sellerRepository){
-        this.userRepository = userRepository;
-        this.emailService = emailService;
-        this.customerRepository = customerRepository;
-        this.sellerRepository = sellerRepository;
-    }
 
     public List<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));

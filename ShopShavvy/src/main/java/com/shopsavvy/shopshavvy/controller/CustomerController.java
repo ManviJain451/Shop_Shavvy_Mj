@@ -7,20 +7,17 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/shop-shavvy/customer")
 public class CustomerController {
 
     private final AuthenticationService authenticationService;
-
-    @Autowired
-    public CustomerController(AuthenticationService authenticationService){
-        this.authenticationService = authenticationService;
-    }
 
     @GetMapping("/hello")
     public String sayHello(String token){

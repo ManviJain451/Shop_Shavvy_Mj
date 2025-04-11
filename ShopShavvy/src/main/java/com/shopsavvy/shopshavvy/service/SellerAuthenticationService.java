@@ -8,14 +8,17 @@ import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
 
 
 @Service
+@RequiredArgsConstructor
 public class SellerAuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -24,24 +27,6 @@ public class SellerAuthenticationService {
     private final JwtService jwtService;
     private final AuthTokenRepository authTokenRepository;
     private final RoleRepository roleRepository;
-
-    public SellerAuthenticationService(
-            UserRepository userRepository,
-            AuthenticationManager authenticationManager,
-            PasswordEncoder passwordEncoder,
-            EmailService emailService,
-            JwtService jwtService,
-            AuthTokenRepository authTokenRepository,
-            RoleRepository roleRepository
-    ) {
-        this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
-        this.jwtService = jwtService;
-        this.authTokenRepository = authTokenRepository;
-        this.roleRepository = roleRepository;
-    }
 
     public String registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
 

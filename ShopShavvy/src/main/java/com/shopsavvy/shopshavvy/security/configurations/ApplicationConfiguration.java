@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.security.configurations;
 
 import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -11,15 +12,10 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @Configuration
+@RequiredArgsConstructor
 public class ApplicationConfiguration {
 
-    private UserDetailsServiceImpl userDetailsServiceImpl;
-
-    @Autowired
-    public ApplicationConfiguration(UserDetailsServiceImpl userDetailsServiceImpl) {
-        this.userDetailsServiceImpl = userDetailsServiceImpl;
-    }
-
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
     @Bean
     BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

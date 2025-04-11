@@ -5,6 +5,7 @@ import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -15,13 +16,12 @@ import org.springframework.web.util.UriComponentsBuilder;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender emailSender;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final JavaMailSender emailSender;
+    private final UserRepository userRepository;
 
     @Async
     public void sendVerificationEmail(String to, String subject, String text) throws MessagingException {

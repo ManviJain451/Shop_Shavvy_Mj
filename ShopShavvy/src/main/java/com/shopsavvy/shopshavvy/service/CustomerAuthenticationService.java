@@ -15,6 +15,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -33,6 +34,7 @@ import java.util.Set;
 
 
 @Service
+@RequiredArgsConstructor
 public class CustomerAuthenticationService {
 
     @Value("${jwt.expiration-time.accessToken}")
@@ -52,29 +54,6 @@ public class CustomerAuthenticationService {
     private final BlackListedTokenRepository blackListedTokenRepository;
     private final BlackListedTokenService blackListedTokenService;
 
-    public CustomerAuthenticationService(
-            UserRepository userRepository,
-            AuthenticationManager authenticationManager,
-            PasswordEncoder passwordEncoder,
-            EmailService emailService,
-            JwtService jwtService,
-            AuthTokenRepository authTokenRepository,
-            AuthenticationService authenticationService,
-            RoleRepository roleRepository,
-            BlackListedTokenRepository blackListedTokenRepository,
-            BlackListedTokenService blackListedTokenService
-    ) {
-        this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.emailService = emailService;
-        this.jwtService = jwtService;
-        this.authTokenRepository = authTokenRepository;
-        this.authenticationService = authenticationService;
-        this.roleRepository = roleRepository;
-        this.blackListedTokenRepository = blackListedTokenRepository;
-        this.blackListedTokenService = blackListedTokenService;
-    }
 
     public String registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
 
