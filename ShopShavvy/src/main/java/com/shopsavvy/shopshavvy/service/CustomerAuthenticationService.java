@@ -108,7 +108,8 @@ public class CustomerAuthenticationService {
     @Transactional
     public String activateCustomer(@RequestParam String token) throws Exception {
             String userEmail = jwtService.extractUsername(token);
-            User user = userRepository.findByEmail(userEmail);
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow(() -> new UserNotFoundException("User not found"));
 
             if (user.getIsActive()) {
                 throw new AlreadyActivatedException("User is already activated");

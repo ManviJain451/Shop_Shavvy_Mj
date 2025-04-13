@@ -30,10 +30,8 @@ public class AdminService {
     private final SellerRepository sellerRepository;
 
     public String unlockUser(String email){
-        User user = userRepository.findByEmail(email);
-        if(user == null){
-            throw new UserNotFoundException("User with this email ID: " + email + " is not found.");
-        }
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User with this email ID: " + email + " is not found."));
 
         if(!user.isLocked()){
             return "User is already unlocked.";

@@ -52,6 +52,7 @@ public class JwtService {
     private final BlackListedTokenRepository blackListedTokenRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final Logger logger= LoggerFactory.getLogger(JwtService.class);
 
     public String extractUsername(String token) {
@@ -126,10 +127,8 @@ public class JwtService {
 
         if (isTokenExpired(token)) {
             if ("activation".equals(tokenType)) {
-                User user = userRepository.findByEmail(username);
-                if(user == null){
-                    throw new UserNotFoundException("User not found: " + username);
-                }
+                User user = userRepository.findByEmail(username)
+                                .orElseThrow(() -> new UserNotFoundException("User not found"));
                 authTokenRepository.deleteByToken(token);
                 sendActivationLinkIfTokenIsExpired(username);
 
@@ -196,8 +195,7 @@ public class JwtService {
     }
 
     public void sendActivationLinkIfTokenIsExpired(String email) throws MessagingException {
-        User user = userRepository.findByEmail(email);
-        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        UserDetailsImpl userDetailsImpl = userDetailsServiceImpl.loadUserByUsername(email);
         String newActivationToken = generateToken(userDetailsImpl, "activation");
         emailService.sendActivationLink(email, newActivationToken);
 

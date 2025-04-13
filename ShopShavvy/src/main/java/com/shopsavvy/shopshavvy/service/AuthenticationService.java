@@ -46,6 +46,7 @@ public class AuthenticationService {
     private long refreshTokenExpirationTime;
 
     private final UserRepository userRepository;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final JwtService jwtService;
     private final AuthTokenRepository authTokenRepository;
     private final PasswordEncoder passwordEncoder;
@@ -89,11 +90,8 @@ public class AuthenticationService {
     }
 
     public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException, MessagingException {
-        if (!userRepository.existsByEmail(userLoginDTO.getEmail())) {
-            throw new UserNotFoundException("User not found");
-        }
-
-        User user = userRepository.findByEmail(userLoginDTO.getEmail());
+        User user = userRepository.findByEmail(userLoginDTO.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (user.isLocked()) {
             throw new LockedException("Account is locked. Please contact support.");
@@ -158,7 +156,8 @@ public class AuthenticationService {
 
     public boolean isPasswordCredentialExpired(String email){
         LocalDateTime passwordLastUpdateDate = userRepository.findPasswordUpdateDateByEmail(email);
-        User user = userRepository.findByEmail(email);
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MONTHS))) {
             user.setExpired(true);
             userRepository.save(user);
@@ -174,8 +173,8 @@ public class AuthenticationService {
         }
 
         String userEmail = jwtService.extractUsername(accessToken);
-        User user = userRepository.findByEmail(userEmail);
-        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+
+        UserDetailsImpl userDetailsImpl = userDetailsServiceImpl.loadUserByUsername(userEmail);
         if (!jwtService.isTokenValid(accessToken, userDetailsImpl, "access")) {
             throw new InvalidTokenException("Access token has expired");
         }
@@ -208,8 +207,7 @@ public class AuthenticationService {
     @Transactional
     public String refreshToken(String refreshToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws RuntimeException, MessagingException {
         String userEmail = jwtService.extractUsername(refreshToken);
-        User user = userRepository.findByEmail(userEmail);
-        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        UserDetailsImpl userDetailsImpl = userDetailsServiceImpl.loadUserByUsername(userEmail);
         jwtService.isTokenValid(refreshToken, userDetailsImpl, "refresh");
         blackListedTokenService.blacklistAccessToken(httpServletRequest);
         String newAccessToken = jwtService.generateToken(userDetailsImpl, "access");
@@ -227,18 +225,13 @@ public class AuthenticationService {
 
     @Transactional
     public ResponseEntity<String> forgotPassword(String email) throws MessagingException {
-        User user = userRepository.findByEmail(email);
-        if (user == null) {
-            throw new UserNotFoundException("User not found.");
-        }
-
+         User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         if(!user.getIsActive()){
             throw new AlreadyDeactivatedException("Account is not activated.");
         }
-
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
         authTokenRepository.deleteResetPasswordTokenByEmail(email);
-        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(userRepository.findByEmail(email));
-
         String resetPasswordToken = jwtService.generateToken(userDetailsImpl, "reset_password");
 
         Claims claimsForResetPasswordToken = jwtService.extractAllClaims(resetPasswordToken);
@@ -261,7 +254,8 @@ public class AuthenticationService {
     public ResponseEntity<ResetPasswordResponseDTO> resetPassword(String resetPasswordtoken, String password, String confirmPassword) throws MessagingException {
 
         String userEmail = jwtService.extractUsername(resetPasswordtoken);
-        User user = userRepository.findByEmail(userEmail);
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
         UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
         jwtService.isTokenValid(resetPasswordtoken, userDetailsImpl, "reset_password");
 
