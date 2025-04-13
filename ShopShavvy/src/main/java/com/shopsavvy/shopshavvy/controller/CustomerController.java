@@ -54,17 +54,15 @@ public class CustomerController {
     }
 
     @PostMapping("/add-address")
-    public ResponseEntity<?> addAddress(
-            @RequestParam String accessToken,
-            @Valid @ModelAttribute AddressDTO addressDTO) {
+    public ResponseEntity<?> addAddress(@RequestParam String accessToken,
+            @Valid @ModelAttribute CustomerAddressDTO customerAddressDTO) {
 
-        customerService.addCustomerAddress(accessToken, addressDTO);
+        customerService.addCustomerAddress(accessToken, customerAddressDTO);
         return ResponseEntity.ok("Address added successfully.");
     }
 
     @DeleteMapping("/delete-address")
-    public ResponseEntity<String> deleteAddress(
-            @RequestParam String accessToken,
+    public ResponseEntity<String> deleteAddress(@RequestParam String accessToken,
             @RequestParam String addressId) {
 
         customerService.deleteCustomerAddress(accessToken, addressId);

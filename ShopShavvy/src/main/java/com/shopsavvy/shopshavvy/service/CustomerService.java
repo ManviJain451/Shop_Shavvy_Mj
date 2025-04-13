@@ -84,21 +84,23 @@ public class CustomerService {
         customerRepository.save(customer);
     }
 
-    public void addCustomerAddress(String accessToken, AddressDTO addressDTO) {
+    public void addCustomerAddress(String accessToken, CustomerAddressDTO customerAddressDTO) {
         String email = jwtService.extractUsername(accessToken);
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
         Address newAddress = new Address();
-        newAddress.setCity(addressDTO.getCity());
-        newAddress.setState(addressDTO.getState());
-        newAddress.setCountry(addressDTO.getCountry());
-        newAddress.setAddressLine(addressDTO.getAddressLine());
-        newAddress.setZipCode(addressDTO.getZipCode());
-        newAddress.setLabel(addressDTO.getLabel());
+        newAddress.setCity(customerAddressDTO.getCity());
+        newAddress.setState(customerAddressDTO.getState());
+        newAddress.setCountry(customerAddressDTO.getCountry());
+        newAddress.setAddressLine(customerAddressDTO.getAddressLine());
+        newAddress.setZipCode(customerAddressDTO.getZipCode());
+        newAddress.setLabel(customerAddressDTO.getLabel());
 
         customer.getAddresses().add(newAddress);
-        customer.setDefaultAddressId(newAddress.getId());
+        if (customerAddressDTO.isMakeDefault() || customer.getAddresses().size() == 1) {
+            customer.setDefaultAddressId(newAddress.getId());
+        }
 
         customerRepository.save(customer);
     }
@@ -116,11 +118,9 @@ public class CustomerService {
         customer.getAddresses().remove(addressToDelete);
 
         if (addressId.equals(customer.getDefaultAddressId())) {
-            if (!customer.getAddresses().isEmpty()) {
-                customer.setDefaultAddressId(customer.getAddresses().iterator().next().getId());
-            } else {
-                customer.setDefaultAddressId(null);
-            }
+            customer.setDefaultAddressId(
+                    customer.getAddresses().isEmpty() ? null : customer.getAddresses().iterator().next().getId()
+            );
         }
 
         customerRepository.save(customer);
