@@ -10,7 +10,7 @@ import java.util.Set;
 @Getter
 @Setter
 @AllArgsConstructor
-public class SellerProfileDTO {
+public class SellerViewProfileDTO {
     private String id;
     private String firstName;
     private String lastName;
