@@ -11,7 +11,7 @@ import lombok.Setter;
 @Setter
 public class UserRegistrationDTO {
 
-    @Email(message = "Email should be valid")
+    @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}", message = "Email should be valid")
     @NotBlank(message = "Email is mandatory")
     private String email;
 
