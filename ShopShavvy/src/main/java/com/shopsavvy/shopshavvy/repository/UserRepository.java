@@ -43,4 +43,6 @@ public interface UserRepository extends JpaRepository<User, String> {
     Page<User> findByRoles(@Param("role") String role, Pageable pageable);
 
     List<User> findAllByIsLocked(boolean isLocked);
+
+    Optional<User> findById(String id);
 }

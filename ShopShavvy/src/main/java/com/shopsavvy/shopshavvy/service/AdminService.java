@@ -6,11 +6,11 @@ import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
+import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.CustomerRepository;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +28,21 @@ public class AdminService {
     private final EmailService emailService;
     private final CustomerRepository customerRepository;
     private final SellerRepository sellerRepository;
+
+    public String unlockUser(String email){
+        User user = userRepository.findByEmail(email);
+        if(user == null){
+            throw new UserNotFoundException("User with this email ID: " + email + " is not found.");
+        }
+
+        if(!user.isLocked()){
+            return "User is already unlocked.";
+        }
+        user.setLocked(false);
+        user.setInvalidAttemptCount(0);
+        userRepository.save(user);
+        return "User is successfully unlocked.";
+    }
 
     public List<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
@@ -72,9 +87,9 @@ public class AdminService {
                 .collect(Collectors.toList());
     }
 
-    public String activateCustomer(String email) {
-        Customer customer = customerRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + email));
+    public String activateCustomer(String customerID) {
+        Customer customer = customerRepository.findById(customerID)
+                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + customerID));
 
         if (customer.getIsActive()) {
             throw new AlreadyActivatedException("Customer is already activated. No action performed.");
@@ -92,9 +107,9 @@ public class AdminService {
         return "Customer account has been successfully activated.";
     }
 
-    public String activateSeller(String email) {
-        Seller seller = sellerRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + email));
+    public String activateSeller(String sellerID) {
+        Seller seller = sellerRepository.findById(sellerID)
+                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + sellerID));
 
         if (seller.getIsActive()) {
             throw new AlreadyActivatedException("Seller is already activated. No action performed.");
@@ -102,9 +117,8 @@ public class AdminService {
 
         seller.setIsActive(true);
         sellerRepository.save(seller);
-
-        try {
-            emailService.sendVerificationEmail(seller.getEmail(), "Account Activated", "Your account has been successfully activated.");
+        try{
+        emailService.sendVerificationEmail(seller.getEmail(), "Account Activated", "Your account has been successfully activated.");
         } catch (Exception e) {
             throw new RuntimeException("Failed to send activation email.");
         }
@@ -112,9 +126,9 @@ public class AdminService {
         return "Seller account has been successfully activated.";
     }
 
-    public String deactivateCustomer(String email){
-        Customer customer = customerRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + email));
+    public String deactivateCustomer(String customerID){
+        Customer customer = customerRepository.findById(customerID)
+                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + customerID));
 
         if (!customer.getIsActive()) {
             return "Customer is already deactivated. No action performed.";
@@ -131,9 +145,9 @@ public class AdminService {
         return "Customer account has been successfully deactivated.";
     }
 
-    public String deactivateSeller(String sellerEmail) {
-        Seller seller = sellerRepository.findByEmail(sellerEmail)
-                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + sellerEmail));
+    public String deactivateSeller(String sellerID) {
+        Seller seller = sellerRepository.findById(sellerID)
+                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + sellerID));
 
         if (!seller.getIsActive()) {
             return "Seller is already deactivated. No action performed.";
