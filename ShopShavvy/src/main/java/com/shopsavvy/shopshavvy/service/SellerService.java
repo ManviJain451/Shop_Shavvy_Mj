@@ -12,9 +12,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -32,20 +29,7 @@ public class SellerService {
         Seller seller = sellerRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
 
-        String imageUrl = null;
-        Path userDirectory = Path.of(basePath, "users", seller.getId());
-        try {
-            Optional<Path> imageFile = Files.list(userDirectory)
-                    .filter(file -> file.getFileName().toString().startsWith(seller.getId() + "."))
-                    .findFirst();
-
-            if (imageFile.isPresent()) {
-                String fileName = imageFile.get().getFileName().toString();
-                imageUrl = "/users/" + seller.getId() + "/" + fileName;
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Error while accessing the user's image directory.", e);
-        }
+        String imageUrl = fileStorageService.getUserImageUrl(seller.getId());
 
         return new SellerViewProfileDTO(
                 seller.getId(),
