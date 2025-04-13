@@ -60,7 +60,7 @@ public class SellerAuthenticationService {
         address.setCountry(sellerRegistrationDTO.getCountry());
         address.setAddressLine(sellerRegistrationDTO.getAddressLine());
         address.setZipCode(sellerRegistrationDTO.getZipCode());
-        seller.setAdresses(Set.of(address));
+        seller.setAddresses(Set.of(address));
 
 
         if (!sellerRegistrationDTO.getConfirmPassword().equals(sellerRegistrationDTO.getPassword())) {

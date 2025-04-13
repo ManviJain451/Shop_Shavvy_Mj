@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.AddressUpdateDTO;
+import com.shopsavvy.shopshavvy.dto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.SellerViewProfileDTO;
 import com.shopsavvy.shopshavvy.dto.SellerUpdateProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
@@ -40,7 +40,7 @@ public class SellerService {
                 seller.getCompanyContact(),
                 seller.getCompanyName(),
                 seller.getGst(),
-                seller.getAdresses()
+                seller.getAddresses()
         );
     }
 
@@ -74,12 +74,12 @@ public class SellerService {
         sellerRepository.save(seller);
     }
 
-    public void updateAddress(String accessToken, Long addressId, AddressUpdateDTO addressUpdateDTO) {
+    public void updateAddress(String accessToken, Long addressId, AddressDTO addressUpdateDTO) {
         String email = jwtService.extractUsername(accessToken);
         Seller seller = sellerRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
 
-        Address address = seller.getAdresses().stream()
+        Address address = seller.getAddresses().stream()
                 .filter(a -> a.getId().equals(addressId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Address not found for the provided address ID."));

@@ -79,7 +79,7 @@ public class AdminService {
                         seller.getEmail(),
                         seller.getIsActive(),
                         seller.getCompanyName(),
-                        seller.getAdresses(),
+                        seller.getAddresses(),
                         seller.getCompanyContact()
                 ))
                 .collect(Collectors.toList());
