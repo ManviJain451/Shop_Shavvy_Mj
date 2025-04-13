@@ -6,6 +6,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Optional;
 
 @Service
 public class FileStorageService {
@@ -47,6 +48,23 @@ public class FileStorageService {
                 Files.deleteIfExists(file);
             }
         }
+    }
+
+    public String getUserImageUrl(String userId) {
+        Path userDirectory = Path.of(BASE_PATH, "users", userId);
+        try {
+            Optional<Path> imageFile = Files.list(userDirectory)
+                    .filter(file -> file.getFileName().toString().startsWith(userId + "."))
+                    .findFirst();
+
+            if (imageFile.isPresent()) {
+                String fileName = imageFile.get().getFileName().toString();
+                return "/users/" + userId + "/" + fileName;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Error while accessing the user's image directory.", e);
+        }
+        return null;
     }
 
     private void validateFileFormat(String fileName) {
