@@ -9,6 +9,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class PasswordUpdateDTO {
+
     @NotBlank(message = "Password is mandatory")
     @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters long")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",

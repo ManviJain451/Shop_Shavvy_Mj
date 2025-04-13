@@ -16,6 +16,4 @@ public class CustomerResponseDTO {
     private String email;
     private Boolean isActive;
 
-
-
 }
