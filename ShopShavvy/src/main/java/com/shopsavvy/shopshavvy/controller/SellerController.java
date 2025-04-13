@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.shopsavvy.shopshavvy.dto.AddressUpdateDTO;
+import com.shopsavvy.shopshavvy.dto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.SellerViewProfileDTO;
 import com.shopsavvy.shopshavvy.dto.SellerUpdateProfileDTO;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
@@ -48,7 +48,7 @@ public class SellerController {
 
     @PatchMapping("/update-address")
     public ResponseEntity<?> updateAddress(@RequestParam String accessToken, @RequestParam Long addressId,
-            @Valid @RequestBody AddressUpdateDTO addressUpdateDTO) {
+            @Valid @ModelAttribute AddressDTO addressUpdateDTO) {
 
         sellerService.updateAddress(accessToken, addressId, addressUpdateDTO);
         return ResponseEntity.ok("Address updated successfully.");
