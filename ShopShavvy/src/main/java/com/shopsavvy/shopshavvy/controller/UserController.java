@@ -1,6 +1,10 @@
 package com.shopsavvy.shopshavvy.controller;
 
+import com.shopsavvy.shopshavvy.dto.PasswordUpdateDTO;
 import com.shopsavvy.shopshavvy.service.FileStorageService;
+import com.shopsavvy.shopshavvy.service.UserService;
+import jakarta.mail.MessagingException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +19,7 @@ import java.io.IOException;
 public class UserController {
 
     private final FileStorageService fileStorageService;
+    private final UserService userService;
 
     @PostMapping("/{userId}/upload-photo")
     public ResponseEntity<String> uploadUserPhoto(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
@@ -33,5 +38,13 @@ public class UserController {
         fileStorageService.deleteUserPhoto(userId);
         return ResponseEntity.ok("Profile photo deleted successfully.");
 
+    }
+
+    @PutMapping("/update-password")
+    public ResponseEntity<?> updatePassword(@RequestParam String accessToken,
+                                            @Valid @RequestBody PasswordUpdateDTO passwordUpdateDTO) throws MessagingException {
+
+        userService.updatePassword(accessToken, passwordUpdateDTO);
+        return ResponseEntity.ok("Password updated successfully.");
     }
 }

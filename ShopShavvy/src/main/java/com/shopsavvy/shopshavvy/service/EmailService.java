@@ -46,4 +46,18 @@ public class EmailService {
 
         sendVerificationEmail(email, subject, text);
     }
+
+    public void sendPasswordChangeNotification(String email) throws MessagingException {
+        try {
+            var message = emailSender.createMimeMessage();
+            var helper = new MimeMessageHelper(message, true);
+            helper.setTo(email);
+            helper.setSubject("Password Changed Successfully");
+            helper.setText("Your password has been changed successfully. If this was not you, please contact support immediately.");
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email notification.", e);
+        }
+    }
+
 }
