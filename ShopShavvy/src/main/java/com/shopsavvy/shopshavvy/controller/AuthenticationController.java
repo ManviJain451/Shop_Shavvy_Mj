@@ -85,7 +85,7 @@ public class AuthenticationController {
 
     @PostMapping("/refresh-token")
     public ResponseEntity<String> refreshToken(@RequestParam String refreshToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {
-        String newAccessToken = customerAuthenticationService.refreshToken(refreshToken, httpServletRequest, httpServletResponse);
+        String newAccessToken = authenticationService.refreshToken(refreshToken, httpServletRequest, httpServletResponse);
         return ResponseEntity.ok().body(newAccessToken);
     }
 
@@ -95,8 +95,8 @@ public class AuthenticationController {
     }
 
     @PutMapping("/reset-password")
-    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(@RequestParam String resetPasswordtoken, @Valid @RequestParam String password, @RequestParam String confirmPassword) throws MessagingException {
-        return authenticationService.resetPassword(resetPasswordtoken, password, confirmPassword);
+    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(@RequestParam String token, @Valid @RequestParam String password, @RequestParam String confirmPassword) throws MessagingException {
+        return authenticationService.resetPassword(token, password, confirmPassword);
     }
 
 }

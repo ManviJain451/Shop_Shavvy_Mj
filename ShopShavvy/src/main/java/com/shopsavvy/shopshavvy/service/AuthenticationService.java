@@ -17,9 +17,6 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -103,7 +100,7 @@ public class AuthenticationService {
         }
 
         if (!user.getIsActive()) {
-            throw new DeactivatedAccountException("Account is not activated. Please activate your account.");
+            throw new AlreadyDeactivatedException("Account is not activated. Please activate your account.");
         }
 
         if(isPasswordCredentialExpired(userLoginDTO.getEmail())){
@@ -114,9 +111,11 @@ public class AuthenticationService {
             user.setInvalidAttemptCount(user.getInvalidAttemptCount() + 1);
             if (user.getInvalidAttemptCount() >= 3) {
                 user.setLocked(true);
+                userRepository.save(user);
                 emailService.sendVerificationEmail(userLoginDTO.getEmail(),
                         "Your ShopShavvy Account has been locked",
                         "Your account has been locked. Please contact support.");
+                throw new LockedException("Account is locked. Please contact support.");
             }
             userRepository.save(user);
             throw new BadCredentialsException("Invalid credentials");
@@ -207,6 +206,26 @@ public class AuthenticationService {
     }
 
     @Transactional
+    public String refreshToken(String refreshToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws RuntimeException, MessagingException {
+        String userEmail = jwtService.extractUsername(refreshToken);
+        User user = userRepository.findByEmail(userEmail);
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        jwtService.isTokenValid(refreshToken, userDetailsImpl, "refresh");
+        blackListedTokenService.blacklistAccessToken(httpServletRequest);
+        String newAccessToken = jwtService.generateToken(userDetailsImpl, "access");
+        ResponseCookie accessTokencookie = ResponseCookie.from("accessToken", newAccessToken)
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(accessTokenExpirationTime)
+                .build();
+        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokencookie.toString());
+
+        return newAccessToken;
+
+    }
+
+    @Transactional
     public ResponseEntity<String> forgotPassword(String email) throws MessagingException {
         User user = userRepository.findByEmail(email);
         if (user == null) {
@@ -214,7 +233,7 @@ public class AuthenticationService {
         }
 
         if(!user.getIsActive()){
-            throw new DeactivatedAccountException("Account is not activated.");
+            throw new AlreadyDeactivatedException("Account is not activated.");
         }
 
         authTokenRepository.deleteResetPasswordTokenByEmail(email);
@@ -231,7 +250,9 @@ public class AuthenticationService {
         resetPasswordAuthToken.setExpirationTime(claimsForResetPasswordToken.getExpiration());
         authTokenRepository.save(resetPasswordAuthToken);
 
-        emailService.sendVerificationEmail(email,"Password Reset Request", "To reset your password, click the link below:\n" + "http://localhost:8080/shop-shavvy/auth/reset-password?token=" + resetPasswordToken);
+        emailService.sendVerificationEmail(email,"Password Reset Request", "To reset your password, click the link below:\n"
+                + "http://localhost:8080/shop-shavvy/auth/reset-password?token=" + resetPasswordToken);
+
 
         return ResponseEntity.ok("Password reset link has been sent to your email.");
     }

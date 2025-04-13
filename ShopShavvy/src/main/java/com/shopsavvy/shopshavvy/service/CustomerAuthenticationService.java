@@ -120,11 +120,7 @@ public class CustomerAuthenticationService {
 
                 user.setIsActive(true);
                 userRepository.save(user);
-
-                //sends verified user mail
                 verifyCustomer(user.getEmail());
-                //activation token is deleted once the user is activated.
-                authTokenRepository.deleteActivationTokenByEmail(userEmail);
 
             }
         return "User is activated.";
@@ -182,24 +178,6 @@ public class CustomerAuthenticationService {
         return ResponseEntity.ok().body("The activation link is sent to registered email.");
     }
 
-    @Transactional
-    public String refreshToken(String refreshToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws RuntimeException, MessagingException {
-        String userEmail = jwtService.extractUsername(refreshToken);
-        User user = userRepository.findByEmail(userEmail);
-        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
-        jwtService.isTokenValid(refreshToken, userDetailsImpl, "refresh");
-        blackListedTokenService.blacklistAccessToken(httpServletRequest);
-        String newAccessToken = jwtService.generateToken(userDetailsImpl, "access");
-        ResponseCookie accessTokencookie = ResponseCookie.from("accessToken", newAccessToken)
-                    .httpOnly(true)
-                    .secure(false)
-                    .path("/")
-                    .maxAge(accessTokenExpirationTime)
-                    .build();
-        httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, accessTokencookie.toString());
 
-        return newAccessToken;
-
-    }
 
 }
