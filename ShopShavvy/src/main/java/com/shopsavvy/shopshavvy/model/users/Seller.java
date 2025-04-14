@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.model.users;
 import com.shopsavvy.shopshavvy.model.products.Product;
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.util.Set;
 
@@ -11,6 +12,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@SuperBuilder
 @Table(name = "sellers")
 @PrimaryKeyJoinColumn(name = "seller_id")
 public class Seller extends User {
