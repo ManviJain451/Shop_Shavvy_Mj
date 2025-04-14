@@ -7,6 +7,7 @@ import com.shopsavvy.shopshavvy.dto.CustomerViewProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;
+import com.shopsavvy.shopshavvy.repository.AddressRepository;
 import com.shopsavvy.shopshavvy.repository.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class CustomerService {
     private final JwtService jwtService;
     private final CustomerRepository customerRepository;
     private final FileStorageService fileStorageService;
+    private final AddressRepository addressRepository;
 
     public CustomerViewProfileDTO getCustomerProfile(String accessToken) {
         String email = jwtService.extractUsername(accessToken);
@@ -89,13 +91,15 @@ public class CustomerService {
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
-        Address newAddress = new Address();
-        newAddress.setCity(customerAddressDTO.getCity());
-        newAddress.setState(customerAddressDTO.getState());
-        newAddress.setCountry(customerAddressDTO.getCountry());
-        newAddress.setAddressLine(customerAddressDTO.getAddressLine());
-        newAddress.setZipCode(customerAddressDTO.getZipCode());
-        newAddress.setLabel(customerAddressDTO.getLabel());
+        Address newAddress = Address.builder()
+                .city(customerAddressDTO.getCity())
+                .state(customerAddressDTO.getState())
+                .country(customerAddressDTO.getCountry())
+                .addressLine(customerAddressDTO.getAddressLine())
+                .zipCode(customerAddressDTO.getZipCode())
+                .label(customerAddressDTO.getLabel())
+                .build();
+
 
         customer.getAddresses().add(newAddress);
         if (customerAddressDTO.isMakeDefault() || customer.getAddresses().size() == 1) {
@@ -115,15 +119,16 @@ public class CustomerService {
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Address not found for the provided address ID."));
 
-        customer.getAddresses().remove(addressToDelete);
-
         if (addressId.equals(customer.getDefaultAddressId())) {
-            customer.setDefaultAddressId(
-                    customer.getAddresses().isEmpty() ? null : customer.getAddresses().iterator().next().getId()
-            );
+            Address newDefaultAddress = customer.getAddresses().stream()
+                    .filter(a -> !a.getId().equals(addressId))
+                    .findFirst()
+                    .orElse(null);
+            customer.setDefaultAddressId(newDefaultAddress != null ? newDefaultAddress.getId() : null);
         }
 
-        customerRepository.save(customer);
+        addressRepository.delete(addressToDelete);
+
     }
 
     public void updateCustomerAddress(String accessToken, String addressId, CustomerAddressDTO customerAddressDTO) {
