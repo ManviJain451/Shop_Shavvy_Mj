@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.model.token;
 
 import jakarta.persistence.*;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -9,6 +10,7 @@ import java.util.Date;
 @Getter
 @Setter
 @Entity
+@Builder
 public class AuthToken {
 
     @Id
