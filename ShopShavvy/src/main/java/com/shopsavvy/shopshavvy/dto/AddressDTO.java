@@ -10,6 +10,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddressDTO {
+
     private String city;
 
     private String state;
@@ -21,4 +22,5 @@ public class AddressDTO {
     private String zipCode;
 
     private String label;
+
 }
