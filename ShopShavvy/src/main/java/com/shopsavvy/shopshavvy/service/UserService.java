@@ -1,8 +1,7 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.PasswordUpdateDTO;
+import com.shopsavvy.shopshavvy.dto.PasswordDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
-import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import jakarta.mail.MessagingException;
@@ -18,7 +17,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    public void updatePassword(String accessToken, PasswordUpdateDTO passwordUpdateDTO) throws MessagingException {
+    public void updatePassword(String accessToken, PasswordDTO passwordUpdateDTO) throws MessagingException {
         if (!passwordUpdateDTO.getPassword().equals(passwordUpdateDTO.getConfirmPassword())) {
             throw new IllegalArgumentException("Password and confirm password do not match.");
         }
