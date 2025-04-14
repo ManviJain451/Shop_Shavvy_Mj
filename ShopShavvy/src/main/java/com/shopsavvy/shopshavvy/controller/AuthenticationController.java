@@ -1,22 +1,30 @@
 package com.shopsavvy.shopshavvy.controller;
 
+import com.shopsavvy.shopshavvy.dto.EmailDTO;
+import com.shopsavvy.shopshavvy.dto.customerDto.CustomerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.loginDto.LoginRequestDTO;
+import com.shopsavvy.shopshavvy.dto.loginDto.LoginResponseDTO;
+import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
+import com.shopsavvy.shopshavvy.dto.passwordDto.ResetPasswordResponseDTO;
+import com.shopsavvy.shopshavvy.dto.sellerDto.SellerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.userDto.UserRegistrationDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.InvalidTokenException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
-import com.shopsavvy.shopshavvy.dto.*;
 
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CustomerAuthenticationService;
 import com.shopsavvy.shopshavvy.service.SellerAuthenticationService;
+import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -41,8 +49,8 @@ public class AuthenticationController {
     }
 
     @PostMapping("/signup/admin")
-    public ResponseEntity<String> registerAdmin(@Valid @RequestBody User user) throws Exception{
-        String message = authenticationService.registerAdmin(user);
+    public ResponseEntity<String> registerAdmin(@Valid @RequestBody UserRegistrationDTO userRegistrationDTO) throws Exception{
+        String message = authenticationService.registerAdmin(userRegistrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(message);
     }
 
@@ -61,25 +69,25 @@ public class AuthenticationController {
     }
 
     @PostMapping("/resend-ActivationLink/customer")
-    public ResponseEntity<String> resendActivationLink(@Valid @RequestParam String email) throws Exception {
-        return customerAuthenticationService.resendActivationLink(email);
+    public ResponseEntity<String> resendActivationLink(@Valid @RequestParam EmailDTO emailDTO) throws Exception {
+        return customerAuthenticationService.resendActivationLink(emailDTO);
     }
 
     @PostMapping("/customer/login")
-    public ResponseEntity<LoginResponseDTO> authenticateCustomer(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws MessagingException {
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO, httpServletResponse);
+    public ResponseEntity<LoginResponseDTO> authenticateCustomer(@Valid @RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse) throws MessagingException {
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse);
         return ResponseEntity.ok().body(loginResponseDTO);
     }
 
     @PostMapping("/seller/login")
-    public ResponseEntity<LoginResponseDTO> authenticateSeller(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws MessagingException {
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO, httpServletResponse);
+    public ResponseEntity<LoginResponseDTO> authenticateSeller(@Valid @RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse) throws MessagingException {
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse);
         return ResponseEntity.ok().body(loginResponseDTO);
     }
 
     @PostMapping("/admin/login")
-    public ResponseEntity<LoginResponseDTO> authenticateAdmin(@Valid @RequestBody UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws MessagingException {
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(userLoginDTO, httpServletResponse);
+    public ResponseEntity<LoginResponseDTO> authenticateAdmin(@Valid @RequestBody LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse) throws MessagingException {
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse);
         return ResponseEntity.ok().body(loginResponseDTO);
     }
 
@@ -90,13 +98,13 @@ public class AuthenticationController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<String> forgotPassword(@Valid @RequestParam String email) throws MessagingException {
-        return authenticationService.forgotPassword(email);
+    public ResponseEntity<String> forgotPassword(@Valid @RequestParam EmailDTO emailDTO) throws MessagingException {
+        return authenticationService.forgotPassword(emailDTO.getEmail());
     }
 
     @PutMapping("/reset-password")
-    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(@RequestParam String token, @Valid @RequestParam String password, @RequestParam String confirmPassword) throws MessagingException {
-        return authenticationService.resetPassword(token, password, confirmPassword);
+    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(@RequestParam String token, @Valid @RequestBody PasswordDTO passwordDTO) throws MessagingException {
+        return authenticationService.resetPassword(token, passwordDTO.getPassword(), passwordDTO.getConfirmPassword());
     }
 
 }

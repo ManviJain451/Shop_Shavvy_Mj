@@ -1,14 +1,19 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.shopsavvy.shopshavvy.dto.*;
+import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CustomerService;
+import com.shopsavvy.shopshavvy.validation.groups.OnCreate;
+import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -34,9 +39,9 @@ public class CustomerController {
     }
 
     @GetMapping("/view-profile")
-    public ResponseEntity<CustomerViewProfileDTO> getProfile(@RequestParam String accessToken) {
-        CustomerViewProfileDTO customerProfile = customerService.getCustomerProfile(accessToken);
-        return ResponseEntity.ok(customerProfile);
+    public ResponseEntity<CustomerProfileDTO> getProfile(@RequestParam String accessToken) {
+        CustomerProfileDTO customerProfileDTO = customerService.getCustomerProfile(accessToken);
+        return ResponseEntity.ok(customerProfileDTO);
     }
 
     @GetMapping("/view-addresses")
@@ -46,16 +51,16 @@ public class CustomerController {
     }
 
     @PatchMapping("/update-profile")
-    public ResponseEntity<?> updateProfile(@RequestParam String accessToken,
-            @Valid @ModelAttribute CustomerUpdateProfileDTO customerUpdateProfileDTO) {
+    public ResponseEntity<String> updateProfile(@RequestParam String accessToken,
+            @Validated(OnUpdate.class) @ModelAttribute CustomerProfileDTO customerProfileDTO) {
 
-        customerService.updateCustomerProfile(accessToken, customerUpdateProfileDTO);
+        customerService.updateCustomerProfile(accessToken, customerProfileDTO);
         return ResponseEntity.ok("Profile updated successfully.");
     }
 
     @PostMapping("/add-address")
     public ResponseEntity<?> addAddress(@RequestParam String accessToken,
-            @Valid @RequestBody CustomerAddressDTO customerAddressDTO) {
+            @Validated(OnCreate.class) @RequestBody CustomerAddressDTO customerAddressDTO) {
 
         customerService.addCustomerAddress(accessToken, customerAddressDTO);
         return ResponseEntity.ok("Address added successfully.");
@@ -72,7 +77,7 @@ public class CustomerController {
     @PatchMapping("/update-address")
     public ResponseEntity<String> updateCustomerAddress(@RequestParam String accessToken,
             @RequestParam String addressId,
-            @Valid @RequestBody CustomerAddressDTO customerAddressDTO) {
+            @Validated(OnUpdate.class) @RequestBody CustomerAddressDTO customerAddressDTO) {
 
         customerService.updateCustomerAddress(accessToken, addressId, customerAddressDTO);
         return ResponseEntity.ok("Address updated successfully.");

@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.shopsavvy.shopshavvy.dto.PasswordDTO;
+import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
 import com.shopsavvy.shopshavvy.service.FileStorageService;
 import com.shopsavvy.shopshavvy.service.UserService;
 import jakarta.mail.MessagingException;

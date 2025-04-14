@@ -1,8 +1,9 @@
 package com.shopsavvy.shopshavvy.controller;
 
 
-import com.shopsavvy.shopshavvy.dto.CustomerResponseDTO;
-import com.shopsavvy.shopshavvy.dto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.EmailDTO;
+import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import jakarta.mail.MessagingException;
@@ -10,9 +11,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,8 +35,8 @@ public class AdminController {
     }
 
     @PutMapping("/unlock/user")
-    public ResponseEntity<String> unlockUser(@Valid @RequestParam String email){
-        String message = adminService.unlockUser(email);
+    public ResponseEntity<String> unlockUser(@Valid @RequestParam EmailDTO emailDTO){
+        String message = adminService.unlockUser(emailDTO);
         return ResponseEntity.ok().body(message);
     }
 
@@ -63,25 +61,25 @@ public class AdminController {
     }
 
     @PutMapping("/activate-customer")
-    public ResponseEntity<String> activateCustomer(@Valid @RequestParam String customerID) throws MessagingException {
+    public ResponseEntity<String> activateCustomer(@RequestParam String customerID) throws MessagingException {
         String responseMessage = adminService.activateCustomer(customerID);
         return ResponseEntity.ok(responseMessage);
     }
 
     @PutMapping("/activate-seller")
-    public ResponseEntity<String> activateSeller(@Valid @RequestParam String sellerID) throws MessagingException {
+    public ResponseEntity<String> activateSeller(@RequestParam String sellerID) throws MessagingException {
         String responseMessage = adminService.activateSeller(sellerID);
         return ResponseEntity.ok(responseMessage);
     }
 
     @PutMapping("/deactivate-customer")
-    public ResponseEntity<String> deactivateCustomer(@Valid @RequestParam String customerID) {
+    public ResponseEntity<String> deactivateCustomer(@RequestParam String customerID) {
         String responseMessage = adminService.deactivateCustomer(customerID);
         return ResponseEntity.ok(responseMessage);
     }
 
     @PutMapping("/deactivate-seller")
-    public ResponseEntity<String> deactivateSeller(@Valid @RequestParam String sellerID) {
+    public ResponseEntity<String> deactivateSeller(@RequestParam String sellerID) {
         String responseMessage = adminService.deactivateSeller(sellerID);
         return ResponseEntity.ok(responseMessage);
     }

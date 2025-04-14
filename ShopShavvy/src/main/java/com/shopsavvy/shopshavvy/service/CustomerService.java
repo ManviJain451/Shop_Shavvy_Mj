@@ -1,9 +1,8 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.CustomerAddressDTO;
-import com.shopsavvy.shopshavvy.dto.CustomerUpdateProfileDTO;
-import com.shopsavvy.shopshavvy.dto.CustomerViewProfileDTO;
+import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;
@@ -24,20 +23,22 @@ public class CustomerService {
     private final FileStorageService fileStorageService;
     private final AddressRepository addressRepository;
 
-    public CustomerViewProfileDTO getCustomerProfile(String accessToken) {
+    public CustomerProfileDTO getCustomerProfile(String accessToken) {
         String email = jwtService.extractUsername(accessToken);
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
         String imageUrl = fileStorageService.getUserImageUrl(customer.getId());
-        return new CustomerViewProfileDTO(
-                customer.getId(),
-                customer.getFirstName(),
-                customer.getLastName(),
-                customer.getIsActive(),
-                customer.getContact(),
-                imageUrl
-        );
+        return CustomerProfileDTO.builder()
+                .id(customer.getId())
+                .firstName(customer.getFirstName())
+                .middleName(customer.getMiddleName())
+                .lastName(customer.getLastName())
+                .isActive(customer.getIsActive())
+                .contact(customer.getContact())
+                .imageUrl(imageUrl)
+                .build();
+
     }
 
     public List<AddressDTO> getCustomerAddresses(String accessToken) {
@@ -57,27 +58,27 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    public void updateCustomerProfile(String accessToken, CustomerUpdateProfileDTO customerUpdateProfileDTO) {
+    public void updateCustomerProfile(String accessToken, CustomerProfileDTO customerProfileDTO) {
         String email = jwtService.extractUsername(accessToken);
         Customer customer = customerRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
-        if (customerUpdateProfileDTO.getFirstName() != null) {
-            customer.setFirstName(customerUpdateProfileDTO.getFirstName());
+        if (customerProfileDTO.getFirstName() != null) {
+            customer.setFirstName(customerProfileDTO.getFirstName());
         }
-        if (customerUpdateProfileDTO.getLastName() != null) {
-            customer.setLastName(customerUpdateProfileDTO.getLastName());
+        if (customerProfileDTO.getLastName() != null) {
+            customer.setLastName(customerProfileDTO.getLastName());
         }
-        if (customerUpdateProfileDTO.getMiddleName() != null) {
-            customer.setMiddleName(customerUpdateProfileDTO.getMiddleName());
+        if (customerProfileDTO.getMiddleName() != null) {
+            customer.setMiddleName(customerProfileDTO.getMiddleName());
         }
-        if (customerUpdateProfileDTO.getContact() != null) {
-            customer.setContact(customerUpdateProfileDTO.getContact());
+        if (customerProfileDTO.getContact() != null) {
+            customer.setContact(customerProfileDTO.getContact());
         }
 
-        if (customerUpdateProfileDTO.getProfileImage() != null && !customerUpdateProfileDTO.getProfileImage().isEmpty()) {
+        if (customerProfileDTO.getProfileImage() != null && !customerProfileDTO.getProfileImage().isEmpty()) {
             try {
-                fileStorageService.saveOrUpdateUserPhoto(customer.getId(), customerUpdateProfileDTO.getProfileImage());
+                fileStorageService.saveOrUpdateUserPhoto(customer.getId(), customerProfileDTO.getProfileImage());
             } catch (IOException e) {
                 throw new RuntimeException("Failed to upload profile image.", e);
             }

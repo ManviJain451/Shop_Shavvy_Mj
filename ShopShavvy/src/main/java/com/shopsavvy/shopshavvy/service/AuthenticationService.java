@@ -1,9 +1,10 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.dto.userDto.UserRegistrationDTO;
 import com.shopsavvy.shopshavvy.exception.*;
-import com.shopsavvy.shopshavvy.dto.LoginResponseDTO;
-import com.shopsavvy.shopshavvy.dto.ResetPasswordResponseDTO;
-import com.shopsavvy.shopshavvy.dto.UserLoginDTO;
+import com.shopsavvy.shopshavvy.dto.loginDto.LoginResponseDTO;
+import com.shopsavvy.shopshavvy.dto.passwordDto.ResetPasswordResponseDTO;
+import com.shopsavvy.shopshavvy.dto.loginDto.LoginRequestDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.users.Role;
 import com.shopsavvy.shopshavvy.model.users.User;
@@ -56,13 +57,13 @@ public class AuthenticationService {
     private  final BlackListedTokenService blackListedTokenService;
 
 
-    public String registerAdmin(User user) throws MessagingException {
+    public String registerAdmin(UserRegistrationDTO userRegistrationDTO) throws MessagingException {
         User adminUser = User.builder()
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .middleName((user.getMiddleName() != null && !user.getMiddleName().isBlank()) ? user.getMiddleName() : null)
-                .password(passwordEncoder.encode(user.getPassword()))
+                .email(userRegistrationDTO.getEmail())
+                .firstName(userRegistrationDTO.getFirstName())
+                .lastName(userRegistrationDTO.getLastName())
+                .middleName((userRegistrationDTO.getMiddleName() != null && !userRegistrationDTO.getMiddleName().isBlank()) ? userRegistrationDTO.getMiddleName() : null)
+                .password(passwordEncoder.encode(userRegistrationDTO.getPassword()))
                 .isActive(true)
                 .build();
 
@@ -98,8 +99,8 @@ public class AuthenticationService {
 
     }
 
-    public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException, MessagingException {
-        User user = userRepository.findByEmail(userLoginDTO.getEmail())
+    public LoginResponseDTO authenticate(LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException, MessagingException {
+        User user = userRepository.findByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         if (user.isLocked()) {
@@ -110,16 +111,16 @@ public class AuthenticationService {
             throw new AlreadyDeactivatedException("Account is not activated. Please activate your account.");
         }
 
-        if(isPasswordCredentialExpired(userLoginDTO.getEmail())){
+        if(isPasswordCredentialExpired(loginRequestDTO.getEmail())){
             throw new RuntimeException("Your password has been expired.");
         }
 
-        if (!passwordEncoder.matches(userLoginDTO.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
             user.setInvalidAttemptCount(user.getInvalidAttemptCount() + 1);
             if (user.getInvalidAttemptCount() >= 3) {
                 user.setLocked(true);
                 userRepository.save(user);
-                emailService.sendVerificationEmail(userLoginDTO.getEmail(),
+                emailService.sendVerificationEmail(loginRequestDTO.getEmail(),
                         "Your ShopShavvy Account has been locked",
                         "Your account has been locked. Please contact support.");
                 throw new LockedException("Account is locked. Please contact support.");
@@ -159,7 +160,7 @@ public class AuthenticationService {
                 .map(role -> role.getAuthority())
                 .collect(Collectors.toSet());
 
-        return new LoginResponseDTO(accessToken, refreshToken, userLoginDTO.getEmail(), roles);
+        return new LoginResponseDTO(accessToken, refreshToken, loginRequestDTO.getEmail(), roles);
     }
 
 

@@ -1,9 +1,9 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.exception.*;
-import com.shopsavvy.shopshavvy.dto.CustomerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.customerDto.CustomerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
-import com.shopsavvy.shopshavvy.model.token.BlackListedToken;
 import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
@@ -11,25 +11,16 @@ import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
-import jakarta.mail.MessagingException;
-import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.management.relation.RoleNotFoundException;
-import java.util.Date;
-import java.util.Optional;
 import java.util.Set;
 
 
@@ -136,7 +127,8 @@ public class CustomerAuthenticationService {
     }
 
     @Transactional
-    public ResponseEntity<String> resendActivationLink(@RequestParam String email) throws Exception {
+    public ResponseEntity<String> resendActivationLink(@RequestParam EmailDTO emailDTO) throws Exception {
+        String email = emailDTO.getEmail();
         if (!userRepository.existsByEmail(email)) {
             throw new UserNotFoundException("User not found");
         }

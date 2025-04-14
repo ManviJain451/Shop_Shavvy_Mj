@@ -1,7 +1,8 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.CustomerResponseDTO;
-import com.shopsavvy.shopshavvy.dto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.EmailDTO;
+import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Customer;
@@ -29,9 +30,9 @@ public class AdminService {
     private final CustomerRepository customerRepository;
     private final SellerRepository sellerRepository;
 
-    public String unlockUser(String email){
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("User with this email ID: " + email + " is not found."));
+    public String unlockUser(EmailDTO emailDTO){
+        User user = userRepository.findByEmail(emailDTO.getEmail())
+                .orElseThrow(() -> new UserNotFoundException("User with this email ID: " + emailDTO.getEmail() + " is not found."));
 
         if(!user.isLocked()){
             return "User is already unlocked.";

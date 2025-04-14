@@ -3,7 +3,7 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.EmailAlreadyExistsException;
 import com.shopsavvy.shopshavvy.exception.PasswordMismatchException;
-import com.shopsavvy.shopshavvy.dto.SellerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.sellerDto.SellerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
@@ -11,7 +11,6 @@ import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
