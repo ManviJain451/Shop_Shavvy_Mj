@@ -20,13 +20,5 @@ public class SellerRegistrationDTO extends UserRegistrationDTO {
     @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid phone number. Must be a 10-digit Indian number starting with 6-9")
     private String companyContact;
 
-    private String city;
-
-    private String state;
-
-    private String country;
-
-    private String addressLine;
-
-    private String zipCode;
+    private AddressDTO address;
 }

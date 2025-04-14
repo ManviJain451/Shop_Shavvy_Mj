@@ -47,11 +47,11 @@ public class SellerAuthenticationService {
 
 
         Address address = Address.builder()
-                .city(sellerRegistrationDTO.getCity())
-                .state(sellerRegistrationDTO.getState())
-                .country(sellerRegistrationDTO.getCountry())
-                .addressLine(sellerRegistrationDTO.getAddressLine())
-                .zipCode(sellerRegistrationDTO.getZipCode())
+                .city(sellerRegistrationDTO.getAddress().getCity())
+                .state(sellerRegistrationDTO.getAddress().getState())
+                .country(sellerRegistrationDTO.getAddress().getCountry())
+                .addressLine(sellerRegistrationDTO.getAddress().getAddressLine())
+                .zipCode(sellerRegistrationDTO.getAddress().getZipCode())
                 .build();
 
         Seller seller = Seller.builder()
