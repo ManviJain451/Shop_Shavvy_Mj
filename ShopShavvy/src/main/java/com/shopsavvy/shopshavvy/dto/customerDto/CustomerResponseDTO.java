@@ -1,10 +1,8 @@
-package com.shopsavvy.shopshavvy.dto;
+package com.shopsavvy.shopshavvy.dto.customerDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.UUID;
 
 @Getter
 @Setter

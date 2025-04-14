@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.dto;
+package com.shopsavvy.shopshavvy.dto.loginDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,6 +10,7 @@ import java.util.Set;
 @Setter
 @AllArgsConstructor
 public class LoginResponseDTO {
+
     private String accessToken;
     private String refreshToken;
     private String email;

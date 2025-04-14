@@ -8,13 +8,11 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class UserLoginDTO {
+public class EmailDTO {
 
-    @Email(message = "Email should be valid")
+    @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}", message = "Invalid email format.")
     @NotBlank(message = "Email is mandatory")
+    @Size(max = 255, message = "Email must be less than 255 characters")
     private String email;
 
-    @NotBlank(message = "Password is mandatory")
-    @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters long")
-    private String password;
 }

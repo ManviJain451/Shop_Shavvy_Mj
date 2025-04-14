@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.dto;
+package com.shopsavvy.shopshavvy.dto.passwordDto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

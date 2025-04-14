@@ -1,7 +1,11 @@
-package com.shopsavvy.shopshavvy.dto;
+package com.shopsavvy.shopshavvy.dto.sellerDto;
 
+import com.shopsavvy.shopshavvy.dto.userDto.UserRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,11 +18,13 @@ public class SellerRegistrationDTO extends UserRegistrationDTO {
     private String gst;
 
     @NotBlank(message = "Company name is mandatory")
+    @Size(min = 3, max = 100, message = "Company name must be between 3 and 100 characters")
     private String companyName;
 
-    @NotBlank(message = "Company contact is mandatory")
-    @Pattern(regexp = "^[6-9]\\d{9}$", message = "Invalid phone number. Must be a 10-digit Indian number starting with 6-9")
+    @Pattern(regexp = "^[0-9]{10}$",
+            message = "Contact must be exactly 10 digits")
     private String companyContact;
 
+    @Valid
     private AddressDTO address;
 }
