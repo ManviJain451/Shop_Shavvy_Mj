@@ -57,36 +57,45 @@ public class AuthenticationService {
 
 
     public String registerAdmin(User user) throws MessagingException {
-
-
-        User use = new User();
-        user.setEmail(user.getEmail());
-        user.setFirstName(user.getFirstName());
-        user.setLastName(user.getLastName());
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        if (user.getMiddleName() != null && !user.getMiddleName().isBlank()) {
-            user.setMiddleName(user.getMiddleName());
-        }
+        User adminUser = User.builder()
+                .email(user.getEmail())
+                .firstName(user.getFirstName())
+                .lastName(user.getLastName())
+                .middleName((user.getMiddleName() != null && !user.getMiddleName().isBlank()) ? user.getMiddleName() : null)
+                .password(passwordEncoder.encode(user.getPassword()))
+                .isActive(true)
+                .build();
 
 
         Role role = roleRepository.findByAuthority("ROLE_ADMIN");
-        user.addRole(role);
-        user.setIsActive(true);
-        userRepository.save(user);
+        adminUser.addRole(role);
 
-        UserDetailsImpl userDetails = new UserDetailsImpl(user);
+
+        userRepository.save(adminUser);
+
+
+        UserDetailsImpl userDetails = new UserDetailsImpl(adminUser);
         String token = jwtService.generateToken(userDetails, "activation");
         Claims claims = jwtService.extractAllClaims(token);
-        AuthToken authToken = new AuthToken();
-        authToken.setUserEmail(user.getEmail());
-        authToken.setToken(token);
-        authToken.setTokenType("activation");
-        authToken.setExpirationTime(claims.getExpiration());
+
+        AuthToken authToken = AuthToken.builder()
+                .userEmail(adminUser.getEmail())
+                .token(token)
+                .tokenType("activation")
+                .expirationTime(claims.getExpiration())
+                .build();
+
         authTokenRepository.save(authToken);
-        emailService.sendVerificationEmail(user.getEmail(), "Admin Account Created", "Admin account has been created. Admin account has been activated.");
+
+
+        emailService.sendVerificationEmail(
+                adminUser.getEmail(),
+                "Admin Account Created",
+                "Admin account has been created. Admin account has been activated."
+        );
 
         return "Admin has been registered";
+
     }
 
     public LoginResponseDTO authenticate(UserLoginDTO userLoginDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException, MessagingException {
@@ -236,11 +245,12 @@ public class AuthenticationService {
 
         Claims claimsForResetPasswordToken = jwtService.extractAllClaims(resetPasswordToken);
 
-        AuthToken resetPasswordAuthToken = new AuthToken();
-        resetPasswordAuthToken.setUserEmail(email);
-        resetPasswordAuthToken.setToken(resetPasswordToken);
-        resetPasswordAuthToken.setTokenType("reset_password");
-        resetPasswordAuthToken.setExpirationTime(claimsForResetPasswordToken.getExpiration());
+        AuthToken resetPasswordAuthToken = AuthToken.builder()
+                .userEmail(email)
+                .token(resetPasswordToken)
+                .tokenType("reset_password")
+                .expirationTime(claimsForResetPasswordToken.getExpiration())
+                .build();
         authTokenRepository.save(resetPasswordAuthToken);
 
         emailService.sendVerificationEmail(email,"Password Reset Request", "To reset your password, click the link below:\n"

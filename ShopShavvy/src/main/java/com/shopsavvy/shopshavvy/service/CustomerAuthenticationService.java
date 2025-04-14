@@ -61,36 +61,34 @@ public class CustomerAuthenticationService {
             throw new EmailAlreadyExistsException("Email already exists");
         }
 
-        Customer customer = new Customer();
-        customer.setEmail(customerRegistrationDTO.getEmail());
-        customer.setFirstName(customerRegistrationDTO.getFirstName());
-        customer.setLastName(customerRegistrationDTO.getLastName());
-        customer.setPassword(passwordEncoder.encode(customerRegistrationDTO.getPassword()));
-        customer.setContact(customerRegistrationDTO.getContact());
-
-        if (customerRegistrationDTO.getMiddleName() != null && !customerRegistrationDTO.getMiddleName().isBlank()) {
-            customer.setMiddleName(customerRegistrationDTO.getMiddleName());
-        }
+        Customer customer = Customer.builder()
+                .email(customerRegistrationDTO.getEmail())
+                .firstName(customerRegistrationDTO.getFirstName())
+                .lastName(customerRegistrationDTO.getLastName())
+                .password(passwordEncoder.encode(customerRegistrationDTO.getPassword()))
+                .contact(customerRegistrationDTO.getContact())
+                .middleName((customerRegistrationDTO.getMiddleName() != null && !customerRegistrationDTO.getMiddleName().isBlank()) ? customerRegistrationDTO.getMiddleName() : null)
+                .build();
 
         if (!customerRegistrationDTO.getConfirmPassword().equals(customerRegistrationDTO.getPassword())) {
             throw new PasswordMismatchException("Confirm Password is not same as Password.");
         }
 
         Role role = roleRepository.findByAuthority("ROLE_CUSTOMER");
-        if(role != null){
-            customer.addRole(role);
-        }
+        customer.addRole(role);
 
         userRepository.save(customer);
 
         UserDetailsImpl userDetails = new UserDetailsImpl(customer);
         String token = jwtService.generateToken(userDetails, "activation");
         Claims claims = jwtService.extractAllClaims(token);
-        AuthToken authToken = new AuthToken();
-        authToken.setUserEmail(customer.getEmail());
-        authToken.setToken(token);
-        authToken.setTokenType("activation");
-        authToken.setExpirationTime(claims.getExpiration());
+
+        AuthToken authToken = AuthToken.builder()
+                .userEmail(customer.getEmail())
+                .token(token)
+                .tokenType("activation")
+                .expirationTime(claims.getExpiration())
+                .build();
         authTokenRepository.save(authToken);
 
 
@@ -163,11 +161,12 @@ public class CustomerAuthenticationService {
 
         Claims claims = jwtService.extractAllClaims(token);
 
-        AuthToken authToken = new AuthToken();
-        authToken.setUserEmail(email);
-        authToken.setToken(token);
-        authToken.setTokenType("activation");
-        authToken.setExpirationTime(claims.getExpiration());
+        AuthToken authToken = AuthToken.builder()
+                .userEmail(email)
+                .token(token)
+                .tokenType("activation")
+                .expirationTime(claims.getExpiration())
+                .build();
         authTokenRepository.save(authToken);
 
         try {

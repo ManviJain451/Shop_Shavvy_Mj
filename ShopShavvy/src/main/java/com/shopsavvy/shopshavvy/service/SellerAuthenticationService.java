@@ -41,31 +41,32 @@ public class SellerAuthenticationService {
             throw new DuplicateEntryExistsException("GST Number already exists.");
         }
 
-        Seller seller = new Seller();
-        seller.setEmail(sellerRegistrationDTO.getEmail());
-        seller.setFirstName(sellerRegistrationDTO.getFirstName());
-        seller.setLastName(sellerRegistrationDTO.getLastName());
-        seller.setPassword(passwordEncoder.encode(sellerRegistrationDTO.getPassword()));
-        seller.setCompanyContact(sellerRegistrationDTO.getCompanyContact());
-        seller.setCompanyName(sellerRegistrationDTO.getCompanyName());
-        seller.setGst(sellerRegistrationDTO.getGst());
-
-        if (sellerRegistrationDTO.getMiddleName() != null && !sellerRegistrationDTO.getMiddleName().isBlank()) {
-            seller.setMiddleName(sellerRegistrationDTO.getMiddleName());
-        }
-
-        Address address = new Address();
-        address.setCity(sellerRegistrationDTO.getCity());
-        address.setState(sellerRegistrationDTO.getState());
-        address.setCountry(sellerRegistrationDTO.getCountry());
-        address.setAddressLine(sellerRegistrationDTO.getAddressLine());
-        address.setZipCode(sellerRegistrationDTO.getZipCode());
-        seller.setAddresses(Set.of(address));
-
-
         if (!sellerRegistrationDTO.getConfirmPassword().equals(sellerRegistrationDTO.getPassword())) {
             throw new PasswordMismatchException("Confirm Password is not same as Password.");
         }
+
+
+        Address address = Address.builder()
+                .city(sellerRegistrationDTO.getCity())
+                .state(sellerRegistrationDTO.getState())
+                .country(sellerRegistrationDTO.getCountry())
+                .addressLine(sellerRegistrationDTO.getAddressLine())
+                .zipCode(sellerRegistrationDTO.getZipCode())
+                .build();
+
+        Seller seller = Seller.builder()
+                .email(sellerRegistrationDTO.getEmail())
+                .firstName(sellerRegistrationDTO.getFirstName())
+                .middleName(sellerRegistrationDTO.getMiddleName() != null && !sellerRegistrationDTO.getMiddleName().isBlank() ? sellerRegistrationDTO.getMiddleName() : null)
+                .lastName(sellerRegistrationDTO.getLastName())
+                .password(passwordEncoder.encode(sellerRegistrationDTO.getPassword()))
+                .companyContact(sellerRegistrationDTO.getCompanyContact())
+                .companyName(sellerRegistrationDTO.getCompanyName())
+                .gst(sellerRegistrationDTO.getGst())
+                .addresses(Set.of(address))
+                .defaultAddressId(address.getId())
+                .build();
+
 
         Role role = roleRepository.findByAuthority("ROLE_SELLER");
         seller.addRole(role);
