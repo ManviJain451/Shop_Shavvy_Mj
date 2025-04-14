@@ -55,7 +55,7 @@ public class CustomerController {
 
     @PostMapping("/add-address")
     public ResponseEntity<?> addAddress(@RequestParam String accessToken,
-            @Valid @ModelAttribute CustomerAddressDTO customerAddressDTO) {
+            @Valid @RequestBody CustomerAddressDTO customerAddressDTO) {
 
         customerService.addCustomerAddress(accessToken, customerAddressDTO);
         return ResponseEntity.ok("Address added successfully.");
@@ -72,7 +72,7 @@ public class CustomerController {
     @PatchMapping("/update-address")
     public ResponseEntity<String> updateCustomerAddress(@RequestParam String accessToken,
             @RequestParam String addressId,
-            @Valid @ModelAttribute CustomerAddressDTO customerAddressDTO) {
+            @Valid @RequestBody CustomerAddressDTO customerAddressDTO) {
 
         customerService.updateCustomerAddress(accessToken, addressId, customerAddressDTO);
         return ResponseEntity.ok("Address updated successfully.");
