@@ -2,6 +2,7 @@ package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.SellerService;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
@@ -10,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,25 +34,24 @@ public class SellerController {
     }
 
     @GetMapping("/view-profile")
-    public ResponseEntity<SellerProfileDTO> getSellerProfile(@RequestParam String accessToken) {
-        SellerProfileDTO sellerProfile = sellerService.getSellerProfile(accessToken);
+    public ResponseEntity<SellerProfileDTO> getSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
+        SellerProfileDTO sellerProfile = sellerService.getSellerProfile(userDetailsImpl);
         return ResponseEntity.ok(sellerProfile);
     }
 
     @PatchMapping("/update-profile")
-    public ResponseEntity<?> updateSellerProfile(
-            @RequestParam String accessToken,
+    public ResponseEntity<?> updateSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @Validated(OnUpdate.class) @ModelAttribute SellerProfileDTO sellerProfileDTO) {
 
-        sellerService.updateSellerProfile(accessToken, sellerProfileDTO);
+        sellerService.updateSellerProfile(userDetailsImpl, sellerProfileDTO);
         return ResponseEntity.ok("Seller profile updated successfully.");
     }
 
     @PatchMapping("/update-address")
-    public ResponseEntity<?> updateAddress(@RequestParam String accessToken, @RequestParam Long addressId,
+    public ResponseEntity<?> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, @RequestParam Long addressId,
             @Validated(OnUpdate.class) @RequestBody AddressDTO addressUpdateDTO) {
 
-        sellerService.updateAddress(accessToken, addressId, addressUpdateDTO);
+        sellerService.updateAddress(userDetailsImpl, addressId, addressUpdateDTO);
         return ResponseEntity.ok("Address updated successfully.");
     }
 

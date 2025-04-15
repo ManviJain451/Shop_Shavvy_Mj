@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.FileStorageService;
 import com.shopsavvy.shopshavvy.service.UserService;
 import jakarta.mail.MessagingException;
@@ -8,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -41,10 +43,10 @@ public class UserController {
     }
 
     @PutMapping("/update-password")
-    public ResponseEntity<?> updatePassword(@RequestParam String accessToken,
+    public ResponseEntity<?> updatePassword(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
                                             @Valid @RequestBody PasswordDTO passwordUpdateDTO) throws MessagingException {
 
-        userService.updatePassword(accessToken, passwordUpdateDTO);
+        userService.updatePassword(userDetailsImpl, passwordUpdateDTO);
         return ResponseEntity.ok("Password updated successfully.");
     }
 }

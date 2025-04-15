@@ -6,6 +6,7 @@ import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -25,9 +26,8 @@ public class SellerService {
     @Value("${file.storage.base-path}")
     private String basePath;
 
-    public SellerProfileDTO getSellerProfile(String accessToken) {
-        String email = jwtService.extractUsername(accessToken);
-        Seller seller = sellerRepository.findByEmail(email)
+    public SellerProfileDTO getSellerProfile(UserDetailsImpl userDetailsImpl) {
+        Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
 
         String imageUrl = fileStorageService.getUserImageUrl(seller.getId());
@@ -59,9 +59,8 @@ public class SellerService {
     }
 
 
-    public void updateSellerProfile(String accessToken, SellerProfileDTO sellerProfileDTO) {
-        String email = jwtService.extractUsername(accessToken);
-        Seller seller = sellerRepository.findByEmail(email)
+    public void updateSellerProfile(UserDetailsImpl userDetailsImpl, SellerProfileDTO sellerProfileDTO) {
+        Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
 
         if (sellerProfileDTO.getFirstName() != null) {
@@ -88,9 +87,8 @@ public class SellerService {
         sellerRepository.save(seller);
     }
 
-    public void updateAddress(String accessToken, Long addressId, AddressDTO addressDTO) {
-        String email = jwtService.extractUsername(accessToken);
-        Seller seller = sellerRepository.findByEmail(email)
+    public void updateAddress(UserDetailsImpl userDetailsImpl, Long addressId, AddressDTO addressDTO) {
+        Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
 
         Address address = seller.getAddresses().stream()

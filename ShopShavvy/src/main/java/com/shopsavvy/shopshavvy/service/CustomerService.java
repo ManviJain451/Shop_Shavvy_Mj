@@ -8,6 +8,7 @@ import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.repository.AddressRepository;
 import com.shopsavvy.shopshavvy.repository.CustomerRepository;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,16 +18,17 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+
 public class CustomerService {
     private final JwtService jwtService;
     private final CustomerRepository customerRepository;
     private final FileStorageService fileStorageService;
     private final AddressRepository addressRepository;
 
-    public CustomerProfileDTO getCustomerProfile(String accessToken) {
-        String email = jwtService.extractUsername(accessToken);
-        Customer customer = customerRepository.findByEmail(email)
-                .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
+    public CustomerProfileDTO getCustomerProfile(UserDetailsImpl userDetailsImpl) {
+
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
+                .orElseThrow(() -> new UserNotFoundException("Customer not found"));
 
         String imageUrl = fileStorageService.getUserImageUrl(customer.getId());
         return CustomerProfileDTO.builder()
@@ -41,9 +43,8 @@ public class CustomerService {
 
     }
 
-    public List<AddressDTO> getCustomerAddresses(String accessToken) {
-        String email = jwtService.extractUsername(accessToken);
-        Customer customer = customerRepository.findByEmail(email)
+    public List<AddressDTO> getCustomerAddresses(UserDetailsImpl userDetailsImpl) {
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
         return customer.getAddresses().stream()
@@ -58,9 +59,8 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    public void updateCustomerProfile(String accessToken, CustomerProfileDTO customerProfileDTO) {
-        String email = jwtService.extractUsername(accessToken);
-        Customer customer = customerRepository.findByEmail(email)
+    public void updateCustomerProfile(UserDetailsImpl userDetailsImpl, CustomerProfileDTO customerProfileDTO) {
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
         if (customerProfileDTO.getFirstName() != null) {
@@ -87,9 +87,8 @@ public class CustomerService {
         customerRepository.save(customer);
     }
 
-    public void addCustomerAddress(String accessToken, CustomerAddressDTO customerAddressDTO) {
-        String email = jwtService.extractUsername(accessToken);
-        Customer customer = customerRepository.findByEmail(email)
+    public void addCustomerAddress(UserDetailsImpl userDetailsImpl, CustomerAddressDTO customerAddressDTO) {
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
         Address newAddress = Address.builder()
@@ -110,12 +109,11 @@ public class CustomerService {
         customerRepository.save(customer);
     }
 
-    public void deleteCustomerAddress(String accessToken, String addressId) {
-        String email = jwtService.extractUsername(accessToken);
-        Customer customer = customerRepository.findByEmail(email)
+    public void deleteCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId) {
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
-        Address addressToDelete = customer.getAddresses().stream()
+        customer.getAddresses().stream()
                 .filter(a -> a.getId().equals(addressId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("Address not found for the provided address ID."));
@@ -128,13 +126,12 @@ public class CustomerService {
             customer.setDefaultAddressId(newDefaultAddress != null ? newDefaultAddress.getId() : null);
         }
 
-        addressRepository.delete(addressToDelete);
-
+        addressRepository.delete(addressId);
+        customerRepository.save(customer);
     }
 
-    public void updateCustomerAddress(String accessToken, String addressId, CustomerAddressDTO customerAddressDTO) {
-        String email = jwtService.extractUsername(accessToken);
-        Customer customer = customerRepository.findByEmail(email)
+    public void updateCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId, CustomerAddressDTO customerAddressDTO) {
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found."));
 
         Address addressToUpdate = customer.getAddresses().stream()
