@@ -31,6 +31,7 @@ public class Address {
     private String zipCode;
 
     private String label;
+
     private boolean isDeleted = false;
 
 }

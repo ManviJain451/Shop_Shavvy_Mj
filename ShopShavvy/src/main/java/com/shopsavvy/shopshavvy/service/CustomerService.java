@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -59,7 +60,7 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    public void updateCustomerProfile(UserDetailsImpl userDetailsImpl, CustomerProfileDTO customerProfileDTO) {
+    public String updateCustomerProfile(UserDetailsImpl userDetailsImpl, CustomerProfileDTO customerProfileDTO) {
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
@@ -85,9 +86,10 @@ public class CustomerService {
         }
 
         customerRepository.save(customer);
+        return "Profile updated successfully.";
     }
 
-    public void addCustomerAddress(UserDetailsImpl userDetailsImpl, CustomerAddressDTO customerAddressDTO) {
+    public String addCustomerAddress(UserDetailsImpl userDetailsImpl, CustomerAddressDTO customerAddressDTO) {
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
@@ -107,9 +109,10 @@ public class CustomerService {
         }
 
         customerRepository.save(customer);
+        return "Address added successfully.";
     }
 
-    public void deleteCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId) {
+    public String deleteCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId) {
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found for the provided access token."));
 
@@ -126,11 +129,12 @@ public class CustomerService {
             customer.setDefaultAddressId(newDefaultAddress != null ? newDefaultAddress.getId() : null);
         }
 
-        addressRepository.delete(addressId);
+        addressRepository.deleteById(addressId);
         customerRepository.save(customer);
+        return "Address deleted successfully.";
     }
 
-    public void updateCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId, CustomerAddressDTO customerAddressDTO) {
+    public String updateCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId, CustomerAddressDTO customerAddressDTO) {
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Customer not found."));
 
@@ -151,6 +155,7 @@ public class CustomerService {
         }
 
         customerRepository.save(customer);
+        return "Address updated successfully.";
     }
 
 }

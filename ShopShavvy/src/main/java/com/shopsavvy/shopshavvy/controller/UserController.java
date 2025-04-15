@@ -4,6 +4,7 @@ import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.FileStorageService;
 import com.shopsavvy.shopshavvy.service.UserService;
+import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,29 +25,29 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/{userId}/upload-photo")
-    public ResponseEntity<String> uploadUserPhoto(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadUserPhoto(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
         try {
             String message = fileStorageService.saveOrUpdateUserPhoto(userId, file);
-            return ResponseEntity.ok(message);
+            return ResponseEntity.ok(SuccessMessageResponse.success(message));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to upload photo.");
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{userId}/delete-photo")
-    public ResponseEntity<String> deleteProfilePhoto(@PathVariable String userId) throws IOException {
-        fileStorageService.deleteUserPhoto(userId);
-        return ResponseEntity.ok("Profile photo deleted successfully.");
+    public ResponseEntity<SuccessMessageResponse<String>> deleteProfilePhoto(@PathVariable String userId) throws IOException {
+        String message = fileStorageService.deleteUserPhoto(userId);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
 
     }
 
     @PutMapping("/update-password")
-    public ResponseEntity<?> updatePassword(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+    public ResponseEntity<SuccessMessageResponse<String>> updatePassword(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
                                             @Valid @RequestBody PasswordDTO passwordUpdateDTO) throws MessagingException {
 
-        userService.updatePassword(userDetailsImpl, passwordUpdateDTO);
-        return ResponseEntity.ok("Password updated successfully.");
+        String message = userService.updatePassword(userDetailsImpl, passwordUpdateDTO);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 }

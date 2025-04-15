@@ -13,7 +13,6 @@ import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -117,17 +116,16 @@ public class CustomerAuthenticationService {
 
     }
 
-    public ResponseEntity<Void> verifyCustomer(String email) throws Exception{
+    public void verifyCustomer(String email) throws Exception{
         try {
             emailService.sendVerificationEmail(email, "Account Activated", "Your account has been successfully activated.");
         } catch (Exception e) {
             throw new Exception("Verification Email is not send");
         }
-        return ResponseEntity.ok().build();
     }
 
     @Transactional
-    public ResponseEntity<String> resendActivationLink(@RequestParam EmailDTO emailDTO) throws Exception {
+    public String resendActivationLink(@RequestParam EmailDTO emailDTO) throws Exception {
         String email = emailDTO.getEmail();
         if (!userRepository.existsByEmail(email)) {
             throw new UserNotFoundException("User not found");
@@ -167,7 +165,7 @@ public class CustomerAuthenticationService {
             throw new Exception("Mail for activating the account is not send");
         }
 
-        return ResponseEntity.ok().body("The activation link is sent to registered email.");
+        return "The activation link is sent to registered email.";
     }
 
 

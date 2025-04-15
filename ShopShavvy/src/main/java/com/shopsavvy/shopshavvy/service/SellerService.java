@@ -59,7 +59,7 @@ public class SellerService {
     }
 
 
-    public void updateSellerProfile(UserDetailsImpl userDetailsImpl, SellerProfileDTO sellerProfileDTO) {
+    public String updateSellerProfile(UserDetailsImpl userDetailsImpl, SellerProfileDTO sellerProfileDTO) {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
 
@@ -85,9 +85,10 @@ public class SellerService {
         }
 
         sellerRepository.save(seller);
+        return "Seller profile updated successfully.";
     }
 
-    public void updateAddress(UserDetailsImpl userDetailsImpl, Long addressId, AddressDTO addressDTO) {
+    public String updateAddress(UserDetailsImpl userDetailsImpl, Long addressId, AddressDTO addressDTO) {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
 
@@ -116,6 +117,7 @@ public class SellerService {
         }
 
         sellerRepository.save(seller);
+        return "Address updated successfully.";
     }
 
 }

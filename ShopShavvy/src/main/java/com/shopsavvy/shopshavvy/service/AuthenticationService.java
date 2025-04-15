@@ -3,7 +3,6 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.dto.userDto.UserRegistrationDTO;
 import com.shopsavvy.shopshavvy.exception.*;
 import com.shopsavvy.shopshavvy.dto.loginDto.LoginResponseDTO;
-import com.shopsavvy.shopshavvy.dto.passwordDto.ResetPasswordResponseDTO;
 import com.shopsavvy.shopshavvy.dto.loginDto.LoginRequestDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.users.Role;
@@ -21,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -177,7 +175,7 @@ public class AuthenticationService {
     }
 
 
-    public ResponseEntity<String> userLogout(String accessToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {
+    public String userLogout(String accessToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {
         if(blackListedTokenRepository.existsByToken(accessToken)){
             throw new TokenNotFoundException("Access token is not found");
         }
@@ -211,7 +209,7 @@ public class AuthenticationService {
         httpServletResponse.addHeader(HttpHeaders.SET_COOKIE, refreshTokencookie.toString());
 
 
-        return ResponseEntity.ok("You are logged out.");
+        return "You are logged out.";
     }
 
     @Transactional
@@ -234,7 +232,7 @@ public class AuthenticationService {
     }
 
     @Transactional
-    public ResponseEntity<String> forgotPassword(String email) throws MessagingException {
+    public String forgotPassword(String email) throws MessagingException {
          User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
         if(!user.getIsActive()){
@@ -258,11 +256,11 @@ public class AuthenticationService {
                 + "http://localhost:8080/shop-shavvy/auth/reset-password?token=" + resetPasswordToken);
 
 
-        return ResponseEntity.ok("Password reset link has been sent to your email.");
+        return "Password reset link has been sent to your email.";
     }
 
     @Transactional
-    public ResponseEntity<ResetPasswordResponseDTO> resetPassword(String resetPasswordtoken, String password, String confirmPassword) throws MessagingException {
+    public String resetPassword(String resetPasswordtoken, String password, String confirmPassword) throws MessagingException {
 
         String userEmail = jwtService.extractUsername(resetPasswordtoken);
         User user = userRepository.findByEmail(userEmail)
@@ -280,7 +278,7 @@ public class AuthenticationService {
         authTokenRepository.deleteByToken(resetPasswordtoken);
 
         emailService.sendVerificationEmail(user.getEmail(), "Password Reset Successful", "Your password has been successfully reset.");
-        return ResponseEntity.ok(new ResetPasswordResponseDTO(resetPasswordtoken, password, confirmPassword));
+        return "Password is reset successfully";
 
     }
 

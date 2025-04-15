@@ -17,29 +17,33 @@ public class FileStorageService {
     private static final String[] ALLOWED_FORMATS = {"jpg", "jpeg", "png", "bmp"};
 
     public String saveOrUpdateUserPhoto(String userId, MultipartFile file) throws IOException {
-        validateFileFormat(file.getOriginalFilename());
+        try {
+            validateFileFormat(file.getOriginalFilename());
 
-        Path userDirectory = Paths.get(BASE_PATH, "users", userId);
-        Files.createDirectories(userDirectory);
+            Path userDirectory = Paths.get(BASE_PATH, "users", userId);
+            Files.createDirectories(userDirectory);
 
-        boolean photoExists = Files.list(userDirectory).findAny().isPresent();
+            boolean photoExists = Files.list(userDirectory).findAny().isPresent();
 
-        deleteExistingPhoto(userDirectory);
+            deleteExistingPhoto(userDirectory);
 
-        Path filePath = userDirectory.resolve(userId + "." + getFileExtension(file.getOriginalFilename()));
-        file.transferTo(filePath.toFile());
+            Path filePath = userDirectory.resolve(userId + "." + getFileExtension(file.getOriginalFilename()));
+            file.transferTo(filePath.toFile());
 
-        return photoExists ? "Profile photo updated successfully." : "Profile photo uploaded successfully.";
-
+            return photoExists ? "Profile photo updated successfully." : "Profile photo uploaded successfully.";
+        } catch (IOException e) {
+            throw new IOException("Failed to store or update file", e);
+        }
     }
 
-    public void deleteUserPhoto(String userId) throws IOException {
+    public String deleteUserPhoto(String userId) throws IOException {
         Path userDirectory = Paths.get(BASE_PATH, "users", userId);
         if (Files.exists(userDirectory)) {
             deleteExistingPhoto(userDirectory);
         } else {
             throw new IllegalArgumentException("No profile photo found for the user.");
         }
+        return "Profile photo deleted successfully.";
     }
 
     private void deleteExistingPhoto(Path userDirectory) throws IOException {

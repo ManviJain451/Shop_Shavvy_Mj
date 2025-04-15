@@ -63,7 +63,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorDetails> handleAlreadyActivatedException(AlreadyActivatedException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InvalidTokenException.class)
@@ -91,7 +91,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorDetails> handleAlreadyDeactivatedException(AlreadyDeactivatedException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.CONFLICT);
     }
 
 

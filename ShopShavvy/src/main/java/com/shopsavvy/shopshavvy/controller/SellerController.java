@@ -5,6 +5,7 @@ import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.SellerService;
+import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,30 +30,31 @@ public class SellerController {
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<String> logout(@RequestParam String accessToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {
-        return authenticationService.userLogout(accessToken, httpServletRequest, httpServletResponse);
+    public ResponseEntity<SuccessMessageResponse<String>> logout(@RequestParam String accessToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {
+        String message = authenticationService.userLogout(accessToken, httpServletRequest, httpServletResponse);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
     @GetMapping("/view-profile")
-    public ResponseEntity<SellerProfileDTO> getSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
+    public ResponseEntity<SuccessMessageResponse<SellerProfileDTO>> getSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
         SellerProfileDTO sellerProfile = sellerService.getSellerProfile(userDetailsImpl);
-        return ResponseEntity.ok(sellerProfile);
+        return ResponseEntity.ok(SuccessMessageResponse.success(sellerProfile));
     }
 
     @PatchMapping("/update-profile")
-    public ResponseEntity<?> updateSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+    public ResponseEntity<SuccessMessageResponse<String>> updateSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @Validated(OnUpdate.class) @ModelAttribute SellerProfileDTO sellerProfileDTO) {
 
-        sellerService.updateSellerProfile(userDetailsImpl, sellerProfileDTO);
-        return ResponseEntity.ok("Seller profile updated successfully.");
+        String message = sellerService.updateSellerProfile(userDetailsImpl, sellerProfileDTO);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
     @PatchMapping("/update-address")
-    public ResponseEntity<?> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, @RequestParam Long addressId,
+    public ResponseEntity<SuccessMessageResponse<String>> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, @RequestParam Long addressId,
             @Validated(OnUpdate.class) @RequestBody AddressDTO addressUpdateDTO) {
 
-        sellerService.updateAddress(userDetailsImpl, addressId, addressUpdateDTO);
-        return ResponseEntity.ok("Address updated successfully.");
+        String message = sellerService.updateAddress(userDetailsImpl, addressId, addressUpdateDTO);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
 }
