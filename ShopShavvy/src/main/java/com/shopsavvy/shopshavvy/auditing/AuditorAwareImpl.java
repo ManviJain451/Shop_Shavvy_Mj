@@ -1,12 +1,6 @@
 package com.shopsavvy.shopshavvy.auditing;
 
-import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
-import com.shopsavvy.shopshavvy.model.users.User;
-import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
-import com.shopsavvy.shopshavvy.service.JwtService;
-import jakarta.servlet.http.HttpServletRequest;
-import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;

@@ -47,4 +47,8 @@ public class UserDetailsImpl implements UserDetails {
     public boolean isEnabled() {
         return user.getIsActive();
     }
+
+    public String getId(){
+        return user.getId();
+    }
 }
