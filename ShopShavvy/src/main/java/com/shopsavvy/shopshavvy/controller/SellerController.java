@@ -16,6 +16,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Locale;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/shop-shavvy/seller")
@@ -41,7 +43,7 @@ public class SellerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(sellerProfile));
     }
 
-    @PatchMapping("/update-profile")
+    @PutMapping("/update-profile")
     public ResponseEntity<SuccessMessageResponse<String>> updateSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @Validated(OnUpdate.class) @ModelAttribute SellerProfileDTO sellerProfileDTO) {
 
@@ -49,7 +51,7 @@ public class SellerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PatchMapping("/update-address")
+    @PutMapping("/update-address")
     public ResponseEntity<SuccessMessageResponse<String>> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, @RequestParam Long addressId,
             @Validated(OnUpdate.class) @RequestBody AddressDTO addressUpdateDTO) {
 

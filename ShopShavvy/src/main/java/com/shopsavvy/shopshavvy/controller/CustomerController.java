@@ -13,12 +13,14 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Locale;
 
 @RestController
 @RequiredArgsConstructor
@@ -53,7 +55,7 @@ public class CustomerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(addresses));
     }
 
-    @PatchMapping("/update-profile")
+    @PutMapping("/update-profile")
     public ResponseEntity<SuccessMessageResponse<String>> updateProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @Validated(OnUpdate.class) @ModelAttribute CustomerProfileDTO customerProfileDTO) {
 
@@ -61,7 +63,7 @@ public class CustomerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PostMapping("/add-address")
+    @PostMapping("/address")
     public ResponseEntity<SuccessMessageResponse<String>> addAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @Validated(OnCreate.class) @RequestBody CustomerAddressDTO customerAddressDTO) {
 
@@ -69,18 +71,18 @@ public class CustomerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @DeleteMapping("/delete-address")
+    @DeleteMapping("/address")
     public ResponseEntity<SuccessMessageResponse<String>> deleteAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestParam String addressId) {
+            @RequestParam String addressId) throws BadRequestException {
 
         String message = customerService.deleteCustomerAddress(userDetailsImpl, addressId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PatchMapping("/update-address")
+    @PutMapping("/address")
     public ResponseEntity<SuccessMessageResponse<String>> updateCustomerAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @RequestParam String addressId,
-            @Validated(OnUpdate.class) @RequestBody CustomerAddressDTO customerAddressDTO) {
+            @Validated(OnUpdate.class) @RequestBody CustomerAddressDTO customerAddressDTO) throws BadRequestException {
 
         String message = customerService.updateCustomerAddress(userDetailsImpl, addressId, customerAddressDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
