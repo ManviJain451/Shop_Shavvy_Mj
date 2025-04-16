@@ -5,11 +5,17 @@ import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.validator.internal.util.stereotypes.Lazy;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
+
+import java.util.Locale;
 
 @Component
 @Order(2)
@@ -18,7 +24,13 @@ public class AdminInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
+    private final BCryptPasswordEncoder passwordEncoder;
+    private MessageSource messageSource;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
 
     @Override
     public void run(String... args) throws Exception {
@@ -28,7 +40,7 @@ public class AdminInitializer implements CommandLineRunner {
 
         Role adminRole = roleRepository.findByAuthority("ROLE_ADMIN");
         if (adminRole == null) {
-            throw new RuntimeException("ROLE_ADMIN must be initialized before creating the admin user.");
+            throw new RuntimeException(messageSource.getMessage("error.initialise.admin", null, getCurrentLocale()));
         }
 
         User adminUser = new User();
@@ -40,6 +52,6 @@ public class AdminInitializer implements CommandLineRunner {
         adminUser.addRole(adminRole);
 
         userRepository.save(adminUser);
-        System.out.println("Admin user created successfully.");
+        System.out.println(messageSource.getMessage("admin.register.success", null, getCurrentLocale()));
     }
 }
