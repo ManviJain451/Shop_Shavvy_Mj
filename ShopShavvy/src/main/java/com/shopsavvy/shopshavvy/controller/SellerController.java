@@ -11,6 +11,7 @@ import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -52,8 +53,8 @@ public class SellerController {
     }
 
     @PutMapping("/update-address")
-    public ResponseEntity<SuccessMessageResponse<String>> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, @RequestParam Long addressId,
-            @Validated(OnUpdate.class) @RequestBody AddressDTO addressUpdateDTO) {
+    public ResponseEntity<SuccessMessageResponse<String>> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, @RequestParam String addressId,
+            @Validated(OnUpdate.class) @RequestBody AddressDTO addressUpdateDTO) throws BadRequestException {
 
         String message = sellerService.updateAddress(userDetailsImpl, addressId, addressUpdateDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));

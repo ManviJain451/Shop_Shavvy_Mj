@@ -26,3 +26,5 @@ public class Seller extends User {
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Product> products;
 }
+
+

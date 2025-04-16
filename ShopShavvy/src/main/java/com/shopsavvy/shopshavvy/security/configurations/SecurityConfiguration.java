@@ -33,6 +33,7 @@ public class SecurityConfiguration {
                         .requestMatchers("/shop-shavvy/seller/**").hasRole("SELLER")
                         .requestMatchers("/shop-shavvy/admin/**").hasRole("ADMIN")
                         .requestMatchers("/shop-shavvy/auth/signup/admin").hasRole("ADMIN")
+                        .requestMatchers("/shop-shavvy/users/**").hasAnyRole("ADMIN", "CUSTOMER", "SELLER")
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session

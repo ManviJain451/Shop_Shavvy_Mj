@@ -61,6 +61,7 @@ public class AuthenticationService {
         return LocaleContextHolder.getLocale();
     }
 
+    @Transactional
     public String registerAdmin(UserRegistrationDTO userRegistrationDTO) throws MessagingException {
         User adminUser = User.builder()
                 .email(userRegistrationDTO.getEmail())
@@ -69,6 +70,7 @@ public class AuthenticationService {
                 .middleName((userRegistrationDTO.getMiddleName() != null && !userRegistrationDTO.getMiddleName().isBlank()) ? userRegistrationDTO.getMiddleName() : null)
                 .password(passwordEncoder.encode(userRegistrationDTO.getPassword()))
                 .isActive(true)
+                .isDeleted(false)
                 .build();
 
         Role role = roleRepository.findByAuthority("ROLE_ADMIN");
@@ -110,8 +112,8 @@ public class AuthenticationService {
             throw new AlreadyDeactivatedException(messageSource.getMessage("account.not.activated", null, getCurrentLocale()));
         }
 
-        if (isPasswordCredentialExpired(loginRequestDTO.getEmail())) {
-            throw new RuntimeException(messageSource.getMessage("password.expired", null, getCurrentLocale()));
+        if (user.isExpired()) {
+            throw new BadCredentialsException(messageSource.getMessage("password.expired", null, getCurrentLocale()));
         }
 
         if (!passwordEncoder.matches(loginRequestDTO.getPassword(), user.getPassword())) {
@@ -159,11 +161,12 @@ public class AuthenticationService {
         return new LoginResponseDTO(accessToken, refreshToken, loginRequestDTO.getEmail(), roles);
     }
 
+
     public boolean isPasswordCredentialExpired(String email) {
         LocalDateTime passwordLastUpdateDate = userRepository.findPasswordUpdateDateByEmail(email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
-        if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MONTHS))) {
+        if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MINUTES))) {
             user.setExpired(true);
             userRepository.save(user);
             return true;
@@ -171,6 +174,7 @@ public class AuthenticationService {
         return false;
     }
 
+    @Transactional
     public String userLogout(String accessToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {
         if (blackListedTokenRepository.existsByToken(accessToken)) {
             throw new TokenNotFoundException(messageSource.getMessage("access.token.not.found", null, getCurrentLocale()));
@@ -273,6 +277,7 @@ public class AuthenticationService {
 
         String encodedPassword = passwordEncoder.encode(password);
         user.setPassword(encodedPassword);
+        user.setExpired(false);
         userRepository.save(user);
 
         authTokenRepository.deleteByToken(resetPasswordtoken);

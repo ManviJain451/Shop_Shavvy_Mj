@@ -19,7 +19,7 @@ public interface UserRepository extends JpaRepository<User, String> {
 
     Optional<User> findByEmail(String email);
 
-    Boolean existsByEmail(String email);
+    boolean existsByEmail(String email);
 
     @Query("select COUNT(*) > 0 from Seller where LOWER(companyName) = LOWER(:companyName)")
     boolean existsByCompanyName(@Param("companyName") String companyName);
@@ -29,7 +29,7 @@ public interface UserRepository extends JpaRepository<User, String> {
     boolean existsByGst(@Param("gst") String gst);
 
     @Query("SELECT u.isActive FROM User u WHERE u.email = :email")
-    Boolean findIsActiveByEmail(@Param("email") String email);
+    boolean findIsActiveByEmail(@Param("email") String email);
 
     @Query("SELECT u.passwordUpdateDate FROM User u WHERE u.email = :email")
     LocalDateTime findPasswordUpdateDateByEmail(@Param("email") String email);
@@ -45,4 +45,8 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<User> findAllByIsLocked(boolean isLocked);
 
     Optional<User> findById(String id);
+
+    @Query("SELECT u FROM User u WHERE u.passwordUpdateDate < ?1 AND u.isExpired = false")
+    List<User> findByPasswordLastUpdateDateBeforeAndExpiredFalse(LocalDateTime threshold);
+
 }

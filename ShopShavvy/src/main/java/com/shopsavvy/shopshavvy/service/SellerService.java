@@ -8,10 +8,12 @@ import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.Locale;
@@ -20,6 +22,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SellerService {
     private final JwtService jwtService;
     private final SellerRepository sellerRepository;
@@ -57,7 +60,7 @@ public class SellerService {
                 .firstName(seller.getFirstName())
                 .middleName(seller.getMiddleName())
                 .lastName(seller.getLastName())
-                .isActive(seller.getIsActive())
+                .active(seller.getIsActive())
                 .companyContact(seller.getCompanyContact())
                 .companyName(seller.getCompanyName())
                 .gst(seller.getGst())
@@ -86,7 +89,7 @@ public class SellerService {
         return messageSource.getMessage("success.seller.profile.updated", null, getCurrentLocale());
     }
 
-    public String updateAddress(UserDetailsImpl userDetailsImpl, Long addressId, AddressDTO addressDTO) {
+    public String updateAddress(UserDetailsImpl userDetailsImpl, String addressId, AddressDTO addressDTO) throws BadRequestException {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(
                         messageSource.getMessage("error.seller.not.found.token", null, getCurrentLocale())));
@@ -94,7 +97,7 @@ public class SellerService {
         Address address = seller.getAddresses().stream()
                 .filter(a -> a.getId().equals(addressId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException(
+                .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.address.not.found.id", null, getCurrentLocale())));
 
         updateAddressFields(address, addressDTO);

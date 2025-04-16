@@ -14,6 +14,7 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CustomerService {
     private final JwtService jwtService;
     private final CustomerRepository customerRepository;
@@ -44,7 +46,7 @@ public class CustomerService {
                 .firstName(customer.getFirstName())
                 .middleName(customer.getMiddleName())
                 .lastName(customer.getLastName())
-                .isActive(customer.getIsActive())
+                .active(customer.getIsActive())
                 .contact(customer.getContact())
                 .imageUrl(imageUrl)
                 .build();
@@ -55,7 +57,9 @@ public class CustomerService {
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale())));
 
-        return customer.getAddresses().stream()
+        return customer.getAddresses()
+                .stream()
+                .filter(address -> !address.isDeleted())
                 .map(address -> new AddressDTO(
                         address.getCity(),
                         address.getState(),
@@ -67,7 +71,7 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    public String updateCustomerProfile(UserDetailsImpl userDetailsImpl, CustomerProfileDTO customerProfileDTO) {
+    public String updateCustomerProfile(UserDetailsImpl userDetailsImpl, CustomerProfileDTO customerProfileDTO) throws IOException {
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale())));
 
@@ -86,11 +90,8 @@ public class CustomerService {
         }
 
         if (customerProfileDTO.getProfileImage() != null && !customerProfileDTO.getProfileImage().isEmpty()) {
-            try {
-                fileStorageService.saveOrUpdateUserPhoto(customer.getId(), customerProfileDTO.getProfileImage());
-            } catch (IOException e) {
-                throw new RuntimeException(messageSource.getMessage("error.profile.image.upload", null, getCurrentLocale()), e);
-            }
+            fileStorageService.saveOrUpdateUserPhoto(customer.getId(), customerProfileDTO.getProfileImage());
+
         }
 
         customerRepository.save(customer);
@@ -110,6 +111,7 @@ public class CustomerService {
                 .build();
 
 
+        addressRepository.save(newAddress);
         customer.getAddresses().add(newAddress);
         if (customerAddressDTO.isMakeDefault() || customer.getAddresses().size() == 1) {
             customer.setDefaultAddressId(newAddress.getId());
@@ -124,7 +126,7 @@ public class CustomerService {
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale())));
 
         customer.getAddresses().stream()
-                .filter(a -> a.getId().equals(addressId))
+                .filter(a -> a.getId().equals(addressId) && !a.isDeleted())
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException(messageSource.getMessage("error.address.not.found", null, getCurrentLocale())));
 
@@ -146,7 +148,7 @@ public class CustomerService {
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found", null, getCurrentLocale())));
 
         Address addressToUpdate = customer.getAddresses().stream()
-                .filter(addr -> addr.getId().equals(addressId))
+                .filter(addr -> addr.getId().equals(addressId) && !addr.isDeleted())
                 .findFirst()
                 .orElseThrow(() -> new BadRequestException(messageSource.getMessage("error.address.not.found.id", null, getCurrentLocale())));
 
@@ -161,6 +163,7 @@ public class CustomerService {
             customer.setDefaultAddressId(addressToUpdate.getId());
         }
 
+        addressRepository.save(addressToUpdate);
         customerRepository.save(customer);
         return messageSource.getMessage("success.address.updated", null, getCurrentLocale());
     }

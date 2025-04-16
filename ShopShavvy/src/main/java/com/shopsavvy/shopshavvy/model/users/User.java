@@ -63,7 +63,7 @@ public class User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
-    private Set<Role> roles = new HashSet<>();
+    private Set<Role> roles;
 
     @CreatedDate
     private LocalDateTime dateCreated;
@@ -83,6 +83,7 @@ public class User {
     }
 
     public void addRole(Role role){
+        this.roles = new HashSet<>();
         this.roles.add(role);
     }
 }

@@ -15,7 +15,7 @@ public class SellerResponseDTO {
     private String id;
     private String fullName;
     private String email;
-    private Boolean isActive;
+    private boolean isActive;
     private String companyName;
     private Set<Address> companyAddress;
     private String companyContact;

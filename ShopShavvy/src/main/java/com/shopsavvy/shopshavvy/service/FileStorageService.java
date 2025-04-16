@@ -10,6 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Arrays;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -29,9 +30,20 @@ public class FileStorageService {
     private static String[] ALLOWED_FORMATS = {"jpg", "jpeg", "png", "bmp"};
 
     public String saveOrUpdateUserPhoto(String userId, MultipartFile file) throws IOException {
-        try {
-            validateFileFormat(file.getOriginalFilename());
 
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException(messageSource.getMessage("error.invalid.file", null, getCurrentLocale()));
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new BadRequestException(messageSource.getMessage("error.invalid.filename", null, getCurrentLocale()));
+        }
+
+        validateFileFormat(originalFilename);
+        validateMimeType(file.getContentType());
+
+        try {
             Path userDirectory = Paths.get(BASE_PATH, "users", userId);
             Files.createDirectories(userDirectory);
 
@@ -39,7 +51,8 @@ public class FileStorageService {
 
             deleteExistingPhoto(userDirectory);
 
-            Path filePath = userDirectory.resolve(userId + "." + getFileExtension(file.getOriginalFilename()));
+            String fileExtension = getFileExtension(originalFilename);
+            Path filePath = userDirectory.resolve(userId + "." + fileExtension);
             file.transferTo(filePath.toFile());
 
             return photoExists ?
@@ -70,6 +83,11 @@ public class FileStorageService {
 
     public String getUserImageUrl(String userId) {
         Path userDirectory = Path.of(BASE_PATH, "users", userId);
+
+        if (!Files.exists(userDirectory)) {
+            return null;
+        }
+
         try {
             Optional<Path> imageFile = Files.list(userDirectory)
                     .filter(file -> file.getFileName().toString().startsWith(userId + "."))
@@ -87,22 +105,32 @@ public class FileStorageService {
 
     private void validateFileFormat(String fileName) throws BadRequestException {
         String fileExtension = getFileExtension(fileName);
-        boolean isValid = false;
-        for (String format : ALLOWED_FORMATS) {
-            if (format.equalsIgnoreCase(fileExtension)) {
-                isValid = true;
-                break;
-            }
-        }
+        boolean isValid = Arrays.stream(ALLOWED_FORMATS)
+                .anyMatch(format -> format.equalsIgnoreCase(fileExtension));
+
         if (!isValid) {
             throw new BadRequestException(messageSource.getMessage("error.invalid.file.format", null, getCurrentLocale()));
         }
     }
 
+    private void validateMimeType(String contentType) throws BadRequestException {
+        if (contentType == null || !contentType.startsWith("image/")) {
+            throw new BadRequestException(messageSource.getMessage("error.invalid.file.contenttype", null, getCurrentLocale()));
+        }
+    }
+
     private String getFileExtension(String fileName) throws BadRequestException {
-        if (fileName == null || !fileName.contains(".")) {
+        if (fileName == null || fileName.trim().isEmpty()) {
             throw new BadRequestException(messageSource.getMessage("error.invalid.filename", null, getCurrentLocale()));
         }
-        return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
+
+        fileName = fileName.trim().replaceAll("[\"']", "");
+
+        int lastDotIndex = fileName.lastIndexOf(".");
+        if (lastDotIndex == -1 || lastDotIndex == fileName.length() - 1) {
+            throw new BadRequestException(messageSource.getMessage("error.invalid.filename", null, getCurrentLocale()));
+        }
+
+        return fileName.substring(lastDotIndex + 1).toLowerCase();
     }
 }

@@ -43,11 +43,12 @@ public class UserProfileDTO {
     private String lastName;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private boolean isActive;
+    private boolean active;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String imageUrl;
 
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private MultipartFile profileImage;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

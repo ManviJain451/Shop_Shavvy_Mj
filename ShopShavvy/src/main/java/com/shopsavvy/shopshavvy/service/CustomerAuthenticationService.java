@@ -26,6 +26,7 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class CustomerAuthenticationService {
 
     @Value("${jwt.expiration-time.accessToken}")
@@ -63,6 +64,8 @@ public class CustomerAuthenticationService {
                 .password(passwordEncoder.encode(customerRegistrationDTO.getPassword()))
                 .contact(customerRegistrationDTO.getContact())
                 .middleName((customerRegistrationDTO.getMiddleName() != null && !customerRegistrationDTO.getMiddleName().isBlank()) ? customerRegistrationDTO.getMiddleName() : null)
+                .isActive(false)
+                .isDeleted(false)
                 .build();
 
         if (!customerRegistrationDTO.getConfirmPassword().equals(customerRegistrationDTO.getPassword())) {

@@ -8,6 +8,7 @@ import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -45,7 +46,7 @@ public class UserController {
 
     @PutMapping("/update-password")
     public ResponseEntity<SuccessMessageResponse<String>> updatePassword(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-                                            @Valid @RequestBody PasswordDTO passwordUpdateDTO) throws MessagingException {
+                                            @Valid @RequestBody PasswordDTO passwordUpdateDTO) throws MessagingException, BadRequestException {
 
         String message = userService.updatePassword(userDetailsImpl, passwordUpdateDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));

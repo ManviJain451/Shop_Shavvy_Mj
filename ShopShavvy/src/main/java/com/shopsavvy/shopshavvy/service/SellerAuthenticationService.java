@@ -14,6 +14,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 import java.util.Set;
@@ -21,6 +22,7 @@ import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SellerAuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -77,6 +79,8 @@ public class SellerAuthenticationService {
                 .gst(sellerRegistrationDTO.getGst())
                 .addresses(Set.of(address))
                 .defaultAddressId(address.getId())
+                .isActive(false)
+                .isDeleted(false)
                 .build();
 
 

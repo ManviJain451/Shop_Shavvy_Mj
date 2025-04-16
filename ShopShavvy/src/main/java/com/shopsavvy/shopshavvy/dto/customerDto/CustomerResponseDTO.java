@@ -12,6 +12,6 @@ public class CustomerResponseDTO {
     private String id;
     private String fullName;
     private String email;
-    private Boolean isActive;
+    private boolean isActive;
 
 }

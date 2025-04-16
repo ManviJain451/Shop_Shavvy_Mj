@@ -19,6 +19,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Locale;
 
@@ -57,7 +58,7 @@ public class CustomerController {
 
     @PutMapping("/update-profile")
     public ResponseEntity<SuccessMessageResponse<String>> updateProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @Validated(OnUpdate.class) @ModelAttribute CustomerProfileDTO customerProfileDTO) {
+            @Validated(OnUpdate.class) @ModelAttribute CustomerProfileDTO customerProfileDTO) throws IOException {
 
         String message = customerService.updateCustomerProfile(userDetailsImpl, customerProfileDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));

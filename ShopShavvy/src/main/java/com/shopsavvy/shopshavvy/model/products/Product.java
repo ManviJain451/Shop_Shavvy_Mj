@@ -38,19 +38,19 @@ public class Product {
     private Category category;
 
     @Column(name = "is_cancellable", nullable = false)
-    private Boolean isCancellable;
+    private boolean isCancellable;
 
     @Column(name = "is_returnable", nullable = false)
-    private Boolean isReturnable;
+    private boolean isReturnable;
 
     @Column(nullable = false)
     private String brand;
 
     @Column(name = "is_active", nullable = false)
-    private Boolean isActive;
+    private boolean isActive;
 
     @Column(name = "is_deleted", nullable = false)
-    private Boolean isDeleted;
+    private boolean isDeleted;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductVariation> productVariations;

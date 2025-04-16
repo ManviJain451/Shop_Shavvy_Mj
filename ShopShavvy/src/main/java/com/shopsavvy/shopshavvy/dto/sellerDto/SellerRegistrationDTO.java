@@ -2,10 +2,13 @@ package com.shopsavvy.shopshavvy.dto.sellerDto;
 
 import com.shopsavvy.shopshavvy.dto.userDto.UserRegistrationDTO;
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
+import com.shopsavvy.shopshavvy.validation.groups.OnCreate;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.groups.ConvertGroup;
+import jakarta.validation.groups.Default;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,5 +30,6 @@ public class SellerRegistrationDTO extends UserRegistrationDTO {
     private String companyContact;
 
     @Valid
+    @ConvertGroup(from = Default.class, to = OnCreate.class)
     private AddressDTO address;
 }
