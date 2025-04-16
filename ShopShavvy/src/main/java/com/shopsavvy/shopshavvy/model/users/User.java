@@ -54,7 +54,7 @@ public class User {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
-    private Set<Address> addresses;
+    private Set<Address> addresses = new HashSet<>();
 
 
     @ManyToMany(fetch = FetchType.EAGER)
