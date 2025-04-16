@@ -16,3 +16,4 @@ public interface BlackListedTokenRepository extends JpaRepository<BlackListedTok
     boolean existsByToken(String token);
 
 }
+
