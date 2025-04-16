@@ -4,19 +4,15 @@ import com.shopsavvy.shopshavvy.model.token.BlackListedToken;
 import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Transactional
 @Service
+@RequiredArgsConstructor
 public class BlackListedTokenService {
     private final BlackListedTokenRepository blackListedTokenRepository;
-
-    @Autowired
-    public BlackListedTokenService(BlackListedTokenRepository blackListedTokenRepository) {
-        this.blackListedTokenRepository = blackListedTokenRepository;
-    }
 
     public void blacklistRefreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
@@ -24,10 +20,9 @@ public class BlackListedTokenService {
             for (Cookie cookie : cookies) {
                 // Check for the refresh token cookie
                 if ("refreshToken".equals(cookie.getName())) {
-                    BlackListedToken blackListedToken = new BlackListedToken();
-                            blackListedToken.setToken(cookie.getValue());
-                            blackListedToken.setType("refresh");
-
+                    BlackListedToken blackListedToken = BlackListedToken.builder()
+                            .token(cookie.getValue())
+                            .type("refresh").build();
                     blackListedTokenRepository.save(blackListedToken);
                     break;
                 }
@@ -41,10 +36,9 @@ public class BlackListedTokenService {
             for (Cookie cookie : cookies) {
                 // Check for the refresh token cookie
                 if ("accessToken".equals(cookie.getName())) {
-                    BlackListedToken blackListedToken = new BlackListedToken();
-                    blackListedToken.setToken(cookie.getValue());
-                    blackListedToken.setType("accessToken");
-
+                    BlackListedToken blackListedToken = BlackListedToken.builder()
+                            .token(cookie.getValue())
+                            .type("accessToken").build();
                     blackListedTokenRepository.save(blackListedToken);
                     break;
                 }

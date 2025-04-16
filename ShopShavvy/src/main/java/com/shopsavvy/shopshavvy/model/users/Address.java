@@ -2,18 +2,23 @@ package com.shopsavvy.shopshavvy.model.users;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.annotations.Where;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@SuperBuilder
 @Table(name = "addresses")
 public class Address {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     private String city;
 
@@ -26,5 +31,8 @@ public class Address {
     private String zipCode;
 
     private String label;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
 
 }

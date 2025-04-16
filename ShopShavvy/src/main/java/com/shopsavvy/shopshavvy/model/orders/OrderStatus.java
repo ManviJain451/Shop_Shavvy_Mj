@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.model.orders;
 
+import com.shopsavvy.shopshavvy.model.enums.OrderStatusType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

@@ -1,27 +1,32 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.UserRegistrationDTO;
-import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.util.UUID;
+import java.util.Locale;
 
 @Service
+@RequiredArgsConstructor
 public class EmailService {
 
-    @Autowired
-    private JavaMailSender emailSender;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final JavaMailSender emailSender;
+    private final UserRepository userRepository;
+    private final MessageSource messageSource;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
 
     @Async
     public void sendVerificationEmail(String to, String subject, String text) throws MessagingException {
@@ -46,4 +51,18 @@ public class EmailService {
 
         sendVerificationEmail(email, subject, text);
     }
+
+    public void sendPasswordChangeNotification(String email) throws MessagingException {
+        try {
+            var message = emailSender.createMimeMessage();
+            var helper = new MimeMessageHelper(message, true);
+            helper.setTo(email);
+            helper.setSubject("Password Changed Successfully");
+            helper.setText("Your password has been changed successfully. If this was not you, please contact support immediately.");
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException( messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
+        }
+    }
+
 }

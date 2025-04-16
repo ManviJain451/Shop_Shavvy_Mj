@@ -1,5 +1,8 @@
 package com.shopsavvy.shopshavvy.exception;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
@@ -12,10 +15,20 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 @ControllerAdvice
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @Autowired
+    private MessageSource messageSource;
+
+    private Locale locale;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     @ExceptionHandler(Exception.class)
     public final ResponseEntity<ErrorDetails> handleAllExceptions(Exception exception, WebRequest request) throws Exception {
@@ -62,7 +75,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorDetails> handleAlreadyActivatedException(AlreadyActivatedException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InvalidTokenException.class)
@@ -86,11 +99,11 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
         return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.UNAUTHORIZED);
     }
 
-    @ExceptionHandler(DeactivatedAccountException.class)
-    public ResponseEntity<ErrorDetails> handleDeactivatedAccountException(DeactivatedAccountException exception, WebRequest request) {
+    @ExceptionHandler(AlreadyDeactivatedException.class)
+    public ResponseEntity<ErrorDetails> handleAlreadyDeactivatedException(AlreadyDeactivatedException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.FORBIDDEN);
+        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.CONFLICT);
     }
 
 
@@ -106,6 +119,12 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public final ResponseEntity<ErrorDetails> handleDuplicateEntryExistsException(DuplicateEntryExistsException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
         return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(MaximumUploadSizeExceededException.class)
+    public ResponseEntity<String> handleMaximumUploadSizeExceededException(MaximumUploadSizeExceededException ex) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(messageSource.getMessage("file.size.exceeded", null, locale));
     }
 
     @ExceptionHandler(PasswordMismatchException.class)
@@ -130,3 +149,5 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     }
 
 }
+
+

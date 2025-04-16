@@ -2,6 +2,7 @@ package com.shopsavvy.shopshavvy.model.users;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -9,15 +10,13 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 @Entity
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
@@ -26,7 +25,7 @@ public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private String id;
 
     @Column(unique = true)
     private String email;
@@ -55,10 +54,10 @@ public class User {
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "user_id")
-    private Set<Address> adresses;
+    private Set<Address> addresses = new HashSet<>();
 
 
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -74,6 +73,14 @@ public class User {
 
     @LastModifiedBy
     private String updatedBy;
+
+    private String defaultAddressId;
+
+    public Optional<Address> getDefaultAddress() {
+        return addresses.stream()
+                .filter(addr -> addr.getId().equals(defaultAddressId))
+                .findFirst();
+    }
 
     public void addRole(Role role){
         this.roles.add(role);

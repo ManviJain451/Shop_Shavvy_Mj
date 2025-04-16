@@ -13,10 +13,12 @@ import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.mail.MessagingException;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -25,11 +27,13 @@ import javax.crypto.SecretKey;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class JwtService {
     @Value("${security.jwt.secret-key}")
     private String secretKey;
@@ -46,22 +50,18 @@ public class JwtService {
     @Value("${jwt.expiration-time.resetPasswordToken}")
     private long resetPasswordTokenTime;
 
-    private AuthTokenRepository authTokenRepository;
-    private BlackListedTokenRepository blackListedTokenRepository;
-    private UserRepository userRepository;
-    private EmailService emailService;
+    private final AuthTokenRepository authTokenRepository;
+    private final BlackListedTokenRepository blackListedTokenRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+    private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final Logger logger= LoggerFactory.getLogger(JwtService.class);
+    private final MessageSource messageSource;
 
-    @Autowired
-    public JwtService(AuthTokenRepository authTokenRepository,
-                      BlackListedTokenRepository blackListedTokenRepository,
-                      UserRepository userRepository,
-                      EmailService emailService){
-        this.blackListedTokenRepository = blackListedTokenRepository;
-        this.authTokenRepository = authTokenRepository;
-        this.userRepository = userRepository;
-        this.emailService = emailService;
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
     }
+
 
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
@@ -125,27 +125,28 @@ public class JwtService {
         final Claims claims = extractAllClaims(token);
 
         if (!username.equals(userDetails.getUsername())) {
-            throw new InvalidTokenException("Token does not match the provided user.");
+            throw new InvalidTokenException(messageSource.getMessage("error.token.user.mismatch", null, getCurrentLocale()));
         }
 
         String typeFromToken = (String) claims.get("type");
         if (!tokenType.equals(typeFromToken)) {
-            throw new InvalidTokenException("Token type mismatch. Expected: " + tokenType + ", but found: " + typeFromToken);
+            Object[] args = {tokenType, typeFromToken};
+            throw new InvalidTokenException(messageSource.getMessage("error.token.type.mismatch", args, getCurrentLocale()));
         }
 
         if (isTokenExpired(token)) {
             if ("activation".equals(tokenType)) {
-                User user = userRepository.findByEmail(username);
-                if(user == null){
-                    throw new UserNotFoundException("User not found: " + username);
-                }
+                User user = userRepository.findByEmail(username)
+                        .orElseThrow(() -> new UserNotFoundException(
+                                messageSource.getMessage("error.user.not.found", null, getCurrentLocale())));
                 authTokenRepository.deleteByToken(token);
                 sendActivationLinkIfTokenIsExpired(username);
 
-                throw new TokenExpiredException("Activation token has expired. A new token has been sent to your email.");
+                throw new TokenExpiredException(
+                        messageSource.getMessage("error.token.activation.expired", null, getCurrentLocale()));
             }
 
-            throw new TokenExpiredException("Token has expired.");
+            throw new TokenExpiredException(messageSource.getMessage("error.token.expired", null, getCurrentLocale()));
         }
 
 
@@ -155,7 +156,8 @@ public class JwtService {
             case "reset_password":
                 tokenExists = authTokenRepository.existsByToken(token);
                 if (!tokenExists) {
-                    throw new TokenNotFoundException("Token not found in repository.");
+                    throw new TokenNotFoundException(
+                            messageSource.getMessage("error.token.not.found", null, getCurrentLocale()));
                 }
                 break;
 
@@ -163,7 +165,8 @@ public class JwtService {
             default:
                 boolean isBlacklisted = blackListedTokenRepository.existsByToken(token);
                 if (isBlacklisted) {
-                    throw new TokenNotFoundException("Token is blacklisted.");
+                    throw new TokenNotFoundException(
+                            messageSource.getMessage("error.token.blacklisted", null, getCurrentLocale()));
                 }
                 break;
         }
@@ -194,7 +197,7 @@ public class JwtService {
         } catch (ExpiredJwtException e) {
             return e.getClaims();
         }catch (JwtException e) {
-            throw new InvalidTokenException("Invalid token");
+            throw new InvalidTokenException(messageSource.getMessage("error.token.invalid", null, getCurrentLocale()));
         }
     }
 
@@ -205,8 +208,7 @@ public class JwtService {
     }
 
     public void sendActivationLinkIfTokenIsExpired(String email) throws MessagingException {
-        User user = userRepository.findByEmail(email);
-        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        UserDetailsImpl userDetailsImpl = userDetailsServiceImpl.loadUserByUsername(email);
         String newActivationToken = generateToken(userDetailsImpl, "activation");
         emailService.sendActivationLink(email, newActivationToken);
 

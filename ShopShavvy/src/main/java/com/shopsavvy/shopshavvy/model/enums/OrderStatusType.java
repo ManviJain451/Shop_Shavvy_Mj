@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.model.orders;
+package com.shopsavvy.shopshavvy.model.enums;
 
 public enum OrderStatusType {
     ORDER_PLACED,
