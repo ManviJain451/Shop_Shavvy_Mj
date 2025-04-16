@@ -32,6 +32,7 @@ public class Address {
 
     private String label;
 
+    @Column(name = "is_deleted", nullable = false)
     private boolean isDeleted = false;
 
 }
