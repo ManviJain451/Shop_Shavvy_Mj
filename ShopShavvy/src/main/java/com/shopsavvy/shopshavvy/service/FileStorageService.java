@@ -1,20 +1,32 @@
 package com.shopsavvy.shopshavvy.service;
 
+import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class FileStorageService {
+    private final MessageSource messageSource;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
 
     @Value("${file.storage.base-path}")
     private String BASE_PATH;
 
-    private static final String[] ALLOWED_FORMATS = {"jpg", "jpeg", "png", "bmp"};
+    private static String[] ALLOWED_FORMATS = {"jpg", "jpeg", "png", "bmp"};
 
     public String saveOrUpdateUserPhoto(String userId, MultipartFile file) throws IOException {
         try {
@@ -30,9 +42,11 @@ public class FileStorageService {
             Path filePath = userDirectory.resolve(userId + "." + getFileExtension(file.getOriginalFilename()));
             file.transferTo(filePath.toFile());
 
-            return photoExists ? "Profile photo updated successfully." : "Profile photo uploaded successfully.";
+            return photoExists ?
+                    messageSource.getMessage("success.photo.updated", null, getCurrentLocale()) :
+                    messageSource.getMessage("success.photo.uploaded", null, getCurrentLocale());
         } catch (IOException e) {
-            throw new IOException("Failed to store or update file", e);
+            throw new IOException(messageSource.getMessage("error.file.store", null, getCurrentLocale()), e);
         }
     }
 
@@ -41,9 +55,9 @@ public class FileStorageService {
         if (Files.exists(userDirectory)) {
             deleteExistingPhoto(userDirectory);
         } else {
-            throw new IllegalArgumentException("No profile photo found for the user.");
+            throw new BadRequestException(messageSource.getMessage("error.photo.not.found", null, getCurrentLocale()));
         }
-        return "Profile photo deleted successfully.";
+        return messageSource.getMessage("success.photo.deleted", null, getCurrentLocale());
     }
 
     private void deleteExistingPhoto(Path userDirectory) throws IOException {
@@ -66,12 +80,12 @@ public class FileStorageService {
                 return "/users/" + userId + "/" + fileName;
             }
         } catch (IOException e) {
-            throw new RuntimeException("Error while accessing the user's image directory.", e);
+            throw new RuntimeException(messageSource.getMessage("error.image.directory.access", null, getCurrentLocale()));
         }
         return null;
     }
 
-    private void validateFileFormat(String fileName) {
+    private void validateFileFormat(String fileName) throws BadRequestException {
         String fileExtension = getFileExtension(fileName);
         boolean isValid = false;
         for (String format : ALLOWED_FORMATS) {
@@ -81,13 +95,13 @@ public class FileStorageService {
             }
         }
         if (!isValid) {
-            throw new IllegalArgumentException("Invalid file format. Allowed formats: jpg, jpeg, png, bmp.");
+            throw new BadRequestException(messageSource.getMessage("error.invalid.file.format", null, getCurrentLocale()));
         }
     }
 
-    private String getFileExtension(String fileName) {
+    private String getFileExtension(String fileName) throws BadRequestException {
         if (fileName == null || !fileName.contains(".")) {
-            throw new IllegalArgumentException("Invalid file name.");
+            throw new BadRequestException(messageSource.getMessage("error.invalid.filename", null, getCurrentLocale()));
         }
         return fileName.substring(fileName.lastIndexOf(".") + 1).toLowerCase();
     }

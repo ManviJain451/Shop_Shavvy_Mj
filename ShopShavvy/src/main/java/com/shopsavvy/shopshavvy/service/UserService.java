@@ -7,8 +7,12 @@ import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -17,20 +21,26 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+    private final MessageSource messageSource;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
 
     public String updatePassword(UserDetailsImpl userDetailsImpl, PasswordDTO passwordUpdateDTO) throws MessagingException {
         if (!passwordUpdateDTO.getPassword().equals(passwordUpdateDTO.getConfirmPassword())) {
-            throw new IllegalArgumentException("Password and confirm password do not match.");
+            throw new IllegalArgumentException(messageSource.getMessage("error.passwordMismatch", null, getCurrentLocale()));
         }
 
 
         User user = userRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.seller.not.found.token", null, getCurrentLocale())));
 
         user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getPassword()));
         userRepository.save(user);
 
         emailService.sendPasswordChangeNotification(userDetailsImpl.getUsername());
-        return "Password updated successfully";
+        return messageSource.getMessage("success.password.updated", null, getCurrentLocale());
     }
 }

@@ -9,26 +9,35 @@ import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class SellerService {
-
     private final JwtService jwtService;
     private final SellerRepository sellerRepository;
     private final FileStorageService fileStorageService;
+    private final MessageSource messageSource;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
 
     @Value("${file.storage.base-path}")
     private String basePath;
 
     public SellerProfileDTO getSellerProfile(UserDetailsImpl userDetailsImpl) {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("error.seller.not.found.token", null, getCurrentLocale())));
 
         String imageUrl = fileStorageService.getUserImageUrl(seller.getId());
 
@@ -55,69 +64,57 @@ public class SellerService {
                 .addresses(addressDTOs)
                 .imageUrl(imageUrl)
                 .build();
-
     }
-
 
     public String updateSellerProfile(UserDetailsImpl userDetailsImpl, SellerProfileDTO sellerProfileDTO) {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("error.seller.not.found.token", null, getCurrentLocale())));
 
-        if (sellerProfileDTO.getFirstName() != null) {
-            seller.setFirstName(sellerProfileDTO.getFirstName());
-        }
-        if (sellerProfileDTO.getMiddleName() != null) {
-            seller.setMiddleName(sellerProfileDTO.getMiddleName());
-        }
-        if (sellerProfileDTO.getLastName() != null) {
-            seller.setLastName(sellerProfileDTO.getLastName());
-        }
-        if (sellerProfileDTO.getCompanyContact() != null) {
-            seller.setCompanyContact(sellerProfileDTO.getCompanyContact());
-        }
+        updateSellerFields(seller, sellerProfileDTO);
 
         if (sellerProfileDTO.getProfileImage() != null && !sellerProfileDTO.getProfileImage().isEmpty()) {
             try {
                 fileStorageService.saveOrUpdateUserPhoto(seller.getId(), sellerProfileDTO.getProfileImage());
             } catch (IOException e) {
-                throw new RuntimeException("Failed to upload profile image.", e);
+                throw new RuntimeException(
+                        messageSource.getMessage("error.profile.image.upload", null, getCurrentLocale()), e);
             }
         }
 
         sellerRepository.save(seller);
-        return "Seller profile updated successfully.";
+        return messageSource.getMessage("success.seller.profile.updated", null, getCurrentLocale());
     }
 
     public String updateAddress(UserDetailsImpl userDetailsImpl, Long addressId, AddressDTO addressDTO) {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException("Seller not found for the provided access token."));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("error.seller.not.found.token", null, getCurrentLocale())));
 
         Address address = seller.getAddresses().stream()
                 .filter(a -> a.getId().equals(addressId))
                 .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Address not found for the provided address ID."));
+                .orElseThrow(() -> new IllegalArgumentException(
+                        messageSource.getMessage("error.address.not.found.id", null, getCurrentLocale())));
 
-        if (addressDTO.getCity() != null) {
-            address.setCity(addressDTO.getCity());
-        }
-        if (addressDTO.getState() != null) {
-            address.setState(addressDTO.getState());
-        }
-        if (addressDTO.getCountry() != null) {
-            address.setCountry(addressDTO.getCountry());
-        }
-        if (addressDTO.getZipCode() != null) {
-            address.setZipCode(addressDTO.getZipCode());
-        }
-        if (addressDTO.getAddressLine() != null) {
-            address.setAddressLine(addressDTO.getAddressLine());
-        }
-        if (addressDTO.getLabel() != null) {
-            address.setLabel(addressDTO.getLabel());
-        }
-
+        updateAddressFields(address, addressDTO);
         sellerRepository.save(seller);
-        return "Address updated successfully.";
+        return messageSource.getMessage("success.address.updated", null, getCurrentLocale());
     }
 
+    private void updateSellerFields(Seller seller, SellerProfileDTO dto) {
+        if (dto.getFirstName() != null) seller.setFirstName(dto.getFirstName());
+        if (dto.getMiddleName() != null) seller.setMiddleName(dto.getMiddleName());
+        if (dto.getLastName() != null) seller.setLastName(dto.getLastName());
+        if (dto.getCompanyContact() != null) seller.setCompanyContact(dto.getCompanyContact());
+    }
+
+    private void updateAddressFields(Address address, AddressDTO dto) {
+        if (dto.getCity() != null) address.setCity(dto.getCity());
+        if (dto.getState() != null) address.setState(dto.getState());
+        if (dto.getCountry() != null) address.setCountry(dto.getCountry());
+        if (dto.getZipCode() != null) address.setZipCode(dto.getZipCode());
+        if (dto.getAddressLine() != null) address.setAddressLine(dto.getAddressLine());
+        if (dto.getLabel() != null) address.setLabel(dto.getLabel());
+    }
 }

@@ -13,15 +13,16 @@ import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import javax.management.relation.RoleNotFoundException;
 import java.util.Set;
-
+import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -43,12 +44,16 @@ public class CustomerAuthenticationService {
     private final RoleRepository roleRepository;
     private final BlackListedTokenRepository blackListedTokenRepository;
     private final BlackListedTokenService blackListedTokenService;
+    private final MessageSource messageSource;
 
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     public String registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(customerRegistrationDTO.getEmail())){
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new EmailAlreadyExistsException(messageSource.getMessage("error.emailExists", null, getCurrentLocale()));
         }
 
         Customer customer = Customer.builder()
@@ -61,7 +66,7 @@ public class CustomerAuthenticationService {
                 .build();
 
         if (!customerRegistrationDTO.getConfirmPassword().equals(customerRegistrationDTO.getPassword())) {
-            throw new PasswordMismatchException("Confirm Password is not same as Password.");
+            throw new PasswordMismatchException(messageSource.getMessage("error.passwordMismatch", null, getCurrentLocale()));
         }
 
         Role role = roleRepository.findByAuthority("ROLE_CUSTOMER");
@@ -81,66 +86,62 @@ public class CustomerAuthenticationService {
                 .build();
         authTokenRepository.save(authToken);
 
-
         try {
             emailService.sendActivationLink(customerRegistrationDTO.getEmail(), token);
         } catch (Exception e) {
-            throw new Exception("Mail for activating the account is not send");
+            throw new Exception(messageSource.getMessage("error.activationEmailNotSent", null, getCurrentLocale()));
         }
 
-
-        return "Customer has been registered";
+        return messageSource.getMessage("success.customerRegistered", null, getCurrentLocale());
     }
-
 
     @Transactional
-    public String activateCustomer(@RequestParam String token) throws Exception {
-            String userEmail = jwtService.extractUsername(token);
-            User user = userRepository.findByEmail(userEmail)
-                    .orElseThrow(() -> new UserNotFoundException("User not found"));
+    public String activateCustomer(String token) throws Exception {
+        String userEmail = jwtService.extractUsername(token);
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.userNotFound",null, getCurrentLocale())));
 
-            if (user.getIsActive()) {
-                throw new AlreadyActivatedException("User is already activated");
-            }
+        if (user.getIsActive()) {
+            throw new AlreadyActivatedException(messageSource.getMessage("error.userAlreadyActivated", null, getCurrentLocale()));
+        }
 
-            UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
+        UserDetailsImpl userDetailsImpl = new UserDetailsImpl(user);
 
-            if (jwtService.isTokenValid(token, userDetailsImpl, "activation")) {
-
-                user.setIsActive(true);
-                userRepository.save(user);
-                verifyCustomer(user.getEmail());
-
-            }
-        return "User is activated.";
-
+        if (jwtService.isTokenValid(token, userDetailsImpl, "activation")) {
+            user.setIsActive(true);
+            userRepository.save(user);
+            verifyCustomer(user.getEmail(), getCurrentLocale());
+        }
+        return messageSource.getMessage("success.userActivated", null, getCurrentLocale());
     }
 
-    public void verifyCustomer(String email) throws Exception{
+    public void verifyCustomer(String email, Locale locale) throws Exception {
         try {
-            emailService.sendVerificationEmail(email, "Account Activated", "Your account has been successfully activated.");
+            emailService.sendVerificationEmail(email,
+                    "Account Activated",
+                    "Your account has been successfully activated.");
         } catch (Exception e) {
-            throw new Exception("Verification Email is not send");
+            throw new Exception(messageSource.getMessage("error.verification.email.not.sent", null, locale));
         }
     }
 
     @Transactional
-    public String resendActivationLink(@RequestParam EmailDTO emailDTO) throws Exception {
+    public String resendActivationLink(EmailDTO emailDTO) throws Exception {
         String email = emailDTO.getEmail();
         if (!userRepository.existsByEmail(email)) {
-            throw new UserNotFoundException("User not found");
+            throw new UserNotFoundException(messageSource.getMessage("error.userNotFound", null, getCurrentLocale()));
         }
 
         Role role = roleRepository.findByAuthority("ROLE_CUSTOMER");
-        if(role== null){
-            throw new RoleNotFoundException("Role not found");
+        if (role == null) {
+            throw new RoleNotFoundException(messageSource.getMessage("error.roleNotFound", null, getCurrentLocale()));
         }
 
         User user = userRepository.findByEmailAndRoles(email, Set.of(role))
-                .orElseThrow(() -> new UserNotFoundException("Customer not found with this email"));
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customerNotFound", null, getCurrentLocale())));
 
         if (user.getIsActive()) {
-            throw new AlreadyActivatedException("User is already activated.");
+            throw new AlreadyActivatedException(messageSource.getMessage("error.userAlreadyActivated", null, getCurrentLocale()));
         }
 
         authTokenRepository.deleteActivationTokenByEmail(email);
@@ -162,12 +163,9 @@ public class CustomerAuthenticationService {
         try {
             emailService.sendActivationLink(email, token);
         } catch (Exception e) {
-            throw new Exception("Mail for activating the account is not send");
+            throw new Exception(messageSource.getMessage("error.activationEmailNotSent", null, getCurrentLocale()));
         }
 
-        return "The activation link is sent to registered email.";
+        return messageSource.getMessage("success.activationLinkSent", null, getCurrentLocale());
     }
-
-
-
 }

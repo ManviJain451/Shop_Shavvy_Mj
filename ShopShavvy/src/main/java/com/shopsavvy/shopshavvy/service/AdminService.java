@@ -12,6 +12,8 @@ import com.shopsavvy.shopshavvy.repository.CustomerRepository;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Service
@@ -29,127 +32,134 @@ public class AdminService {
     private final EmailService emailService;
     private final CustomerRepository customerRepository;
     private final SellerRepository sellerRepository;
+    private final MessageSource messageSource;
 
-    public String unlockUser(EmailDTO emailDTO){
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
+    public String unlockUser(EmailDTO emailDTO) {
         User user = userRepository.findByEmail(emailDTO.getEmail())
-                .orElseThrow(() -> new UserNotFoundException("User with this email ID: " + emailDTO.getEmail() + " is not found."));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("user.not.found.with.email", new Object[]{emailDTO.getEmail() }, getCurrentLocale())));
 
-        if(!user.isLocked()){
-            return "User is already unlocked.";
+        if (!user.isLocked()) {
+            return messageSource.getMessage("user.already.unlocked", null, getCurrentLocale());
         }
+
         user.setLocked(false);
         user.setInvalidAttemptCount(0);
         userRepository.save(user);
-        return "User is successfully unlocked.";
+        return messageSource.getMessage("user.unlocked.success",null,  getCurrentLocale());
     }
 
     public List<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
-        Page<Customer> customers;
+        Page<Customer> customers = (email != null && !email.isEmpty()) ?
+                customerRepository.findByEmailContainingIgnoreCase(email, pageable) :
+                customerRepository.findAll(pageable);
 
-        if (email != null && !email.isEmpty()) {
-            customers = customerRepository.findByEmailContainingIgnoreCase(email, pageable);
-        } else {
-            customers = customerRepository.findAll(pageable);
-        }
-
-        return customers.stream()
-                .map(customer -> new CustomerResponseDTO(
-                        customer.getId(),
-                        customer.getFirstName() + " " + (customer.getMiddleName() != null ? customer.getMiddleName() + " " : "") + customer.getLastName(),
-                        customer.getEmail(),
-                        customer.getIsActive()
-                ))
-                .collect(Collectors.toList());
+        return customers.stream().map(customer -> new CustomerResponseDTO(
+                customer.getId(),
+                customer.getFirstName() + " " +
+                        (customer.getMiddleName() != null ? customer.getMiddleName() + " " : "") +
+                        customer.getLastName(),
+                customer.getEmail(),
+                customer.getIsActive()
+        )).collect(Collectors.toList());
     }
 
     public List<SellerResponseDTO> getAllSellers(int pageSize, int pageOffset, String sort, String email) {
         Pageable pageable = PageRequest.of(pageOffset, pageSize, Sort.by(sort));
-        Page<Seller> sellers;
+        Page<Seller> sellers = (email != null && !email.isEmpty()) ?
+                sellerRepository.findByEmailContainingIgnoreCase(email, pageable) :
+                sellerRepository.findAll(pageable);
 
-        if (email != null && !email.isEmpty()) {
-            sellers = sellerRepository.findByEmailContainingIgnoreCase(email, pageable);
-        } else {
-            sellers = sellerRepository.findAll(pageable);
-        }
-
-        return sellers.stream()
-                .map(seller -> new SellerResponseDTO(
-                        seller.getId(),
-                        seller.getFirstName() + " " + (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") + seller.getLastName(),
-                        seller.getEmail(),
-                        seller.getIsActive(),
-                        seller.getCompanyName(),
-                        seller.getAddresses(),
-                        seller.getCompanyContact()
-                ))
-                .collect(Collectors.toList());
+        return sellers.stream().map(seller -> new SellerResponseDTO(
+                seller.getId(),
+                seller.getFirstName() + " " +
+                        (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") +
+                        seller.getLastName(),
+                seller.getEmail(),
+                seller.getIsActive(),
+                seller.getCompanyName(),
+                seller.getAddresses(),
+                seller.getCompanyContact()
+        )).collect(Collectors.toList());
     }
 
     public String activateCustomer(String customerID) {
         Customer customer = customerRepository.findById(customerID)
-                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + customerID));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("customer.not.found", new Object[]{customerID}, getCurrentLocale())));
 
         if (customer.getIsActive()) {
-            throw new AlreadyActivatedException("Customer is already activated. No action performed.");
+            throw new AlreadyActivatedException(messageSource.getMessage("customer.already.activated", null, getCurrentLocale()));
         }
 
         customer.setIsActive(true);
         customerRepository.save(customer);
 
+
         try {
             emailService.sendVerificationEmail(customer.getEmail(), "Account Activated", "Your account has been successfully activated.");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send activation email.");
+            throw new RuntimeException(messageSource.getMessage("email.failed.activation", null, getCurrentLocale()));
         }
 
-        return "Customer account has been successfully activated.";
+        return messageSource.getMessage("customer.activated.success",null, getCurrentLocale());
     }
 
     public String activateSeller(String sellerID) {
         Seller seller = sellerRepository.findById(sellerID)
-                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + sellerID));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("seller.not.found", new Object[]{sellerID} , getCurrentLocale())));
 
         if (seller.getIsActive()) {
-            throw new AlreadyActivatedException("Seller is already activated. No action performed.");
+            throw new AlreadyActivatedException(messageSource.getMessage("seller.already.activated", null, getCurrentLocale()));
         }
 
         seller.setIsActive(true);
         sellerRepository.save(seller);
-        try{
-        emailService.sendVerificationEmail(seller.getEmail(), "Account Activated", "Your account has been successfully activated.");
+
+        try {
+            emailService.sendVerificationEmail(seller.getEmail(),
+                    "Account Activated", "Your account has been successfully activated.");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send activation email.");
+            throw new RuntimeException(messageSource.getMessage("email.failed.activation", null, getCurrentLocale()));
         }
 
-        return "Seller account has been successfully activated.";
+        return messageSource.getMessage("seller.activated.success", null, getCurrentLocale());
     }
 
-    public String deactivateCustomer(String customerID){
+    public String deactivateCustomer(String customerID) {
         Customer customer = customerRepository.findById(customerID)
-                .orElseThrow(() -> new UserNotFoundException("Customer not found with ID: " + customerID));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("customer.not.found", new  Object[]{customerID}, getCurrentLocale())));
 
         if (!customer.getIsActive()) {
-            return "Customer is already deactivated. No action performed.";
+            return messageSource.getMessage("customer.already.deactivated", null, getCurrentLocale());
         }
 
         customer.setIsActive(false);
         customerRepository.save(customer);
+
         try {
             emailService.sendVerificationEmail(customer.getEmail(), "Account Deactivated", "Your account has been successfully deactivated.");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send deactivation email.");
+            throw new RuntimeException(messageSource.getMessage("email.failed.deactivation", null, getCurrentLocale()));
         }
 
-        return "Customer account has been successfully deactivated.";
+        return messageSource.getMessage("customer.deactivated.success", null, getCurrentLocale());
     }
 
     public String deactivateSeller(String sellerID) {
         Seller seller = sellerRepository.findById(sellerID)
-                .orElseThrow(() -> new UserNotFoundException("Seller not found with ID: " + sellerID));
+                .orElseThrow(() -> new UserNotFoundException(
+                        messageSource.getMessage("seller.not.found", new Object[]{sellerID}, getCurrentLocale())));
 
         if (!seller.getIsActive()) {
-            return "Seller is already deactivated. No action performed.";
+            return messageSource.getMessage("seller.already.deactivated", null, getCurrentLocale());
         }
 
         seller.setIsActive(false);
@@ -158,11 +168,9 @@ public class AdminService {
         try {
             emailService.sendVerificationEmail(seller.getEmail(), "Account Deactivated", "Your account has been successfully deactivated.");
         } catch (Exception e) {
-            throw new RuntimeException("Failed to send deactivation email.");
+            throw new RuntimeException(messageSource.getMessage("email.failed.deactivation", null, getCurrentLocale()));
         }
 
-        return "Seller account has been successfully deactivated.";
+        return messageSource.getMessage("seller.deactivated.success", null, getCurrentLocale());
     }
-
-
 }

@@ -9,10 +9,13 @@ import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Locale;
 import java.util.Set;
 
 
@@ -26,22 +29,32 @@ public class SellerAuthenticationService {
     private final JwtService jwtService;
     private final AuthTokenRepository authTokenRepository;
     private final RoleRepository roleRepository;
+    private final MessageSource messageSource;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
+
 
     public String registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
-            throw new EmailAlreadyExistsException("Email already exists");
+            throw new EmailAlreadyExistsException(
+                    messageSource.getMessage("error.emailExists", null, getCurrentLocale()));
         }
         if (userRepository.existsByCompanyName(sellerRegistrationDTO.getCompanyName())) {
-            throw new DuplicateEntryExistsException("Company name already exists.");
+            throw new DuplicateEntryExistsException(
+                    messageSource.getMessage("error.companyNameExists", null, getCurrentLocale()));
         }
 
         if (userRepository.existsByGst(sellerRegistrationDTO.getGst())) {
-            throw new DuplicateEntryExistsException("GST Number already exists.");
+            throw new DuplicateEntryExistsException(
+                    messageSource.getMessage("error.gstExists", null, getCurrentLocale()));
         }
 
         if (!sellerRegistrationDTO.getConfirmPassword().equals(sellerRegistrationDTO.getPassword())) {
-            throw new PasswordMismatchException("Confirm Password is not same as Password.");
+            throw new PasswordMismatchException(
+                    messageSource.getMessage("error.passwordMismatch", null, getCurrentLocale()));
         }
 
 
@@ -72,11 +85,14 @@ public class SellerAuthenticationService {
         userRepository.save(seller);
 
         try {
-            emailService.sendVerificationEmail(seller.getEmail(), "Account Created", "Seller Account has been created. Waiting for Approval");
+            emailService.sendVerificationEmail(seller.getEmail(),
+                    "Account Created",
+                    "Seller Account has been created. Waiting for Approval");
         } catch (Exception e) {
-            throw new Exception("Confirmation mail for account creation is not send.");
+            throw new Exception(
+                    messageSource.getMessage("error.verification.email.not.sent", null, getCurrentLocale()));
         }
 
-        return "Seller has been registered";
+        return messageSource.getMessage("success.sellerRegistered", null, getCurrentLocale());
     }
 }
