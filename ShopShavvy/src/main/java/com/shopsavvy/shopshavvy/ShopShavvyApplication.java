@@ -9,6 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableAsync
 @EnableScheduling
+@EnableJpaAuditing(auditorAwareRef = "auditorAware")
 public class ShopShavvyApplication {
 
 	public static void main(String[] args) {
@@ -16,3 +17,7 @@ public class ShopShavvyApplication {
 	}
 
 }
+
+
+
+

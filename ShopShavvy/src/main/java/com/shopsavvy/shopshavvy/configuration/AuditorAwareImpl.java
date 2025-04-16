@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.auditing;
+package com.shopsavvy.shopshavvy.configuration;
 
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import org.springframework.data.domain.AuditorAware;
@@ -9,8 +9,9 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Component
+@Component("auditorAware")
 public class AuditorAwareImpl implements AuditorAware<String> {
+
 
     @Override
     public Optional<String> getCurrentAuditor() {
