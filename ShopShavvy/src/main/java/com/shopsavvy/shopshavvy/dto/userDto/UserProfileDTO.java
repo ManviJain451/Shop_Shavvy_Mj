@@ -24,21 +24,21 @@ public class UserProfileDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String id;
 
-    @Size(min = 2, max = 30, message = "First name must be between 2 and 30 characters", groups = OnUpdate.class)
+    @Size(min = 2, max = 30, message = "{validation.user.firstname.size}", groups = OnUpdate.class)
     @Pattern(regexp = "^[A-Za-z]+([ '-][A-Za-z]+)*$",
-            message = "First name can only contain letters, spaces, hyphens, and apostrophes",
+            message = "{validation.user.firstname.pattern}",
             groups = OnUpdate.class)
     private String firstName;
 
-    @Size(min = 2, max = 30, message = "Middle name must be between 2 and 30 characters", groups = OnUpdate.class)
+    @Size(min = 2, max = 30, message = "{validation.user.middlename.size}", groups = OnUpdate.class)
     @Pattern(regexp = "^[A-Za-z]+([ '-][A-Za-z]+)*$",
-            message = "Middle name can only contain letters, spaces, hyphens, and apostrophes",
+            message = "{validation.user.middlename.pattern}",
             groups = OnUpdate.class)
     private String middleName;
 
-    @Size(min = 2, max = 30, message = "Last name must be between 2 and 30 characters", groups = OnUpdate.class)
+    @Size(min = 2, max = 30, message = "{validation.user.lastname.size}", groups = OnUpdate.class)
     @Pattern(regexp = "^[A-Za-z]+([ '-][A-Za-z]+)*$",
-            message = "Last name can only contain letters, spaces, hyphens, and apostrophes",
+            message = "{validation.user.lastname.pattern}",
             groups = OnUpdate.class)
     private String lastName;
 
@@ -51,5 +51,5 @@ public class UserProfileDTO {
     private MultipartFile profileImage;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-        private Set<AddressDTO> addresses;
+    private Set<AddressDTO> addresses;
 }

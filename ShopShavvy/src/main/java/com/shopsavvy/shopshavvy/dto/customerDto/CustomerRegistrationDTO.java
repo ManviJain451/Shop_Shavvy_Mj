@@ -11,6 +11,6 @@ import lombok.Setter;
 public class CustomerRegistrationDTO extends UserRegistrationDTO {
 
     @Pattern(regexp = "^[0-9]{10}$",
-            message = "Contact must be exactly 10 digits")
+            message = "{validation.customer.contact.pattern}")
     private String contact;
 }

@@ -14,13 +14,12 @@ import lombok.Setter;
 @NoArgsConstructor
 public class PasswordDTO {
 
-    @NotBlank(message = "Password is mandatory")
-    @Size(min = 8, max = 15, message = "Password must be between 8 and 15 characters long")
+    @NotBlank(message = "{validation.password.required}")
+    @Size(min = 8, max = 15, message = "{validation.password.size}")
     @Pattern(regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]+$",
-            message = "Password must contain at least one lowercase letter, one uppercase letter, one special character, and one number")
+            message = "{validation.password.pattern}")
     private String password;
 
-    @NotBlank(message = "Confirm Password is mandatory")
+    @NotBlank(message = "{validation.password.confirm.required}")
     private String confirmPassword;
-
 }

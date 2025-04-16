@@ -1,7 +1,6 @@
 package com.shopsavvy.shopshavvy.dto.customerDto;
 
 import com.shopsavvy.shopshavvy.dto.userDto.UserProfileDTO;
-import com.shopsavvy.shopshavvy.validation.groups.OnCreate;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
@@ -15,9 +14,7 @@ import lombok.experimental.SuperBuilder;
 public class CustomerProfileDTO extends UserProfileDTO {
 
     @Pattern(regexp = "^[0-9]{10}$",
-            message = "Contact must be exactly 10 digits",
+            message = "{validation.customer.contact.pattern}",
             groups = OnUpdate.class)
     private String contact;
-
-
 }

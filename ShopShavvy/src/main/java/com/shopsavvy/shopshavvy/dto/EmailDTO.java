@@ -10,9 +10,9 @@ import lombok.Setter;
 @Setter
 public class EmailDTO {
 
-    @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}", message = "Invalid email format.")
-    @NotBlank(message = "Email is mandatory")
-    @Size(max = 255, message = "Email must be less than 255 characters")
+    @Email(regexp = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,3}",
+            message = "{validation.login.email.format}")
+    @NotBlank(message = "{validation.login.email.required}")
+    @Size(max = 255, message = "{validation.login.email.size}")
     private String email;
-
 }
