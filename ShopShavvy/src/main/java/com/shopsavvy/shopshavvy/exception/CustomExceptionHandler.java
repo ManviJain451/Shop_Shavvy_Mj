@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.exception;
 
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
@@ -10,9 +10,7 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.context.request.WebRequest;
-import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.time.LocalDateTime;
@@ -22,6 +20,15 @@ import java.util.Map;
 
 @ControllerAdvice
 public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
+
+    @Autowired
+    private MessageSource messageSource;
+
+    private Locale locale;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     @ExceptionHandler(Exception.class)
     public final ResponseEntity<ErrorDetails> handleAllExceptions(Exception exception, WebRequest request) throws Exception {
@@ -117,7 +124,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(MaximumUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaximumUploadSizeExceededException(MaximumUploadSizeExceededException ex) {
         return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
-                .body("File size exceeds the maximum allowed limit. Please upload a smaller file.");
+                .body(messageSource.getMessage("file.size.exceeded", null, locale));
     }
 
     @ExceptionHandler(PasswordMismatchException.class)
@@ -144,152 +151,3 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 }
 
 
-
-//@ControllerAdvice
-//@RequiredArgsConstructor
-//public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
-//
-//    private final MessageSource messageSource;
-//    private Locale locale;
-//
-//    @ModelAttribute
-//    public void initialiseLocale() {
-//        this.locale = LocaleContextHolder.getLocale();
-//    }
-//
-//    private ErrorDetails createErrorDetails(String messageKey, WebRequest request) {
-//        return new ErrorDetails(
-//                LocalDateTime.now(),
-//                messageSource.getMessage(messageKey, null, locale),
-//                request.getDescription(false)
-//        );
-//    }
-//
-//    @ExceptionHandler(Exception.class)
-//    public final ResponseEntity<ErrorDetails> handleAllExceptions(Exception ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.general", request),
-//                HttpStatus.INTERNAL_SERVER_ERROR
-//        );
-//    }
-//
-//    @ExceptionHandler(LockedException.class)
-//    public final ResponseEntity<ErrorDetails> handleLockedExceptions(LockedException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.account.locked", request),
-//                HttpStatus.LOCKED
-//        );
-//    }
-//
-//    @ExceptionHandler(UserNotFoundException.class)
-//    public final ResponseEntity<ErrorDetails> handleUserNotFoundException(UserNotFoundException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.user.not.found", request),
-//                HttpStatus.NOT_FOUND
-//        );
-//    }
-//
-//    @ExceptionHandler(TokenNotFoundException.class)
-//    public ResponseEntity<ErrorDetails> handleTokenNotFoundException(TokenNotFoundException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.token.not.found", request),
-//                HttpStatus.GONE
-//        );
-//    }
-//
-//    @ExceptionHandler(TokenExpiredException.class)
-//    public ResponseEntity<ErrorDetails> handleTokenExpiredException(TokenExpiredException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.token.expired", request),
-//                HttpStatus.UNAUTHORIZED
-//        );
-//    }
-//
-//    @ExceptionHandler(AlreadyActivatedException.class)
-//    public ResponseEntity<ErrorDetails> handleAlreadyActivatedException(AlreadyActivatedException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.account.already.activated", request),
-//                HttpStatus.CONFLICT
-//        );
-//    }
-//
-//    @ExceptionHandler(InvalidTokenException.class)
-//    public ResponseEntity<ErrorDetails> handleInvalidTokenException(InvalidTokenException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.token.invalid", request),
-//                HttpStatus.UNAUTHORIZED
-//        );
-//    }
-//
-//    @ExceptionHandler(ResourceNotFoundException.class)
-//    public ResponseEntity<ErrorDetails> handleResourceNotFoundException(ResourceNotFoundException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.resource.not.found", request),
-//                HttpStatus.NOT_FOUND
-//        );
-//    }
-//
-//    @ExceptionHandler(InvalidEmailException.class)
-//    public ResponseEntity<ErrorDetails> handleInvalidEmailException(InvalidEmailException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.email.invalid", request),
-//                HttpStatus.UNAUTHORIZED
-//        );
-//    }
-//
-//    @ExceptionHandler(AlreadyDeactivatedException.class)
-//    public ResponseEntity<ErrorDetails> handleAlreadyDeactivatedException(AlreadyDeactivatedException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.account.already.deactivated", request),
-//                HttpStatus.CONFLICT
-//        );
-//    }
-//
-//    @ExceptionHandler(EmailAlreadyExistsException.class)
-//    public ResponseEntity<ErrorDetails> handleEmailAlreadyExistsException(EmailAlreadyExistsException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.email.exists", request),
-//                HttpStatus.CONFLICT
-//        );
-//    }
-//
-//    @ExceptionHandler(DuplicateEntryExistsException.class)
-//    public final ResponseEntity<ErrorDetails> handleDuplicateEntryExistsException(DuplicateEntryExistsException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.duplicate.entry", request),
-//                HttpStatus.CONFLICT
-//        );
-//    }
-//
-//    @ExceptionHandler(MaximumUploadSizeExceededException.class)
-//    public ResponseEntity<ErrorDetails> handleMaximumUploadSizeExceededException(MaximumUploadSizeExceededException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.file.size.exceeded", request),
-//                HttpStatus.PAYLOAD_TOO_LARGE
-//        );
-//    }
-//
-//    @ExceptionHandler(PasswordMismatchException.class)
-//    public final ResponseEntity<ErrorDetails> handlePasswordMismatchException(PasswordMismatchException ex, WebRequest request) {
-//        return new ResponseEntity<>(
-//                createErrorDetails("error.password.mismatch", request),
-//                HttpStatus.UNPROCESSABLE_ENTITY
-//        );
-//    }
-//
-//    @Override
-//    protected ResponseEntity<Object> handleMethodArgumentNotValid(
-//            MethodArgumentNotValidException ex,
-//            org.springframework.http.HttpHeaders headers,
-//            HttpStatusCode status,
-//            WebRequest request) {
-//
-//        Map<String, String> errors = new HashMap<>();
-//        ex.getBindingResult().getFieldErrors().forEach(error ->
-//                errors.put(error.getField(), messageSource.getMessage(error.getDefaultMessage(), null, locale))
-//        );
-//        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-//    }
-//}
-//
-//
