@@ -1,13 +1,11 @@
 package com.shopsavvy.shopshavvy.model.categories;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.springframework.data.annotation.CreatedBy;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -18,16 +16,19 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
+@EntityListeners(AuditingEntityListener.class)
 public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String categoryId;
 
+    @Column(name = "name", unique = true)
     private String name;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "parent_category_id")
+    @JoinColumn(name = "parent_category")
     private Category parentCategory;
 
     @OneToMany(mappedBy = "parentCategory")

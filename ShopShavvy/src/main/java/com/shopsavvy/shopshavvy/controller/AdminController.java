@@ -13,6 +13,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
+import org.springframework.boot.actuate.autoconfigure.observation.ObservationProperties;
 import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -104,5 +106,13 @@ public class AdminController {
         List<CategoryMetadataField> metadataFields = adminService.getAllFields(max, offset, sort, order, query);
         return ResponseEntity.ok(SuccessMessageResponse.success(metadataFields));
 
+    }
+
+    @PostMapping("/category")
+    public ResponseEntity<SuccessMessageResponse<String>> addNewCategory(
+            @RequestParam String categoryName,
+            @RequestParam(required = false) String parentCategoryId) throws BadRequestException {
+        String message = adminService.addCategory(categoryName, parentCategoryId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 }

@@ -6,15 +6,14 @@ import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
+import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
-import com.shopsavvy.shopshavvy.repository.CategoryMetadataFieldRepository;
-import com.shopsavvy.shopshavvy.repository.CustomerRepository;
-import com.shopsavvy.shopshavvy.repository.SellerRepository;
-import com.shopsavvy.shopshavvy.repository.UserRepository;
+import com.shopsavvy.shopshavvy.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -26,6 +25,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,6 +40,8 @@ public class AdminService {
     private final SellerRepository sellerRepository;
     private final MessageSource messageSource;
     private final CategoryMetadataFieldRepository categoryMetadataFieldRepository;
+    private final CategoryRepository categoryRepository;
+    private final ProductRepository productRepository;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -203,7 +206,54 @@ public class AdminService {
         return metadataFields.stream().toList();
     }
 
-    public String addCategory(String category, String parentId){
+    public String addCategory(String categoryName, String parentId) throws BadRequestException {
+
+        if (categoryRepository.findAll().stream()
+                .filter(category -> category.getParentCategory() == null)
+                .anyMatch(category -> category.getName().equalsIgnoreCase(categoryName))) {
+            throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+        }
+
+        Category newCategory = null;
+        if(parentId != null){
+            Optional<Category> parentCategory = categoryRepository.findById(parentId);
+
+            Category currentParentCategory = parentCategory.get();
+            while (currentParentCategory.getParentCategory() != null) {
+                if(currentParentCategory.getName().equalsIgnoreCase(categoryName)){
+                    throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+                }
+                currentParentCategory = currentParentCategory.getParentCategory();
+            }
+
+
+            for(Category category : parentCategory.get().getSubCategories()){
+                if(category.getName().equalsIgnoreCase(categoryName)){
+                    throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+                }
+            }
+
+            if(productRepository.existsByCategory(parentCategory.get())){
+                throw new BadRequestException(messageSource.getMessage("error.product.exists.for.parent.category", null, getCurrentLocale()));
+            }
+
+            newCategory = Category.builder()
+                    .parentCategory(parentCategory.get())
+                    .name(categoryName)
+                    .build();
+
+        }
+        else {
+            newCategory = Category.builder()
+                    .parentCategory(null)
+                    .name(categoryName)
+                    .build();
+
+        }
+        categoryRepository.save(newCategory);
+        return messageSource.getMessage("success.category.created", new Object[]{newCategory.getCategoryId()}, getCurrentLocale());
 
     }
+
+
 }
