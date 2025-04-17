@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
+import com.shopsavvy.shopshavvy.dto.passwordDto.UpdatePasswordDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.FileStorageService;
 import com.shopsavvy.shopshavvy.service.UserService;
@@ -46,9 +47,9 @@ public class UserController {
 
     @PutMapping("/update-password")
     public ResponseEntity<SuccessMessageResponse<String>> updatePassword(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-                                            @Valid @RequestBody PasswordDTO passwordUpdateDTO) throws MessagingException, BadRequestException {
+                                                                         @Valid @RequestBody UpdatePasswordDTO updatePasswordDTO) throws MessagingException, BadRequestException {
 
-        String message = userService.updatePassword(userDetailsImpl, passwordUpdateDTO);
+        String message = userService.updatePassword(userDetailsImpl, updatePasswordDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 }

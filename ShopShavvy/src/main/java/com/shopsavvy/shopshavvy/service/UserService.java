@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
+import com.shopsavvy.shopshavvy.dto.passwordDto.UpdatePasswordDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
@@ -31,16 +32,21 @@ public class UserService {
     }
 
 
-    public String updatePassword(UserDetailsImpl userDetailsImpl, PasswordDTO passwordUpdateDTO) throws MessagingException, BadRequestException {
-        if (!passwordUpdateDTO.getPassword().equals(passwordUpdateDTO.getConfirmPassword())) {
-            throw new BadRequestException(messageSource.getMessage("error.passwordMismatch", null, getCurrentLocale()));
-        }
-
-
+    public String updatePassword(UserDetailsImpl userDetailsImpl, UpdatePasswordDTO updatePasswordDTO) throws MessagingException, BadRequestException {
         User user = userRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.seller.not.found.token", null, getCurrentLocale())));
 
-        user.setPassword(passwordEncoder.encode(passwordUpdateDTO.getPassword()));
+        if (!passwordEncoder.matches(updatePasswordDTO.getOldPassword(), user.getPassword())) {
+            System.out.println(user.getPassword());
+            System.out.println(passwordEncoder.encode(updatePasswordDTO.getOldPassword()));
+            throw new BadRequestException(messageSource.getMessage("error.oldPassword.mismatch", null, getCurrentLocale()));
+        }
+
+        if (!updatePasswordDTO.getPassword().equals(updatePasswordDTO.getConfirmPassword())) {
+            throw new BadRequestException(messageSource.getMessage("error.passwordMismatch", null, getCurrentLocale()));
+        }
+
+        user.setPassword(passwordEncoder.encode(updatePasswordDTO.getPassword()));
         userRepository.save(user);
 
         emailService.sendPasswordChangeNotification(userDetailsImpl.getUsername());
