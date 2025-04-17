@@ -15,7 +15,6 @@ import com.shopsavvy.shopshavvy.repository.CustomerRepository;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -190,5 +189,21 @@ public class AdminService {
                 .name(fieldName).build();
         categoryMetadataFieldRepository.save(categoryMetadataField);
         return messageSource.getMessage("success.created.metadata.field", new Object[]{categoryMetadataField.getId()}, getCurrentLocale());
+    }
+
+
+    public List<CategoryMetadataField> getAllFields(int max, int offset, String sortBy, String order, String query){
+        Sort sort = Sort.by(Sort.Order.by(sortBy).ignoreCase().with(Sort.Direction.valueOf(order.toUpperCase())));
+        Pageable pageable = PageRequest.of(offset, max, sort);
+
+        Page<CategoryMetadataField> metadataFields = (query != null && !query.isEmpty()) ?
+                categoryMetadataFieldRepository.findByNameContainingIgnoreCase(query, pageable) :
+                categoryMetadataFieldRepository.findAll(pageable);
+
+        return metadataFields.stream().toList();
+    }
+
+    public String addCategory(String category, String parentId){
+
     }
 }

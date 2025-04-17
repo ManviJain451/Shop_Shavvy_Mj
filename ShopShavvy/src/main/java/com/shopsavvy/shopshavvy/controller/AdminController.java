@@ -4,6 +4,7 @@ package com.shopsavvy.shopshavvy.controller;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
@@ -87,9 +88,21 @@ public class AdminController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PostMapping("/add/metadata-field")
+    @PostMapping("/metadata-fields")
     public ResponseEntity<SuccessMessageResponse<String>> addField(@RequestParam String fieldName){
         String message = adminService.addMetadataField(fieldName);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
+    }
+
+    @GetMapping("/metadata-fields")
+    public ResponseEntity<SuccessMessageResponse<List<CategoryMetadataField>>> getAllMetadataFields(
+            @RequestParam(required = false, defaultValue = "10") int max,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false, defaultValue = "id") String sort,
+            @RequestParam(required = false, defaultValue = "ASC") String order,
+            @RequestParam(required = false) String query){
+        List<CategoryMetadataField> metadataFields = adminService.getAllFields(max, offset, sort, order, query);
+        return ResponseEntity.ok(SuccessMessageResponse.success(metadataFields));
+
     }
 }
