@@ -112,7 +112,7 @@ public class AuthenticationService {
             throw new AlreadyDeactivatedException(messageSource.getMessage("account.not.activated", null, getCurrentLocale()));
         }
 
-        if (user.isExpired()) {
+        if (isPasswordCredentialExpired(loginRequestDTO.getEmail())) {
             throw new BadCredentialsException(messageSource.getMessage("password.expired", null, getCurrentLocale()));
         }
 
@@ -166,7 +166,7 @@ public class AuthenticationService {
         LocalDateTime passwordLastUpdateDate = userRepository.findPasswordUpdateDateByEmail(email);
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
-        if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MINUTES))) {
+        if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(3, ChronoUnit.MONTHS))) {
             user.setExpired(true);
             userRepository.save(user);
             return true;

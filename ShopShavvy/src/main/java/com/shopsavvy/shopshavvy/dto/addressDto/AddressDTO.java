@@ -18,14 +18,17 @@ public class AddressDTO {
 
     @NotBlank(groups = OnCreate.class, message = "{validation.address.city.required}")
     @Size(min = 2, max = 50, message = "{validation.address.city.size}", groups = {OnCreate.class, OnUpdate.class})
+    @Pattern(regexp = "^[a-zA-Z\\s\\-'.]+$", message = "{validation.address.pattern}", groups = {OnCreate.class, OnUpdate.class})
     private String city;
 
     @NotBlank(groups = OnCreate.class, message = "{validation.address.state.required}")
     @Size(min = 2, max = 50, message = "{validation.address.state.size}", groups = {OnCreate.class, OnUpdate.class})
+    @Pattern(regexp = "^[a-zA-Z\\s\\-'.]+$", message = "{validation.address.pattern}", groups = {OnCreate.class, OnUpdate.class})
     private String state;
 
     @NotBlank(groups = OnCreate.class, message = "{validation.address.country.required}")
     @Size(min = 4, max = 50, message = "{validation.address.country.size}", groups = {OnCreate.class, OnUpdate.class})
+    @Pattern(regexp = "^[a-zA-Z\\s\\-'.]+$", message = "{validation.address.pattern}", groups = {OnCreate.class, OnUpdate.class})
     private String country;
 
     @NotBlank(groups = OnCreate.class, message = "{validation.address.line.required}")

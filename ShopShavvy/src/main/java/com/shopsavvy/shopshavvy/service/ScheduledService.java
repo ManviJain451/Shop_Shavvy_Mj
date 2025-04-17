@@ -31,21 +31,22 @@ public class ScheduledService {
             userRepository.save(user);
         }
     }
+
     @Scheduled(cron = "0 0 0 * * *")
     public void deleteExpiredTokens() {
         Date now = new Date();
         authTokenRepository.deleteByExpirationTimeBefore(now);
     }
 
-    @Scheduled(cron = "0 0 */1 * * *")
-    @Transactional
-    public void checkPasswordExpiration() {
-        LocalDateTime expirationThreshold = LocalDateTime.now().minus(3, ChronoUnit.MINUTES);
-        List<User> usersWithExpiredPasswords = userRepository.findByPasswordLastUpdateDateBeforeAndExpiredFalse(expirationThreshold);
-
-        usersWithExpiredPasswords.forEach(user -> {
-            user.setExpired(true);
-            userRepository.save(user);
-        });
-    }
+//    @Scheduled(cron = "0 0 */1 * * *")
+//    @Transactional
+//    public void checkPasswordExpiration() {
+//        LocalDateTime expirationThreshold = LocalDateTime.now().minus(15, ChronoUnit.MINUTES);
+//        List<User> usersWithExpiredPasswords = userRepository.findByPasswordLastUpdateDateBeforeAndExpiredFalse(expirationThreshold);
+//
+//        usersWithExpiredPasswords.forEach(user -> {
+//            user.setExpired(true);
+//            userRepository.save(user);
+//        });
+//    }
 }
