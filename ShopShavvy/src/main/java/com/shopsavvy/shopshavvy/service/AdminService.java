@@ -4,10 +4,13 @@ import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
+import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
+import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.repository.CategoryMetadataFieldRepository;
 import com.shopsavvy.shopshavvy.repository.CustomerRepository;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
@@ -36,6 +39,7 @@ public class AdminService {
     private final CustomerRepository customerRepository;
     private final SellerRepository sellerRepository;
     private final MessageSource messageSource;
+    private final CategoryMetadataFieldRepository categoryMetadataFieldRepository;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -175,5 +179,16 @@ public class AdminService {
         }
 
         return messageSource.getMessage("seller.deactivated.success", null, getCurrentLocale());
+    }
+
+
+    public String addMetadataField(String fieldName){
+        if(categoryMetadataFieldRepository.existsByName(fieldName)){
+            throw new DuplicateEntryExistsException(messageSource.getMessage("error.field.already.exists", null , getCurrentLocale()));
+        }
+        CategoryMetadataField categoryMetadataField = CategoryMetadataField.builder()
+                .name(fieldName).build();
+        categoryMetadataFieldRepository.save(categoryMetadataField);
+        return messageSource.getMessage("success.created.metadata.field", new Object[]{categoryMetadataField.getId()}, getCurrentLocale());
     }
 }

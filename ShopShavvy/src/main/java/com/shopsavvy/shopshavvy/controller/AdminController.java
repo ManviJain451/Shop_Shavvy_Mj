@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -84,5 +85,11 @@ public class AdminController {
     public ResponseEntity<SuccessMessageResponse<String>> deactivateSeller(@RequestParam String sellerID) {
         String message = adminService.deactivateSeller(sellerID);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
+
+    @PostMapping("/add/metadata-field")
+    public ResponseEntity<SuccessMessageResponse<String>> addField(@RequestParam String fieldName){
+        String message = adminService.addMetadataField(fieldName);
+        return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 }
