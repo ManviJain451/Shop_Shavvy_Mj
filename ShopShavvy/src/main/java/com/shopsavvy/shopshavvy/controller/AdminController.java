@@ -2,6 +2,7 @@ package com.shopsavvy.shopshavvy.controller;
 
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategeoryDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
@@ -14,14 +15,11 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
-import org.springframework.boot.actuate.autoconfigure.observation.ObservationProperties;
-import org.springframework.context.MessageSource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Locale;
 
 @RestController
 @RequiredArgsConstructor
@@ -114,5 +112,25 @@ public class AdminController {
             @RequestParam(required = false) String parentCategoryId) throws BadRequestException {
         String message = adminService.addCategory(categoryName, parentCategoryId);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
+    }
+
+    @GetMapping("/category")
+    public ResponseEntity<CategeoryDetailsDTO> viewCategory(@RequestParam String categoryId) throws BadRequestException {
+        CategeoryDetailsDTO categeoryDetailsDTO = adminService.viewCategory(categoryId);
+        return ResponseEntity.ok(categeoryDetailsDTO);
+
+    }
+
+    @GetMapping("/all/categories")
+    public ResponseEntity<List<CategeoryDetailsDTO>> viewAllCategories() {
+        List<CategeoryDetailsDTO> categeoryDetailsDTOS = adminService.viewAllCategories();
+        return ResponseEntity.ok(categeoryDetailsDTOS);
+    }
+
+    @PutMapping("/category")
+    public ResponseEntity<SuccessMessageResponse<String>> updateCategory(@RequestParam(required = true) String categoryName,
+                                                 @RequestParam(required = true) String categoryId) throws BadRequestException {
+        String message = adminService.updateCategory(categoryId, categoryName);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 }

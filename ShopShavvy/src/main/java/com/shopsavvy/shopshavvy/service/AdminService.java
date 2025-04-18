@@ -1,6 +1,9 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategeoryDetailsDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.MetadataFieldDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
@@ -8,6 +11,7 @@ import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
+import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
@@ -23,10 +27,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.Locale;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,6 +43,7 @@ public class AdminService {
     private final CategoryMetadataFieldRepository categoryMetadataFieldRepository;
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
+    private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -50,7 +52,7 @@ public class AdminService {
     public String unlockUser(EmailDTO emailDTO) {
         User user = userRepository.findByEmail(emailDTO.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(
-                        messageSource.getMessage("user.not.found.with.email", new Object[]{emailDTO.getEmail() }, getCurrentLocale())));
+                        messageSource.getMessage("user.not.found.with.email", new Object[]{emailDTO.getEmail()}, getCurrentLocale())));
 
         if (!user.isLocked()) {
             return messageSource.getMessage("user.already.unlocked", null, getCurrentLocale());
@@ -59,7 +61,7 @@ public class AdminService {
         user.setLocked(false);
         user.setInvalidAttemptCount(0);
         userRepository.save(user);
-        return messageSource.getMessage("user.unlocked.success",null,  getCurrentLocale());
+        return messageSource.getMessage("user.unlocked.success", null, getCurrentLocale());
     }
 
     public List<CustomerResponseDTO> getAllCustomers(int pageSize, int pageOffset, String sort, String email) {
@@ -116,13 +118,13 @@ public class AdminService {
             throw new RuntimeException(messageSource.getMessage("email.failed.activation", null, getCurrentLocale()));
         }
 
-        return messageSource.getMessage("customer.activated.success",null, getCurrentLocale());
+        return messageSource.getMessage("customer.activated.success", null, getCurrentLocale());
     }
 
     public String activateSeller(String sellerID) {
         Seller seller = sellerRepository.findById(sellerID)
                 .orElseThrow(() -> new UserNotFoundException(
-                        messageSource.getMessage("seller.not.found", new Object[]{sellerID} , getCurrentLocale())));
+                        messageSource.getMessage("seller.not.found", new Object[]{sellerID}, getCurrentLocale())));
 
         if (seller.getIsActive()) {
             throw new AlreadyActivatedException(messageSource.getMessage("seller.already.activated", null, getCurrentLocale()));
@@ -144,7 +146,7 @@ public class AdminService {
     public String deactivateCustomer(String customerID) {
         Customer customer = customerRepository.findById(customerID)
                 .orElseThrow(() -> new UserNotFoundException(
-                        messageSource.getMessage("customer.not.found", new  Object[]{customerID}, getCurrentLocale())));
+                        messageSource.getMessage("customer.not.found", new Object[]{customerID}, getCurrentLocale())));
 
         if (!customer.getIsActive()) {
             return messageSource.getMessage("customer.already.deactivated", null, getCurrentLocale());
@@ -184,9 +186,9 @@ public class AdminService {
     }
 
 
-    public String addMetadataField(String fieldName){
-        if(categoryMetadataFieldRepository.existsByName(fieldName)){
-            throw new DuplicateEntryExistsException(messageSource.getMessage("error.field.already.exists", null , getCurrentLocale()));
+    public String addMetadataField(String fieldName) {
+        if (categoryMetadataFieldRepository.existsByName(fieldName)) {
+            throw new DuplicateEntryExistsException(messageSource.getMessage("error.field.already.exists", null, getCurrentLocale()));
         }
         CategoryMetadataField categoryMetadataField = CategoryMetadataField.builder()
                 .name(fieldName).build();
@@ -195,7 +197,7 @@ public class AdminService {
     }
 
 
-    public List<CategoryMetadataField> getAllFields(int max, int offset, String sortBy, String order, String query){
+    public List<CategoryMetadataField> getAllFields(int max, int offset, String sortBy, String order, String query) {
         Sort sort = Sort.by(Sort.Order.by(sortBy).ignoreCase().with(Sort.Direction.valueOf(order.toUpperCase())));
         Pageable pageable = PageRequest.of(offset, max, sort);
 
@@ -215,25 +217,25 @@ public class AdminService {
         }
 
         Category newCategory = null;
-        if(parentId != null){
+        if (parentId != null) {
             Optional<Category> parentCategory = categoryRepository.findById(parentId);
 
             Category currentParentCategory = parentCategory.get();
             while (currentParentCategory.getParentCategory() != null) {
-                if(currentParentCategory.getName().equalsIgnoreCase(categoryName)){
+                if (currentParentCategory.getName().equalsIgnoreCase(categoryName)) {
                     throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
                 }
                 currentParentCategory = currentParentCategory.getParentCategory();
             }
 
 
-            for(Category category : parentCategory.get().getSubCategories()){
-                if(category.getName().equalsIgnoreCase(categoryName)){
+            for (Category category : parentCategory.get().getSubCategories()) {
+                if (category.getName().equalsIgnoreCase(categoryName)) {
                     throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
                 }
             }
 
-            if(productRepository.existsByCategory(parentCategory.get())){
+            if (productRepository.existsByCategory(parentCategory.get())) {
                 throw new BadRequestException(messageSource.getMessage("error.product.exists.for.parent.category", null, getCurrentLocale()));
             }
 
@@ -242,18 +244,137 @@ public class AdminService {
                     .name(categoryName)
                     .build();
 
-        }
-        else {
+            Set<Category> subCategoriesUnderParentCategory = parentCategory.get().getSubCategories();
+            subCategoriesUnderParentCategory.add(newCategory);
+            parentCategory.get().setSubCategories(subCategoriesUnderParentCategory);
+
+        } else {
             newCategory = Category.builder()
                     .parentCategory(null)
                     .name(categoryName)
                     .build();
-
         }
         categoryRepository.save(newCategory);
         return messageSource.getMessage("success.category.created", new Object[]{newCategory.getCategoryId()}, getCurrentLocale());
 
     }
 
+    public CategeoryDetailsDTO viewCategory(String categoryId) throws BadRequestException {
+        Category category = validateAndGetCategory(categoryId);
 
+        List<CategoryResponseDTO> parentCategoriesDetails = getParentCategoriesDetails(category);
+        List<CategoryResponseDTO> immediateChildrenDetails = getChildrenCategoriesDetails(category);
+        List<MetadataFieldDTO> metadataFields = getMetadataFieldDTOs(categoryId);
+
+        return CategeoryDetailsDTO.builder()
+                .id(categoryId)
+                .name(category.getName())
+                .parentCategories(parentCategoriesDetails)
+                .immediateChildrens(immediateChildrenDetails)
+                .metadataFields(metadataFields)
+                .build();
+    }
+
+    private Category validateAndGetCategory(String categoryId) throws BadRequestException {
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BadRequestException("Category doesn't exists."));
+    }
+
+    private List<CategoryResponseDTO> getParentCategoriesDetails(Category category) {
+        List<Category> parentCategories = new ArrayList<>();
+        Category currentParent = category.getParentCategory();
+
+        while (currentParent != null) {
+            parentCategories.add(currentParent);
+            currentParent = currentParent.getParentCategory();
+        }
+
+        return parentCategories.stream()
+                .map(this::buildCategoryResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    private List<CategoryResponseDTO> getChildrenCategoriesDetails(Category category) {
+        return category.getSubCategories().stream()
+                .map(this::buildCategoryResponseDTO)
+                .collect(Collectors.toList());
+    }
+
+    private CategoryResponseDTO buildCategoryResponseDTO(Category category) {
+        return CategoryResponseDTO.builder()
+                .categoryId(category.getCategoryId())
+                .categoryName(category.getName())
+                .parentCategoryId(category.getParentCategory() != null ?
+                        category.getParentCategory().getCategoryId() : null)
+                .metadataFields(getMetadataFieldDTOs(category.getCategoryId()))
+                .build();
+    }
+
+    private List<MetadataFieldDTO> getMetadataFieldDTOs(String categoryId) {
+        List<CategoryMetadataFieldValues> metadataFields = categoryMetadataFieldValuesRepository
+                .findMetadataFieldByCategoryId(categoryId);
+
+        return metadataFields.stream()
+                .map(field -> MetadataFieldDTO.builder()
+                        .id(field.getCategoryMetadataField().getId())
+                        .name(field.getCategoryMetadataField().getName())
+                        .values(Arrays.asList(field.getValues().split("\\s*,\\s*")))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public List<CategeoryDetailsDTO> viewAllCategories() {
+        return categoryRepository.findAll().stream()
+                .map(category -> {
+                    try {
+                        return viewCategory(category.getCategoryId());
+                    } catch (BadRequestException e) {
+                        return null;
+                    }
+
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
+
+    public String updateCategory(String categoryId, String categoryName) throws BadRequestException {
+        Category category = validateAndGetCategory(categoryId);
+
+        if (categoryRepository.findAll().stream()
+                .filter(cat -> cat.getParentCategory() == null)
+                .anyMatch(cat -> cat.getName().equalsIgnoreCase(categoryName))) {
+            throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+        }
+
+        Category parentCategory = category.getParentCategory();
+        Category currentParentCategory = parentCategory;
+        while (currentParentCategory.getParentCategory() != null) {
+            if (currentParentCategory.getName().equalsIgnoreCase(categoryName)) {
+                throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+            }
+            currentParentCategory = currentParentCategory.getParentCategory();
+        }
+
+
+        for (Category subCategory : parentCategory.getSubCategories()) {
+            if (subCategory.getName().equalsIgnoreCase(categoryName)) {
+                throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+            }
+        }
+
+        Queue<Category> queue = new LinkedList<>(category.getSubCategories());
+        while (!queue.isEmpty()) {
+            Category child = queue.poll();
+            if (child.getName().equalsIgnoreCase(categoryName)) {
+                throw new DuplicateEntryExistsException(messageSource.getMessage(
+                        "error.category.already.exists", null, getCurrentLocale()));
+            }
+            queue.addAll(child.getSubCategories());
+        }
+
+        category.setName(categoryName);
+        return "Category is updated successfully";
+
+
+    }
 }
