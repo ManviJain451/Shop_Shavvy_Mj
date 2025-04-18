@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategeoryDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.MetadataFieldDTO;
@@ -11,6 +12,7 @@ import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
+import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValueId;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
@@ -373,8 +375,117 @@ public class AdminService {
         }
 
         category.setName(categoryName);
-        return "Category is updated successfully";
+        return messageSource.getMessage("success.category.updated", null, getCurrentLocale());
+    }
 
+    public String addMetadataFieldToCategory(CategoryMetadataFieldValueDTO dto) throws BadRequestException {
+        Category category = validateAndGetCategory(dto.getCategoryId());
+        HashMap<String, String> mapFieldWithValues = dto.getMetadataFieldWithValues();
+
+        for (Map.Entry<String, String> entry : mapFieldWithValues.entrySet()) {
+            String fieldId = entry.getKey();
+            String values = entry.getValue();
+
+            CategoryMetadataField metadataField = validateAndGetMetadataField(fieldId);
+            validateUniqueValues(values);
+
+            CategoryMetadataFieldValueId categoryMetadataFieldValueId = new CategoryMetadataFieldValueId(
+                    category.getCategoryId(),
+                    fieldId
+            );
+            CategoryMetadataFieldValues existingFieldValue = categoryMetadataFieldValuesRepository
+                    .findById(categoryMetadataFieldValueId)
+                    .orElse(null);
+
+            if (existingFieldValue != null) {
+                throw new DuplicateEntryExistsException(messageSource.getMessage(
+                        "error.metadata.field.already.exists", new Object[]{dto.getCategoryId()}, getCurrentLocale()));
+            }
+
+            CategoryMetadataFieldValues fieldValues = CategoryMetadataFieldValues.builder()
+                    .id(categoryMetadataFieldValueId)
+                    .category(category)
+                    .categoryMetadataField(metadataField)
+                    .values(values)
+                    .build();
+
+            categoryMetadataFieldValuesRepository.save(fieldValues);
+        }
+
+        return messageSource.getMessage("success.metadata.field.added", null, getCurrentLocale());
+    }
+
+    private CategoryMetadataField validateAndGetMetadataField(String fieldId) throws BadRequestException {
+        return categoryMetadataFieldRepository.findById(fieldId)
+                .orElseThrow(() -> new BadRequestException(messageSource
+                        .getMessage("error.metadata.field.doesnt.exist", null, getCurrentLocale())));
+    }
+
+    private void validateUniqueValues(String values) throws BadRequestException {
+        if (values == null || values.trim().isEmpty()) {
+            throw new BadRequestException(messageSource.getMessage(
+                    "error.metadata.values.required", null, getCurrentLocale()));
+        }
+
+        Set<String> uniqueValues = Arrays.stream(values.split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+
+        if (uniqueValues.size() != values.split(",").length) {
+            throw new BadRequestException(messageSource.getMessage(
+                    "error.metadata.values.duplicate", null, getCurrentLocale()));
+        }
+    }
+
+    public String updateMetadataFieldToCategory(CategoryMetadataFieldValueDTO dto) throws BadRequestException {
+        Category category = validateAndGetCategory(dto.getCategoryId());
+        HashMap<String, String> mapFieldWithValues = dto.getMetadataFieldWithValues();
+        for (Map.Entry<String, String> entry : mapFieldWithValues.entrySet()) {
+            String fieldId = entry.getKey();
+            String values = entry.getValue();
+
+            validateUniqueValues(values);
+            CategoryMetadataFieldValues existingFieldValues = validatedAndAssociatedToCategory(dto.getCategoryId(), fieldId);
+
+            validateUniqueValuesAgainstExisting(values, existingFieldValues.getValues());
+
+            String updatedValues = existingFieldValues.getValues() + "," + values;
+            existingFieldValues.setValues(updatedValues);
+
+            categoryMetadataFieldValuesRepository.save(existingFieldValues);
+        }
+
+        return messageSource.getMessage("success.metadata.field.updated", null, getCurrentLocale());
 
     }
+
+    private CategoryMetadataFieldValues validatedAndAssociatedToCategory(String categoryId, String fieldId) throws BadRequestException {
+        CategoryMetadataField metadataField = validateAndGetMetadataField(fieldId);
+        CategoryMetadataFieldValueId fieldValueId = new CategoryMetadataFieldValueId(categoryId, fieldId);
+        return categoryMetadataFieldValuesRepository.findById(fieldValueId)
+                .orElseThrow(() -> new BadRequestException(messageSource.getMessage(
+                        "error.metadata.field.not.associated", new Object[]{fieldId}, getCurrentLocale())));
+    }
+
+    private void validateUniqueValuesAgainstExisting(String newValues, String existingValues) throws BadRequestException {
+        Set<String> existingSet = Arrays.stream(existingValues.split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+
+        Set<String> newSet = Arrays.stream(newValues.split(","))
+                .map(String::trim)
+                .collect(Collectors.toSet());
+
+        Set<String> intersection = new HashSet<>(existingSet);
+        intersection.retainAll(newSet);
+
+        if (!intersection.isEmpty()) {
+            throw new BadRequestException(messageSource.getMessage(
+                    "error.metadata.values.already.exists",
+                    new Object[]{String.join(", ", intersection)},
+                    getCurrentLocale()));
+        }
+    }
+
+
 }

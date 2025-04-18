@@ -2,6 +2,7 @@ package com.shopsavvy.shopshavvy.model.categories;
 
 import jakarta.persistence.*;
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "category_metadata_field_values")
@@ -9,6 +10,7 @@ import lombok.*;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 public class CategoryMetadataFieldValues {
 
     @EmbeddedId

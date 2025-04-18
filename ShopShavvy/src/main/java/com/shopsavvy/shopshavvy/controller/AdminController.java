@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategeoryDetailsDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
@@ -133,4 +134,19 @@ public class AdminController {
         String message = adminService.updateCategory(categoryId, categoryName);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
+
+    @PostMapping("/category/metadata-field")
+    public ResponseEntity<SuccessMessageResponse<String>> addMetadataFieldValues(
+            @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException {
+        String message = adminService.addMetadataFieldToCategory(dto);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
+
+    @PutMapping("/category/metadata-field")
+    public ResponseEntity<SuccessMessageResponse<String>> updateMetadataFieldValues(
+            @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException{
+        String message = adminService.updateMetadataFieldToCategory(dto);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
+
 }
