@@ -2,12 +2,16 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
+import com.shopsavvy.shopshavvy.model.categories.Category;
+import com.shopsavvy.shopshavvy.model.products.Product;
+import com.shopsavvy.shopshavvy.model.products.ProductVariation;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;
-import com.shopsavvy.shopshavvy.repository.AddressRepository;
-import com.shopsavvy.shopshavvy.repository.CustomerRepository;
+import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -17,8 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +33,9 @@ public class CustomerService {
     private final FileStorageService fileStorageService;
     private final AddressRepository addressRepository;
     private final MessageSource messageSource;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
+    private final ProductRepository productRepository;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -166,6 +172,93 @@ public class CustomerService {
         addressRepository.save(addressToUpdate);
         customerRepository.save(customer);
         return messageSource.getMessage("success.address.updated", null, getCurrentLocale());
+    }
+
+    public List<CategoryDTO> viewAllCategories(String categoryId) throws BadRequestException {
+        if(categoryId == null || categoryId.isBlank()) {
+            return categoryRepository.findByParentCategoryIsNull()
+                    .stream()
+                    .map(category -> CategoryDTO.builder()
+                            .name(category.getName())
+                            .id(category.getCategoryId())
+                            .build())
+                    .collect(Collectors.toList());
+        }
+        if (!categoryRepository.existsById(categoryId)) {
+            throw new BadRequestException(messageSource.getMessage("error.category.doesnt.exist", null, getCurrentLocale()));
+        }
+
+        Set<Category> childCategories = categoryRepository.findById(categoryId).get().getSubCategories();
+        return childCategories.stream()
+                .map(category -> CategoryDTO.builder()
+                        .id(category.getCategoryId())
+                        .name(category.getName())
+                        .build())
+                .collect(Collectors.toList());
+
+
+    }
+
+    public FilteringDetailsDTO getFilteringDetails(String categoryId) throws BadRequestException {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BadRequestException(messageSource
+                        .getMessage("error.category.doesnt.exist", null, getCurrentLocale())));
+
+        HashMap<String, String> metadataFieldsWithValues = fetchMetadataFieldsFromRoot(category);
+
+        Set<Category> allCategories = getAllSubCategories(category);
+        List<Product> products = productRepository.findByCategoryIn(allCategories);
+
+        List<String> brands = products.stream()
+                .map(Product::getBrand)
+                .distinct()
+                .collect(Collectors.toList());
+
+        Double minPrice = products.stream()
+                .flatMap(product -> product.getProductVariations().stream())
+                .mapToDouble(ProductVariation::getPrice)
+                .min()
+                .orElse(0.0);
+
+        Double maxPrice = products.stream()
+                .flatMap(product -> product.getProductVariations().stream())
+                .mapToDouble(ProductVariation::getPrice)
+                .max()
+                .orElse(0.0);
+
+        return FilteringDetailsDTO.builder()
+                .id(categoryId)
+                .categoryName(category.getName())
+                .metadataFields(metadataFieldsWithValues)
+                .brands(brands)
+                .minPrice(minPrice)
+                .maxPrice(maxPrice)
+                .build();
+    }
+
+    private Set<Category> getAllSubCategories(Category category) {
+        Set<Category> allCategories = new HashSet<>();
+        allCategories.add(category);
+        if (category.getSubCategories() != null) {
+            for (Category subCategory : category.getSubCategories()) {
+                allCategories.addAll(getAllSubCategories(subCategory));
+            }
+        }
+        return allCategories;
+    }
+
+    private HashMap<String, String> fetchMetadataFieldsFromRoot(Category category) {
+        HashMap<String, String> metadataFieldsWithValues = new HashMap<>();
+        while (category != null) {
+            categoryMetadataFieldValuesRepository
+                    .findMetadataFieldByCategoryId(category.getCategoryId())
+                    .forEach(field -> metadataFieldsWithValues.putIfAbsent(
+                            field.getCategoryMetadataField().getName(),
+                            field.getValues()
+                    ));
+            category = category.getParentCategory();
+        }
+        return metadataFieldsWithValues;
     }
 
 }

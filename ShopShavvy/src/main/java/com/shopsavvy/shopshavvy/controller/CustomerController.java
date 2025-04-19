@@ -2,6 +2,8 @@ package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
@@ -87,5 +89,17 @@ public class CustomerController {
 
         String message = customerService.updateCustomerAddress(userDetailsImpl, addressId, customerAddressDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
+
+    @GetMapping("/category")
+    public ResponseEntity<List<CategoryDTO>> viewCategories(@RequestParam(required = false) String categoryId) throws BadRequestException {
+        List<CategoryDTO> categories = customerService.viewAllCategories(categoryId);
+        return ResponseEntity.ok(categories);
+    }
+
+    @GetMapping("/filtering-details")
+    public ResponseEntity<FilteringDetailsDTO> getFilteringDetails(@RequestParam String categoryId) throws BadRequestException {
+        FilteringDetailsDTO dto = customerService.getFilteringDetails(categoryId);
+        return ResponseEntity.ok(dto);
     }
 }
