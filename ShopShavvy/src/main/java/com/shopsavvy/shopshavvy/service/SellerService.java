@@ -1,10 +1,15 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
+import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Seller;
+import com.shopsavvy.shopshavvy.repository.CategoryMetadataFieldValuesRepository;
+import com.shopsavvy.shopshavvy.repository.CategoryRepository;
 import com.shopsavvy.shopshavvy.repository.SellerRepository;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.Locale;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -28,6 +32,8 @@ public class SellerService {
     private final SellerRepository sellerRepository;
     private final FileStorageService fileStorageService;
     private final MessageSource messageSource;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -119,5 +125,37 @@ public class SellerService {
         if (dto.getZipCode() != null) address.setZipCode(dto.getZipCode());
         if (dto.getAddressLine() != null) address.setAddressLine(dto.getAddressLine());
         if (dto.getLabel() != null) address.setLabel(dto.getLabel());
+    }
+
+    public List<CategoryDetailsForSellerDTO> viewCategory() {
+        return categoryRepository.findAll().stream()
+                .filter(category -> category.getSubCategories() == null || category.getSubCategories().isEmpty())
+                .map(category -> CategoryDetailsForSellerDTO.builder()
+                        .id(category.getCategoryId())
+                        .name(category.getName())
+                        .parentCategories(category.getParentCategory() != null
+                                ? List.of(CategoryResponseDTO.builder()
+                                .categoryId(category.getParentCategory().getCategoryId())
+                                .categoryName(category.getParentCategory().getName())
+                                .parentCategoryId(category.getParentCategory().getParentCategory().getCategoryId())
+                                .build())
+                                : null)
+                        .metadataFieldsWithValues(fetchMetadataFieldsFromRoot(category))
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    private HashMap<String, String> fetchMetadataFieldsFromRoot(Category category) {
+        HashMap<String, String> metadataFieldsWithValues = new HashMap<>();
+        while (category != null) {
+            categoryMetadataFieldValuesRepository
+                    .findMetadataFieldByCategoryId(category.getCategoryId())
+                    .forEach(field -> metadataFieldsWithValues.putIfAbsent(
+                            field.getCategoryMetadataField().getName(),
+                            field.getValues()
+                    ));
+            category = category.getParentCategory();
+        }
+        return metadataFieldsWithValues;
     }
 }

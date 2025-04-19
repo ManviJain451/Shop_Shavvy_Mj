@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
@@ -17,7 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Locale;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -60,4 +61,9 @@ public class SellerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
+    @GetMapping("/category")
+    public ResponseEntity<List<CategoryDetailsForSellerDTO>> viewCatgeory(){
+        List<CategoryDetailsForSellerDTO> categories = sellerService.viewCategory();
+        return ResponseEntity.ok(categories);
+    }
 }
