@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.util.HashMap;
 import java.util.List;
 
 @Getter
@@ -13,12 +14,11 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class CategeoryDetailsDTO {
+public class CategoryDetailsDTO {
 
     private String id;
     private String name;
     private List<CategoryResponseDTO> parentCategories;
     private List<CategoryResponseDTO> immediateChildrens;
-    private List<MetadataFieldDTO> metadataFields;
-
+    private HashMap<String, String> metadataFieldsWithValues;
 }

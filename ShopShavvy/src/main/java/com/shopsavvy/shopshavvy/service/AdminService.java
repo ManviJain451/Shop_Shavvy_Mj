@@ -3,7 +3,7 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategeoryDetailsDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.MetadataFieldDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
@@ -261,19 +261,19 @@ public class AdminService {
 
     }
 
-    public CategeoryDetailsDTO viewCategory(String categoryId) throws BadRequestException {
+    public CategoryDetailsDTO viewCategory(String categoryId) throws BadRequestException {
         Category category = validateAndGetCategory(categoryId);
 
         List<CategoryResponseDTO> parentCategoriesDetails = getParentCategoriesDetails(category);
         List<CategoryResponseDTO> immediateChildrenDetails = getChildrenCategoriesDetails(category);
-        List<MetadataFieldDTO> metadataFields = getMetadataFieldDTOs(categoryId);
+        HashMap<String, String> metadataFieldsWithValues = getMetadataFields(category);
 
-        return CategeoryDetailsDTO.builder()
+        return CategoryDetailsDTO.builder()
                 .id(categoryId)
                 .name(category.getName())
                 .parentCategories(parentCategoriesDetails)
                 .immediateChildrens(immediateChildrenDetails)
-                .metadataFields(metadataFields)
+                .metadataFieldsWithValues(metadataFieldsWithValues)
                 .build();
     }
 
@@ -308,24 +308,25 @@ public class AdminService {
                 .categoryName(category.getName())
                 .parentCategoryId(category.getParentCategory() != null ?
                         category.getParentCategory().getCategoryId() : null)
-                .metadataFields(getMetadataFieldDTOs(category.getCategoryId()))
+//                .metadataFields(getMetadataFieldDTOs(category.getCategoryId()))
                 .build();
     }
 
-    private List<MetadataFieldDTO> getMetadataFieldDTOs(String categoryId) {
-        List<CategoryMetadataFieldValues> metadataFields = categoryMetadataFieldValuesRepository
-                .findMetadataFieldByCategoryId(categoryId);
-
-        return metadataFields.stream()
-                .map(field -> MetadataFieldDTO.builder()
-                        .id(field.getCategoryMetadataField().getId())
-                        .name(field.getCategoryMetadataField().getName())
-                        .values(Arrays.asList(field.getValues().split("\\s*,\\s*")))
-                        .build())
-                .collect(Collectors.toList());
+    private HashMap<String, String> getMetadataFields(Category category) {
+        HashMap<String, String> metadataFieldsWithValues = new HashMap<>();
+        while (category != null) {
+            categoryMetadataFieldValuesRepository
+                    .findMetadataFieldByCategoryId(category.getCategoryId())
+                    .forEach(field -> metadataFieldsWithValues.putIfAbsent(
+                            field.getCategoryMetadataField().getName(),
+                            field.getValues()
+                    ));
+            category = category.getParentCategory();
+        }
+        return metadataFieldsWithValues;
     }
 
-    public List<CategeoryDetailsDTO> viewAllCategories() {
+    public List<CategoryDetailsDTO> viewAllCategories() {
         return categoryRepository.findAll().stream()
                 .map(category -> {
                     try {

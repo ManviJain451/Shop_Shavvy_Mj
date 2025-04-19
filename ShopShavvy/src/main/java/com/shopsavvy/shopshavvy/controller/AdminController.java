@@ -2,7 +2,7 @@ package com.shopsavvy.shopshavvy.controller;
 
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategeoryDetailsDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
@@ -116,15 +116,15 @@ public class AdminController {
     }
 
     @GetMapping("/category")
-    public ResponseEntity<CategeoryDetailsDTO> viewCategory(@RequestParam String categoryId) throws BadRequestException {
-        CategeoryDetailsDTO categeoryDetailsDTO = adminService.viewCategory(categoryId);
+    public ResponseEntity<CategoryDetailsDTO> viewCategory(@RequestParam String categoryId) throws BadRequestException {
+        CategoryDetailsDTO categeoryDetailsDTO = adminService.viewCategory(categoryId);
         return ResponseEntity.ok(categeoryDetailsDTO);
 
     }
 
     @GetMapping("/all/categories")
-    public ResponseEntity<List<CategeoryDetailsDTO>> viewAllCategories() {
-        List<CategeoryDetailsDTO> categeoryDetailsDTOS = adminService.viewAllCategories();
+    public ResponseEntity<List<CategoryDetailsDTO>> viewAllCategories() {
+        List<CategoryDetailsDTO> categeoryDetailsDTOS = adminService.viewAllCategories();
         return ResponseEntity.ok(categeoryDetailsDTOS);
     }
 
