@@ -5,8 +5,6 @@ import com.shopsavvy.shopshavvy.model.products.ProductVariation;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.io.Serializable;
-
 @Entity
 @Getter
 @Setter
@@ -28,10 +26,3 @@ public class Cart {
     private boolean isWishlistItem;
 }
 
-@Getter
-@Setter
-@EqualsAndHashCode
-class CartId implements Serializable {
-    private Customer customer;
-    private ProductVariation productVariation;
-}
