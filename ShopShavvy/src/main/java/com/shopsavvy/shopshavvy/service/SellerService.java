@@ -7,6 +7,7 @@ import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductUpdateDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
@@ -443,11 +444,60 @@ public class SellerService {
             throw new BadRequestException(
                     messageSource.getMessage("error.product.not.authorized", null, getCurrentLocale()));
         }
+        if(product.isDeleted()){
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.already.deleted", null, getCurrentLocale()));
+
+        }
 
         product.setDeleted(true);
         productRepository.save(product);
 
         return messageSource.getMessage("success.product.deleted", null, getCurrentLocale());
+    }
+
+    public String updateProduct(UserDetailsImpl userDetails, String productId, ProductUpdateDTO updateDTO) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if (!product.getSeller().getEmail().equals(userDetails.getUsername())) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.not.authorized", null, getCurrentLocale()));
+        }
+
+        if (product.isDeleted()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.deleted", null, getCurrentLocale()));
+        }
+
+        if (updateDTO.getName() != null && !updateDTO.getName().equals(product.getName())) {
+            boolean exists = productRepository.existsByNameAndBrandAndCategoryAndSellerAndIdNot(
+                    updateDTO.getName(),
+                    product.getBrand(),
+                    product.getCategory(),
+                    product.getSeller(),
+                    productId
+            );
+            if (exists) {
+                throw new BadRequestException(
+                        messageSource.getMessage("error.product.name.exists", null, getCurrentLocale()));
+            }
+            product.setName(updateDTO.getName());
+        }
+
+        if (updateDTO.getDescription() != null) {
+            product.setDescription(updateDTO.getDescription());
+        }
+        if (updateDTO.getCancellable() != null) {
+            product.setCancellable(updateDTO.getCancellable());
+        }
+        if (updateDTO.getReturnable() != null) {
+            product.setReturnable(updateDTO.getReturnable());
+        }
+
+        productRepository.save(product);
+        return messageSource.getMessage("success.product.updated", null, getCurrentLocale());
     }
 
 }
