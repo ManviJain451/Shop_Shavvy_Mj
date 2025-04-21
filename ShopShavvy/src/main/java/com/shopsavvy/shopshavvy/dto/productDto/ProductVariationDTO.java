@@ -41,9 +41,8 @@ public class ProductVariationDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private ProductDTO parentProduct;
 
-//    @NotNull(message = "Primary image is required")
-//    private MultipartFile primaryImage;
-//
-//    private List<MultipartFile> secondaryImages;
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonView(Views.AdminView.class)
+    private String primaryImage;
 
 }

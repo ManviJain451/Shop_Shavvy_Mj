@@ -1,11 +1,10 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.MetadataFieldDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.*;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
@@ -14,18 +13,23 @@ import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValueId;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
+import com.shopsavvy.shopshavvy.model.products.Product;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.*;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,10 +50,14 @@ public class AdminService {
     private final CategoryRepository categoryRepository;
     private final ProductRepository productRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
+    private final FileStorageService fileStorageService;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
     }
+
+    @Value("${file.storage.base-path}")
+    private String basePath;
 
     public String unlockUser(EmailDTO emailDTO) {
         User user = userRepository.findByEmail(emailDTO.getEmail())
@@ -486,6 +494,92 @@ public class AdminService {
                     new Object[]{String.join(", ", intersection)},
                     getCurrentLocale()));
         }
+    }
+
+    public ProductDTO viewProduct(String productId) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        Set<ProductVariationDTO> variations = product.getProductVariations().stream()
+                .map(variation -> {
+                    String imageUrl = null;
+                    if (variation.getPrimaryImage() != null) {
+                        imageUrl = fileStorageService.getProductVariationImageUrl(
+                                product.getId(),
+                                variation.getId(),
+                                variation.getPrimaryImage());
+                    }
+
+                    return ProductVariationDTO.builder()
+                            .productId(product.getId())
+                            .price(variation.getPrice())
+                            .quantity(variation.getQuantity())
+                            .metadata(variation.getMetadata())
+                            .primaryImage(imageUrl)
+                            .build();
+                })
+                .collect(Collectors.toSet());
+
+        return ProductDTO.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .brand(product.getBrand())
+                .description(product.getDescription())
+                .active(product.isActive())
+                .cancellable(product.isCancellable())
+                .returnable(product.isReturnable())
+                .categoryDetails(CategoryDTO.builder()
+                        .id(product.getCategory().getCategoryId())
+                        .name(product.getCategory().getName())
+                        .build())
+                .productVariations(variations)
+                .build();
+    }
+
+    public String deactivateProduct(String productId) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if (!product.isActive()) {
+            throw new BadRequestException(messageSource.getMessage(
+                    "error.product.already.inactive", null, getCurrentLocale()));
+        }
+
+        product.setActive(false);
+        productRepository.save(product);
+        emailService.sendProductStatusUpdateEmail(
+                product.getSeller().getEmail(),
+                product.getName(),
+                false,
+                product.getBrand(),
+                product.getDescription());
+
+        return messageSource.getMessage("success.product.deactivated", null, getCurrentLocale());
+    }
+
+    public String activateProduct(String productId) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if (product.isActive()) {
+            throw new BadRequestException(messageSource.getMessage(
+                    "error.product.already.active", null, getCurrentLocale()));
+        }
+
+        product.setActive(true);
+        productRepository.save(product);
+
+        emailService.sendProductStatusUpdateEmail(
+                product.getSeller().getEmail(),
+                product.getName(),
+                true,
+                product.getBrand(),
+                product.getDescription());
+
+        return messageSource.getMessage("success.product.activated", null, getCurrentLocale());
     }
 
 

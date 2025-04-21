@@ -10,9 +10,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -23,11 +21,12 @@ public class FileStorageService {
         return LocaleContextHolder.getLocale();
     }
 
-
     @Value("${file.storage.base-path}")
     private String BASE_PATH;
 
     private static String[] ALLOWED_FORMATS = {"jpg", "jpeg", "png", "bmp"};
+    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+
 
     public String saveOrUpdateUserPhoto(String userId, MultipartFile file) throws IOException {
 
@@ -133,4 +132,89 @@ public class FileStorageService {
 
         return fileName.substring(lastDotIndex + 1).toLowerCase();
     }
+
+    public String saveProductVariationImage(String productId, String variationId, MultipartFile file) throws IOException, BadRequestException {
+        System.out.println("primary image ");
+        if (file == null || file.isEmpty()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.invalid.file", null, getCurrentLocale()));
+        }
+
+        String originalFilename = file.getOriginalFilename();
+        if (originalFilename == null) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.invalid.filename", null, getCurrentLocale()));
+        }
+
+        validateFileFormat(originalFilename);
+        validateMimeType(file.getContentType());
+
+        try {
+            System.out.println(productId +  " " + variationId);
+            Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+            Files.createDirectories(variationDirectory);
+
+            String fileExtension = getFileExtension(originalFilename);
+            String fileName = variationId + "." + fileExtension;
+            Path filePath = variationDirectory.resolve(fileName);
+
+            file.transferTo(filePath.toFile());
+
+            return fileName;
+        } catch (IOException e) {
+            throw new IOException(
+                    messageSource.getMessage("error.file.store", null, getCurrentLocale()), e);
+        }
+    }
+
+    public void saveSecondaryImages(String productId, String variationId, List<MultipartFile> files) throws IOException, BadRequestException {
+        if (files == null || files.isEmpty()) {
+            return;
+        }
+
+        Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+        Files.createDirectories(variationDirectory);
+
+        for (int i = 0; i < files.size(); i++) {
+            MultipartFile file = files.get(i);
+            if (file.isEmpty()) {
+                continue;
+            }
+
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null) {
+                continue;
+            }
+
+            validateFileFormat(originalFilename);
+            validateMimeType(file.getContentType());
+
+            String fileExtension = getFileExtension(originalFilename);
+            String fileName = variationId + "_" + (i + 1) + "." + fileExtension;
+            Path filePath = variationDirectory.resolve(fileName);
+
+            file.transferTo(filePath.toFile());
+        }
+    }
+
+    public String getProductVariationImageUrl(String productId, String variationId, String imageName) {
+        Path imagePath = Paths.get(BASE_PATH, "products", productId, "variations", variationId, imageName);
+        if (!Files.exists(imagePath)) {
+            return null;
+        }
+        return "/products/" + productId + "/variations/" + variationId + "/" + imageName;
+    }
+
+    public void deleteProductVariationImages(String productId, String variationId) throws IOException {
+        Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+        if (Files.exists(variationDirectory)) {
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(variationDirectory)) {
+                for (Path file : stream) {
+                    Files.deleteIfExists(file);
+                }
+            }
+            Files.deleteIfExists(variationDirectory);
+        }
+    }
 }
+

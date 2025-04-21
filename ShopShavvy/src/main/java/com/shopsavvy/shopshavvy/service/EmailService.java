@@ -65,4 +65,41 @@ public class EmailService {
         }
     }
 
+    @Async
+    public void sendProductStatusUpdateEmail(String email, String productName, boolean isActive,
+                                             String brand, String description) {
+        try {
+            MimeMessage message = emailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+
+            helper.setTo(email);
+            helper.setSubject(isActive ? "Product Activation Notification" : "Product Deactivation Notification");
+
+            String emailText = buildProductStatusEmail(productName, isActive, brand, description);
+            helper.setText(emailText, true);
+
+            emailSender.send(message);
+        } catch (MessagingException e) {
+            throw new RuntimeException("Failed to send email", e);
+        }
+    }
+
+    private String buildProductStatusEmail(String productName, boolean isActive, String brand, String description) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<html><body>");
+        builder.append("<h2>").append(isActive ? "Product Successfully Activated" : "Product Has Been Deactivated").append("</h2>");
+        builder.append("<p>Product Details:</p>");
+        builder.append("<ul>");
+        builder.append("<li>Product Name: ").append(productName).append("</li>");
+        builder.append("<li>Brand: ").append(brand).append("</li>");
+        builder.append("<li>Description: ").append(description).append("</li>");
+        builder.append("</ul>");
+        builder.append("<p>").append(isActive ?
+                "Your product has been activated and is now visible to customers." :
+                "Your product has been deactivated and is no longer visible to customers.").append("</p>");
+        builder.append("</body></html>");
+
+        return builder.toString();
+    }
+
 }

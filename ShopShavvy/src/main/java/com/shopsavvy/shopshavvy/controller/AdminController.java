@@ -1,15 +1,19 @@
 package com.shopsavvy.shopshavvy.controller;
 
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
+import com.shopsavvy.shopshavvy.validation.groups.Views;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -18,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -147,6 +152,28 @@ public class AdminController {
             @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException{
         String message = adminService.updateMetadataFieldToCategory(dto);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
+
+    @GetMapping("/product")
+    @JsonView(Views.AdminView.class)
+    public ResponseEntity<SuccessMessageResponse<ProductDTO>> viewProduct(
+            @RequestParam String id) throws BadRequestException {
+        return ResponseEntity.ok(SuccessMessageResponse.success(
+                adminService.viewProduct(id)));
+    }
+
+    @PutMapping("/products/{productId}/deactivate")
+    public ResponseEntity<SuccessMessageResponse<String>> deactivateProduct(
+            @PathVariable String productId) throws BadRequestException {
+        return ResponseEntity.ok(SuccessMessageResponse.success(
+                adminService.deactivateProduct(productId)));
+    }
+
+    @PutMapping("/products/{productId}/activate")
+    public ResponseEntity<SuccessMessageResponse<String>> activateProduct(
+            @PathVariable String productId) throws BadRequestException {
+        return ResponseEntity.ok(SuccessMessageResponse.success(
+                adminService.activateProduct(productId)));
     }
 
 }
