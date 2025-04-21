@@ -2,6 +2,8 @@ package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
@@ -11,12 +13,16 @@ import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -54,7 +60,8 @@ public class SellerController {
     }
 
     @PutMapping("/update-address")
-    public ResponseEntity<SuccessMessageResponse<String>> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl, @RequestParam String addressId,
+    public ResponseEntity<SuccessMessageResponse<String>> updateAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+                                                                        @RequestParam String addressId,
             @Validated(OnUpdate.class) @RequestBody AddressDTO addressUpdateDTO) throws BadRequestException {
 
         String message = sellerService.updateAddress(userDetailsImpl, addressId, addressUpdateDTO);
@@ -66,4 +73,31 @@ public class SellerController {
         List<CategoryDetailsForSellerDTO> categories = sellerService.viewCategory();
         return ResponseEntity.ok(categories);
     }
+
+    @PostMapping("/product")
+    public ResponseEntity<SuccessMessageResponse<String>> addProduct(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+                                                                     @Valid @RequestBody ProductDTO productDTO) throws BadRequestException {
+        String message = sellerService.addProduct(userDetailsImpl, productDTO);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
+
+    @GetMapping("/product")
+    public ResponseEntity<ProductDTO> viewProduct(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestParam String productId) throws BadRequestException {
+        ProductDTO dto = sellerService.viewProduct(userDetails, productId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<ProductDTO>> viewAllProducts(@AuthenticationPrincipal UserDetailsImpl userDetails){
+        List<ProductDTO> products = sellerService.viewAllProducts(userDetails);
+        return ResponseEntity.ok(products);
+    }
+
+    @PostMapping(value = "/products/variations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<SuccessMessageResponse<String>> addProductVariation(@ModelAttribute @Valid ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws BadRequestException {
+        String message = sellerService.addProductVariations(dto, primaryImage, secondaryImages);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
+
+
 }

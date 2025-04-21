@@ -1,24 +1,33 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
+import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
+import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
+import com.shopsavvy.shopshavvy.model.products.Product;
+import com.shopsavvy.shopshavvy.model.products.ProductVariation;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Seller;
-import com.shopsavvy.shopshavvy.repository.CategoryMetadataFieldValuesRepository;
-import com.shopsavvy.shopshavvy.repository.CategoryRepository;
-import com.shopsavvy.shopshavvy.repository.SellerRepository;
+import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.jmx.export.metadata.InvalidMetadataException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.*;
@@ -34,6 +43,9 @@ public class SellerService {
     private final MessageSource messageSource;
     private final CategoryRepository categoryRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
+    private final ProductRepository productRepository;
+    private final ObjectMapper objectMapper;
+    private final ProductVariationRepository productVariationRepository;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -158,4 +170,199 @@ public class SellerService {
         }
         return metadataFieldsWithValues;
     }
+
+
+    public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException {
+        Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
+                .orElseThrow(() -> new UserNotFoundException(messageSource
+                        .getMessage("error.seller.not.found.toke", null, getCurrentLocale())));
+        Category category = categoryRepository.findById(dto.getCategoryId())
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.category.not.found", null, getCurrentLocale())));
+        if (category.getSubCategories() != null && !category.getSubCategories().isEmpty()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.category.not.leaf.node", null, getCurrentLocale()));
+        }
+
+        List<Product> existingProducts = productRepository.findByNameAndCategoryAndBrandAndSeller(
+                dto.getProductName(),
+                category,
+                dto.getBrand(),
+                seller
+        );
+
+        if (!existingProducts.isEmpty()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.already.exists", null, getCurrentLocale()));
+        }
+
+        Product product = Product.builder()
+                .seller(seller)
+                .name(dto.getProductName())
+                .description(dto.getDescription() != null ? dto.getDescription() : null)
+                .category(category)
+                .isCancellable(dto.isCancellable())
+                .isReturnable(dto.isReturnable())
+                .brand(dto.getBrand())
+                .isActive(false)
+                .isDeleted(false)
+                .build();
+
+        productRepository.save(product);
+
+        Set<Product> existingProductsOfSeller = seller.getProducts();
+        existingProductsOfSeller.add(product);
+        seller.setProducts(existingProductsOfSeller);
+        sellerRepository.save(seller);
+
+        return messageSource.getMessage("success.product.added", null, getCurrentLocale());
+    }
+
+    public ProductDTO viewProduct(UserDetailsImpl userDetailsImpl, String productId) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if (!product.getSeller().getEmail().equals(userDetailsImpl.getUsername())) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.not.authorized", null, getCurrentLocale()));
+        }
+
+        if (product.isDeleted()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.deleted", null, getCurrentLocale()));
+        }
+
+        CategoryDTO categoryDTO = CategoryDTO.builder()
+                .id(product.getCategory().getCategoryId())
+                .name(product.getCategory().getName())
+                .build();
+
+        return ProductDTO.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .description(product.getDescription())
+                .brand(product.getBrand())
+                .active(product.isActive())
+                .cancellable(product.isCancellable())
+                .returnable(product.isReturnable())
+                .categoryDetails(categoryDTO)
+                .build();
+    }
+
+    public List<ProductDTO> viewAllProducts(UserDetailsImpl userDetails){
+        Seller seller = sellerRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UserNotFoundException(messageSource
+                        .getMessage("user.not.found", null, getCurrentLocale())));
+
+        List<Product> products = productRepository.findBySeller(seller);
+        return products
+                .stream()
+                .map(product -> ProductDTO.builder()
+                        .productId(product.getId())
+                        .productName(product.getName())
+                        .description(product.getDescription())
+                        .brand(product.getBrand())
+                        .active(product.isActive())
+                        .cancellable(product.isCancellable())
+                        .returnable(product.isReturnable())
+                        .categoryDetails(CategoryDTO.builder()
+                                .id(product.getCategory().getCategoryId())
+                                .name(product.getCategory().getName())
+                                .build())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+
+    public String addProductVariations(ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws BadRequestException {
+        Product product = productRepository.findById(dto.getProductId())
+                .orElseThrow(() -> new BadRequestException(messageSource.getMessage("product.not.found", new Object[]{dto.getProductId()}, getCurrentLocale())));
+        if (product.isDeleted()) {
+            throw new BadRequestException(messageSource.getMessage("product.deleted", null, getCurrentLocale()));
+        }
+        if (!product.isActive()) {
+            throw new BadRequestException(messageSource.getMessage("product.inactive", null, getCurrentLocale()));
+        }
+        Category category = product.getCategory();
+
+        boolean alreadyExists = product.getProductVariations().stream()
+                .anyMatch(v -> Objects.equals(v.getMetadata(), dto.getMetadata()));
+        if (alreadyExists)
+            throw new DuplicateEntryExistsException(messageSource.getMessage("product.variation.duplicate", null, getCurrentLocale()));
+
+        validateMetadata(dto.getMetadata(), category, product);
+
+        ProductVariation variation = new ProductVariation();
+        variation.setProduct(product);
+        variation.setMetadata(dto.getMetadata());
+        variation.setQuantity(dto.getQuantity());
+        variation.setPrice(dto.getPrice());
+        variation.setActive(true);
+
+        ProductVariation savedVariation = productVariationRepository.save(variation);
+
+        try {
+            String primaryImageKey = fileStorageService.saveProductVariationImage(product.getId(), savedVariation.getId(), primaryImage);
+            savedVariation.setPrimaryImage(primaryImageKey);
+
+            if (secondaryImages != null && !secondaryImages.isEmpty()) {
+                fileStorageService.saveSecondaryImages(product.getId(), savedVariation.getId(), secondaryImages);
+            }
+
+            productVariationRepository.save(savedVariation);
+
+        } catch (IOException e) {
+            productVariationRepository.delete(savedVariation);
+            throw new RuntimeException("Failed to upload images: " + e.getMessage());
+        }
+
+        return "Product variation created";
+
+    }
+
+    private void validateMetadata(Map<String, Object> metadata, Category category, Product product) throws BadRequestException {
+        if (metadata == null || metadata.isEmpty()) {
+            throw new BadRequestException(messageSource.getMessage("metadata.min.one", null, getCurrentLocale()));
+        }
+
+        Set<String> newMetadataFields = metadata.keySet();
+
+        if (!product.getProductVariations().isEmpty()) {
+            Optional<ProductVariation> existingVariation = product.getProductVariations().stream()
+                    .filter(v -> v.getMetadata() != null && !v.getMetadata().isEmpty())
+                    .findFirst();
+
+            if (existingVariation.isPresent()) {
+                Set<String> existingFields = existingVariation.get().getMetadata().keySet();
+
+                if (!existingFields.equals(newMetadataFields)) {
+                    throw new InvalidMetadataException(messageSource.getMessage("metadata.structure.mismatch", null, getCurrentLocale()));
+                }
+            }
+        }
+
+        Map<String, Set<String>> existingMetadata = new HashMap<>();
+        Category current = category;
+
+        while (current != null) {
+            List<CategoryMetadataFieldValues> metadataValues = categoryMetadataFieldValuesRepository.findByCategory(current);
+            for (CategoryMetadataFieldValues value : metadataValues) {
+                String fieldName = value.getCategoryMetadataField().getName();
+                Set<String> allowedValues = Arrays.stream(value.getValues().split(",")).map(String::trim).collect(Collectors.toSet());
+                existingMetadata.put(fieldName, allowedValues);
+            }
+            current = current.getParentCategory();
+        }
+        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+            String fieldName = entry.getKey();
+            String value = entry.getValue().toString();
+
+            if (!existingMetadata.containsKey(fieldName))
+                throw new InvalidMetadataException(messageSource.getMessage("metadata.field.invalid", new Object[]{fieldName}, getCurrentLocale()));
+            if (!existingMetadata.get(fieldName).contains(value))
+                throw new InvalidMetadataException(messageSource.getMessage("metadata.value.invalid", new Object[]{value, fieldName}, getCurrentLocale()));
+        }
+    }
+
 }

@@ -9,7 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -32,7 +32,7 @@ public class Product {
     @Column(nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "description")
     private String description;
 
     @ManyToOne
@@ -55,7 +55,7 @@ public class Product {
     private boolean isDeleted;
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<ProductVariation> productVariations;
+    private Set<ProductVariation> productVariations;
 
     @CreatedDate
     @Column(name = "date_created", nullable = false)

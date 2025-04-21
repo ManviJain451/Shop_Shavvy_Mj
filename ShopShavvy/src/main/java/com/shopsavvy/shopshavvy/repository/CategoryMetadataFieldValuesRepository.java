@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.repository;
 
+import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValueId;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
@@ -15,5 +16,7 @@ public interface CategoryMetadataFieldValuesRepository extends JpaRepository<Cat
 
     @Query("SELECT cmfv FROM CategoryMetadataFieldValues cmfv WHERE cmfv.category.categoryId = :categoryId")
     List<CategoryMetadataFieldValues> findMetadataFieldByCategoryId(@Param("categoryId") String categoryId);
+
+    List<CategoryMetadataFieldValues> findByCategory(Category category);
 
 }
