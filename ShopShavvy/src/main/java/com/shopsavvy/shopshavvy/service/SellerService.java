@@ -303,8 +303,11 @@ public class SellerService {
         ProductVariation savedVariation = productVariationRepository.save(variation);
 
         try {
+            System.out.println(primaryImage);
             String primaryImageKey = fileStorageService.saveProductVariationImage(product.getId(), savedVariation.getId(), primaryImage);
+            System.out.println(primaryImageKey);
             savedVariation.setPrimaryImage(primaryImageKey);
+            System.out.println(savedVariation.getPrimaryImage());
 
             if (secondaryImages != null && !secondaryImages.isEmpty()) {
                 fileStorageService.saveSecondaryImages(product.getId(), savedVariation.getId(), secondaryImages);
@@ -346,6 +349,7 @@ public class SellerService {
         Category current = category;
 
         while (current != null) {
+            System.out.println(current.getName());
             List<CategoryMetadataFieldValues> metadataValues = categoryMetadataFieldValuesRepository.findByCategory(current);
             for (CategoryMetadataFieldValues value : metadataValues) {
                 String fieldName = value.getCategoryMetadataField().getName();
@@ -357,12 +361,93 @@ public class SellerService {
         for (Map.Entry<String, Object> entry : metadata.entrySet()) {
             String fieldName = entry.getKey();
             String value = entry.getValue().toString();
+            System.out.println("value = " + value);
+            System.out.println("existingValue = " + existingMetadata.get(fieldName));
 
             if (!existingMetadata.containsKey(fieldName))
                 throw new InvalidMetadataException(messageSource.getMessage("metadata.field.invalid", new Object[]{fieldName}, getCurrentLocale()));
             if (!existingMetadata.get(fieldName).contains(value))
                 throw new InvalidMetadataException(messageSource.getMessage("metadata.value.invalid", new Object[]{value, fieldName}, getCurrentLocale()));
         }
+    }
+
+    public ProductVariationDTO viewProductVariation(UserDetailsImpl userDetails, String productVariationId) throws BadRequestException {
+        ProductVariation variation = productVariationRepository.findById(productVariationId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.variation.not.found", null, getCurrentLocale())));
+
+        if (!variation.getProduct().getSeller().getEmail().equals(userDetails.getUsername())) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.variation.not.authorized", null, getCurrentLocale()));
+        }
+
+        if (variation.getProduct().isDeleted()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.deleted", null, getCurrentLocale()));
+        }
+
+        ProductDTO parentProduct = ProductDTO.builder()
+                .productId(variation.getProduct().getId())
+                .productName(variation.getProduct().getName())
+                .brand(variation.getProduct().getBrand())
+                .description(variation.getProduct().getDescription())
+                .active(variation.getProduct().isActive())
+                .cancellable(variation.getProduct().isCancellable())
+                .returnable(variation.getProduct().isReturnable())
+                .categoryDetails(CategoryDTO.builder()
+                        .id(variation.getProduct().getCategory().getCategoryId())
+                        .name(variation.getProduct().getCategory().getName())
+                        .build())
+                .build();
+
+        return ProductVariationDTO.builder()
+                .productId(variation.getProduct().getId())
+                .price(variation.getPrice())
+                .quantity(variation.getQuantity())
+                .metadata(variation.getMetadata())
+                .parentProduct(parentProduct)
+                .build();
+    }
+
+    public List<ProductVariationDTO> viewProductVariations(UserDetailsImpl userDetails, String productId) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if (!product.getSeller().getEmail().equals(userDetails.getUsername())) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.not.authorized", null, getCurrentLocale()));
+        }
+
+        if (product.isDeleted()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.deleted", null, getCurrentLocale()));
+        }
+
+        return product.getProductVariations().stream()
+                .map(variation -> ProductVariationDTO.builder()
+                        .productId(product.getId())
+                        .price(variation.getPrice())
+                        .quantity(variation.getQuantity())
+                        .metadata(variation.getMetadata())
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    public String deleteProduct(UserDetailsImpl userDetails, String productId) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if (!product.getSeller().getEmail().equals(userDetails.getUsername())) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.not.authorized", null, getCurrentLocale()));
+        }
+
+        product.setDeleted(true);
+        productRepository.save(product);
+
+        return messageSource.getMessage("success.product.deleted", null, getCurrentLocale());
     }
 
 }

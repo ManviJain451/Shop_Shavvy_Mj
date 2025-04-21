@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.controller;
 
+import com.fasterxml.jackson.annotation.JsonView;
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
@@ -10,6 +11,7 @@ import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.SellerService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
+import com.shopsavvy.shopshavvy.validation.groups.Views;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -93,11 +95,44 @@ public class SellerController {
         return ResponseEntity.ok(products);
     }
 
-    @PostMapping(value = "/products/variations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<SuccessMessageResponse<String>> addProductVariation(@ModelAttribute @Valid ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws BadRequestException {
-        String message = sellerService.addProductVariations(dto, primaryImage, secondaryImages);
-        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+//    @PostMapping(value = "/products/variations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+//    public ResponseEntity<SuccessMessageResponse<String>> addProductVariation(@RequestPart @Valid ProductVariationDTO dto, @RequestBody MultipartFile primaryImage, @RequestBody List<MultipartFile> secondaryImages) throws BadRequestException {
+//        String message = sellerService.addProductVariations(dto, primaryImage, secondaryImages);
+//        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+//    }
+
+    @PostMapping("/product/variations")
+    public ResponseEntity<String> addProductVariation(@RequestPart("productData") @Valid ProductVariationDTO dto,
+            @RequestPart("primaryImage") MultipartFile primaryImage,
+            @RequestPart(value = "secondaryImages", required = false) List<MultipartFile> secondaryImages
+    ) throws BadRequestException {
+        String message = sellerService.addProductVariations(dto,primaryImage,secondaryImages);
+        return ResponseEntity.ok(message);
     }
 
+    @JsonView(Views.SellerView.class)
+    @GetMapping("/product/variations/{id}")
+    public ResponseEntity<ProductVariationDTO> viewProductVariation(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable("id") String productVariationId) throws BadRequestException {
+        ProductVariationDTO dto = sellerService.viewProductVariation(userDetails, productVariationId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/product/{id}/variations")
+    public ResponseEntity<List<ProductVariationDTO>> viewProductVariations(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable("id") String productId) throws BadRequestException {
+        List<ProductVariationDTO> variations = sellerService.viewProductVariations(userDetails, productId);
+        return ResponseEntity.ok(variations);
+    }
+
+    @DeleteMapping("/product/{id}")
+    public ResponseEntity<String> deleteProduct(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable("id") String productId) throws BadRequestException {
+        String response = sellerService.deleteProduct(userDetails, productId);
+        return ResponseEntity.ok(response);
+    }
 
 }

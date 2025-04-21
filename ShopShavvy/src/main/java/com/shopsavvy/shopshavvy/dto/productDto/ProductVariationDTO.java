@@ -1,9 +1,12 @@
 package com.shopsavvy.shopshavvy.dto.productDto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonView;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.shopsavvy.shopshavvy.validation.groups.Views;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -33,6 +36,10 @@ public class ProductVariationDTO {
 
     @NotEmpty(message = "Metadata fields are required")
     private Map<String, Object> metadata;
+
+    @JsonView(Views.SellerView.class)
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    private ProductDTO parentProduct;
 
 //    @NotNull(message = "Primary image is required")
 //    private MultipartFile primaryImage;
