@@ -6,6 +6,7 @@ import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductUpdateDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationUpdateDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
@@ -136,6 +137,17 @@ public class SellerController {
             @RequestParam("id") String productId,
             @Valid @RequestBody ProductUpdateDTO updateDTO) throws BadRequestException {
         String response = sellerService.updateProduct(userDetails, productId, updateDTO);
+        return ResponseEntity.ok(SuccessMessageResponse.success(response));
+    }
+
+    @PutMapping(value = "/product/variation", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<SuccessMessageResponse<String>> updateProductVariation(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam("id") String variationId,
+            @RequestPart(value = "data", required = false) ProductVariationUpdateDTO updateDTO,
+            @RequestPart(value = "primaryImage", required = false) MultipartFile primaryImage,
+            @RequestPart(value = "secondaryImages", required = false) List<MultipartFile> secondaryImages) throws BadRequestException {
+        String response = sellerService.updateProductVariation(userDetails, variationId, updateDTO, primaryImage, secondaryImages);
         return ResponseEntity.ok(SuccessMessageResponse.success(response));
     }
 

@@ -9,6 +9,7 @@ import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductUpdateDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationUpdateDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
@@ -500,4 +501,60 @@ public class SellerService {
         return messageSource.getMessage("success.product.updated", null, getCurrentLocale());
     }
 
+    public String updateProductVariation(UserDetailsImpl userDetails, String variationId,
+                                         ProductVariationUpdateDTO updateDTO, MultipartFile primaryImage,
+                                         List<MultipartFile> secondaryImages) throws BadRequestException {
+
+        ProductVariation variation = productVariationRepository.findById(variationId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.variation.not.found", null, getCurrentLocale())));
+
+        if (!variation.getProduct().getSeller().getEmail().equals(userDetails.getUsername())) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.variation.not.authorized", null, getCurrentLocale()));
+        }
+
+        Product product = variation.getProduct();
+        if (product.isDeleted() || !product.isActive()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.inactive", null, getCurrentLocale()));
+        }
+
+        if (updateDTO != null) {
+            if (updateDTO.getQuantity() != null) {
+                variation.setQuantity(updateDTO.getQuantity());
+            }
+            if (updateDTO.getPrice() != null) {
+                variation.setPrice(updateDTO.getPrice());
+            }
+            if (updateDTO.getActive() != null) {
+                variation.setActive(updateDTO.getActive());
+            }
+            if (updateDTO.getMetadata() != null) {
+                validateMetadata(updateDTO.getMetadata(), product.getCategory(), product);
+                variation.setMetadata(updateDTO.getMetadata());
+            }
+        }
+
+        try {
+            if (primaryImage != null) {
+                fileStorageService.deleteProductVariationImages(product.getId(), variationId);
+                String primaryImageKey = fileStorageService.saveProductVariationImage(
+                        product.getId(), variationId, primaryImage);
+                variation.setPrimaryImage(primaryImageKey);
+            }
+
+            if (secondaryImages != null && !secondaryImages.isEmpty()) {
+                fileStorageService.deleteProductVariationImages(product.getId(), variationId);
+                fileStorageService.saveSecondaryImages(product.getId(), variationId, secondaryImages);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update images: " + e.getMessage());
+        }
+
+        productVariationRepository.save(variation);
+        return messageSource.getMessage("success.variation.updated", null, getCurrentLocale());
+    }
+
 }
+
