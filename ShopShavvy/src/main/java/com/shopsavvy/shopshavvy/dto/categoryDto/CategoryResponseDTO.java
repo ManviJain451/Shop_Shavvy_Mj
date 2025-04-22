@@ -18,6 +18,5 @@ public class CategoryResponseDTO {
     String categoryId;
     String categoryName;
     String parentCategoryId;
-//    private List<MetadataFieldDTO> metadataFields;
 }
 

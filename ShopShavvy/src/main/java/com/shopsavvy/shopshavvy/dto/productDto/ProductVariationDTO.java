@@ -18,18 +18,18 @@ import java.util.Map;
 @Builder
 public class ProductVariationDTO {
 
-    @NotBlank(message = "Product ID is required")
+    @NotBlank(message = "{validation.product.id.mandatory}")
     private String productId;
 
-    @NotNull(message = "Price is required")
+    @NotNull(message = "{validation.price.mandatory}")
     @Min(value = 0, message = "Price must be 0 or more")
     private Double price;
 
-    @NotNull(message = "Quantity is required")
-    @Min(value = 0, message = "Quantity must be 0 or more")
+    @NotNull(message = "{validation.quantity.mandatory}")
+    @Min(value = 0, message = "{validation.quantity.value}")
     private Integer quantity;
 
-    @NotEmpty(message = "Metadata fields are required")
+    @NotEmpty(message = "{validation.metadata.mandatory}")
     private Map<String, Object> metadata;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)

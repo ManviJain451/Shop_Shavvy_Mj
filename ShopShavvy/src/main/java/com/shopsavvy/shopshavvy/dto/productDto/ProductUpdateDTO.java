@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.dto.productDto;
 
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 @Getter
@@ -8,8 +9,14 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class ProductUpdateDTO {
+
+    @Size(max = 255, message = "{validation.max.name.size}")
     private String name;
+
+    @Size(max = 255, message = "{validation.max.description.size}")
     private String description;
+
     private Boolean cancellable;
+
     private Boolean returnable;
 }

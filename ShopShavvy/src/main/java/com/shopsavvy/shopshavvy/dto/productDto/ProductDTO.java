@@ -19,13 +19,13 @@ public class ProductDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String productId;
 
-    @NotBlank(message = "Product name is required")
+    @NotBlank(message = "{validation.product.name.mandatory}")
     private String productName;
 
-    @NotBlank(message = "Brand is required")
+    @NotBlank(message = "{validation.brand.mandatory}")
     private String brand;
 
-    @NotBlank(message = "Category ID is required")
+    @NotBlank(message = "{validation.category.id.mandatory}")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String categoryId;
 
