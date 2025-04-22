@@ -5,6 +5,7 @@ import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CustomerService;
@@ -23,7 +24,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 
 @RestController
 @RequiredArgsConstructor
@@ -100,6 +100,12 @@ public class CustomerController {
     @GetMapping("/filtering-details")
     public ResponseEntity<FilteringDetailsDTO> getFilteringDetails(@RequestParam String categoryId) throws BadRequestException {
         FilteringDetailsDTO dto = customerService.getFilteringDetails(categoryId);
+        return ResponseEntity.ok(dto);
+    }
+
+    @GetMapping("/product")
+    public ResponseEntity<ProductDTO> viewProduct(@RequestParam String productId) throws BadRequestException {
+        ProductDTO dto = customerService.viewProduct(productId);
         return ResponseEntity.ok(dto);
     }
 }

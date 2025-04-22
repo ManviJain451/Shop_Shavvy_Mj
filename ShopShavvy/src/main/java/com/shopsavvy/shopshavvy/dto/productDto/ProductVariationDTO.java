@@ -17,6 +17,7 @@ import java.util.Map;
 @Builder
 public class ProductVariationDTO {
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @NotBlank(message = "{validation.product.id.mandatory}")
     private String productId;
 

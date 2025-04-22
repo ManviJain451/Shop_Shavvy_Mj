@@ -2,9 +2,7 @@ package com.shopsavvy.shopshavvy.dto.productDto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
-import com.shopsavvy.shopshavvy.validation.groups.Views;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 

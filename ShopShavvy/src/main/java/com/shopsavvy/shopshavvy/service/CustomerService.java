@@ -5,6 +5,8 @@ import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -261,4 +263,56 @@ public class CustomerService {
         return metadataFieldsWithValues;
     }
 
+    public ProductDTO viewProduct(String productId) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(
+                        messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if (product.isDeleted()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.deleted", null, getCurrentLocale()));
+        }
+        if (!product.isActive()) {
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.deactive", null, getCurrentLocale()));
+        }
+        if(product.getProductVariations().size() == 0){
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.doesnt.have.variations", null, getCurrentLocale()));
+        }
+
+        Set<ProductVariationDTO> variations = product.getProductVariations().stream()
+                .map(variation -> {
+                    String imageUrl = null;
+                    if (variation.getPrimaryImage() != null) {
+                        imageUrl = fileStorageService.getProductVariationImageUrl(
+                                product.getId(),
+                                variation.getId(),
+                                variation.getPrimaryImage());
+                    }
+
+                    return ProductVariationDTO.builder()
+                            .price(variation.getPrice())
+                            .quantity(variation.getQuantity())
+                            .metadata(variation.getMetadata())
+                            .primaryImage(imageUrl)
+                            .build();
+                })
+                .collect(Collectors.toSet());
+
+        return ProductDTO.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .brand(product.getBrand())
+                .description(product.getDescription())
+                .active(product.isActive())
+                .cancellable(product.isCancellable())
+                .returnable(product.isReturnable())
+                .categoryDetails(CategoryDTO.builder()
+                        .id(product.getCategory().getCategoryId())
+                        .name(product.getCategory().getName())
+                        .build())
+                .productVariations(variations)
+                .build();
+    }
 }
