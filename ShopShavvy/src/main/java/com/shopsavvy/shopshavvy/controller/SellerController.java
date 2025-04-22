@@ -3,10 +3,7 @@ package com.shopsavvy.shopshavvy.controller;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductUpdateDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationUpdateDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.*;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
@@ -106,20 +103,19 @@ public class SellerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @JsonView(Views.SellerView.class)
     @GetMapping("/product/variations/{id}")
-    public ResponseEntity<ProductVariationDTO> viewProductVariation(
+    public ResponseEntity<ProductVariationResponseDTO> viewProductVariation(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable("id") String productVariationId) throws BadRequestException {
-        ProductVariationDTO dto = sellerService.viewProductVariation(userDetails, productVariationId);
+        ProductVariationResponseDTO dto = sellerService.viewProductVariation(userDetails, productVariationId);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/product/{id}/variations")
-    public ResponseEntity<List<ProductVariationDTO>> viewProductVariations(
+    public ResponseEntity<List<ProductVariationResponseDTO>> viewProductVariations(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable("id") String productId) throws BadRequestException {
-        List<ProductVariationDTO> variations = sellerService.viewProductVariations(userDetails, productId);
+        List<ProductVariationResponseDTO> variations = sellerService.viewProductVariations(userDetails, productId);
         return ResponseEntity.ok(variations);
     }
 

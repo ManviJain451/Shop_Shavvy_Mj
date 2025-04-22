@@ -1,15 +1,10 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryResponseDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductUpdateDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationUpdateDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.*;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
@@ -39,14 +34,12 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Transactional
 public class SellerService {
-    private final JwtService jwtService;
     private final SellerRepository sellerRepository;
     private final FileStorageService fileStorageService;
     private final MessageSource messageSource;
     private final CategoryRepository categoryRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
     private final ProductRepository productRepository;
-    private final ObjectMapper objectMapper;
     private final ProductVariationRepository productVariationRepository;
 
     private Locale getCurrentLocale() {
@@ -305,20 +298,15 @@ public class SellerService {
         ProductVariation savedVariation = productVariationRepository.save(variation);
 
         try {
-            System.out.println(primaryImage);
             String primaryImageKey = fileStorageService.saveProductVariationImage(product.getId(), savedVariation.getId(), primaryImage);
-            System.out.println(primaryImageKey);
             savedVariation.setPrimaryImage(primaryImageKey);
-            System.out.println(savedVariation.getPrimaryImage());
 
             if (secondaryImages != null && !secondaryImages.isEmpty()) {
                 fileStorageService.saveSecondaryImages(product.getId(), savedVariation.getId(), secondaryImages);
             }
-
             productVariationRepository.save(savedVariation);
 
         } catch (IOException e) {
-            productVariationRepository.delete(savedVariation);
             throw new RuntimeException("Failed to upload images: " + e.getMessage());
         }
 
@@ -331,7 +319,9 @@ public class SellerService {
             throw new BadRequestException(messageSource.getMessage("metadata.min.one", null, getCurrentLocale()));
         }
 
-        Set<String> newMetadataFields = metadata.keySet();
+        Set<String> newMetadataFields = metadata.keySet().stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toSet());
 
         if (!product.getProductVariations().isEmpty()) {
             Optional<ProductVariation> existingVariation = product.getProductVariations().stream()
@@ -339,7 +329,9 @@ public class SellerService {
                     .findFirst();
 
             if (existingVariation.isPresent()) {
-                Set<String> existingFields = existingVariation.get().getMetadata().keySet();
+                Set<String> existingFields = existingVariation.get().getMetadata().keySet().stream()
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toSet());
 
                 if (!existingFields.equals(newMetadataFields)) {
                     throw new InvalidMetadataException(messageSource.getMessage("metadata.structure.mismatch", null, getCurrentLocale()));
@@ -351,20 +343,19 @@ public class SellerService {
         Category current = category;
 
         while (current != null) {
-            System.out.println(current.getName());
             List<CategoryMetadataFieldValues> metadataValues = categoryMetadataFieldValuesRepository.findByCategory(current);
             for (CategoryMetadataFieldValues value : metadataValues) {
-                String fieldName = value.getCategoryMetadataField().getName();
-                Set<String> allowedValues = Arrays.stream(value.getValues().split(",")).map(String::trim).collect(Collectors.toSet());
+                String fieldName = value.getCategoryMetadataField().getName().toLowerCase();
+                Set<String> allowedValues = Arrays.stream(value.getValues().split(","))
+                        .map(v -> v.trim().toLowerCase())
+                        .collect(Collectors.toSet());
                 existingMetadata.put(fieldName, allowedValues);
             }
             current = current.getParentCategory();
         }
         for (Map.Entry<String, Object> entry : metadata.entrySet()) {
-            String fieldName = entry.getKey();
-            String value = entry.getValue().toString();
-            System.out.println("value = " + value);
-            System.out.println("existingValue = " + existingMetadata.get(fieldName));
+            String fieldName = entry.getKey().toLowerCase();
+            String value = entry.getValue().toString().toLowerCase();
 
             if (!existingMetadata.containsKey(fieldName))
                 throw new InvalidMetadataException(messageSource.getMessage("metadata.field.invalid", new Object[]{fieldName}, getCurrentLocale()));
@@ -373,10 +364,11 @@ public class SellerService {
         }
     }
 
-    public ProductVariationDTO viewProductVariation(UserDetailsImpl userDetails, String productVariationId) throws BadRequestException {
+    public ProductVariationResponseDTO viewProductVariation(UserDetailsImpl userDetails, String productVariationId) throws BadRequestException {
         ProductVariation variation = productVariationRepository.findById(productVariationId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.variation.not.found", null, getCurrentLocale())));
+
 
         if (!variation.getProduct().getSeller().getEmail().equals(userDetails.getUsername())) {
             throw new BadRequestException(
@@ -388,30 +380,33 @@ public class SellerService {
                     messageSource.getMessage("error.product.deleted", null, getCurrentLocale()));
         }
 
-        ProductDTO parentProduct = ProductDTO.builder()
-                .productId(variation.getProduct().getId())
-                .productName(variation.getProduct().getName())
-                .brand(variation.getProduct().getBrand())
-                .description(variation.getProduct().getDescription())
-                .active(variation.getProduct().isActive())
-                .cancellable(variation.getProduct().isCancellable())
-                .returnable(variation.getProduct().isReturnable())
-                .categoryDetails(CategoryDTO.builder()
-                        .id(variation.getProduct().getCategory().getCategoryId())
-                        .name(variation.getProduct().getCategory().getName())
-                        .build())
+        Product product = variation.getProduct();
+        ProductResponseDTO parentProduct = ProductResponseDTO.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .brand(product.getBrand())
+                .description(product.getDescription())
+                .cancellable(product.isCancellable())
+                .returnable(product.isReturnable())
                 .build();
 
-        return ProductVariationDTO.builder()
-                .productId(variation.getProduct().getId())
+        String primaryImageUrl = fileStorageService.getProductVariationImageUrl(product.getId(), variation.getId(), variation.getPrimaryImage());
+        List<String> secondaryImagesUrl = fileStorageService.getProductVariationSecondaryImageUrls(
+                product.getId(), variation.getId(), variation.getPrimaryImage());
+
+
+        return ProductVariationResponseDTO.builder()
                 .price(variation.getPrice())
                 .quantity(variation.getQuantity())
                 .metadata(variation.getMetadata())
+                .primaryImage(primaryImageUrl)
+                .secondaryImages(secondaryImagesUrl)
                 .parentProduct(parentProduct)
                 .build();
+
     }
 
-    public List<ProductVariationDTO> viewProductVariations(UserDetailsImpl userDetails, String productId) throws BadRequestException {
+    public List<ProductVariationResponseDTO> viewProductVariations(UserDetailsImpl userDetails, String productId) throws BadRequestException {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -427,11 +422,13 @@ public class SellerService {
         }
 
         return product.getProductVariations().stream()
-                .map(variation -> ProductVariationDTO.builder()
-                        .productId(product.getId())
+                .map(variation -> ProductVariationResponseDTO.builder()
+                        .productVariationId(variation.getId())
                         .price(variation.getPrice())
                         .quantity(variation.getQuantity())
                         .metadata(variation.getMetadata())
+                        .primaryImage(fileStorageService
+                                .getProductVariationImageUrl(productId, variation.getId(), variation.getPrimaryImage()))
                         .build())
                 .collect(Collectors.toList());
     }
