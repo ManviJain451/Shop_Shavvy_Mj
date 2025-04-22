@@ -155,7 +155,6 @@ public class AdminController {
     }
 
     @GetMapping("/product")
-    @JsonView(Views.AdminView.class)
     public ResponseEntity<SuccessMessageResponse<ProductDTO>> viewProduct(
             @RequestParam String id) throws BadRequestException {
         return ResponseEntity.ok(SuccessMessageResponse.success(

@@ -1,9 +1,8 @@
 package com.shopsavvy.shopshavvy.dto.productDto;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonView;
-import com.shopsavvy.shopshavvy.validation.groups.Views;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -33,10 +32,10 @@ public class ProductVariationDTO {
     private Map<String, Object> metadata;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     private ProductDTO parentProduct;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @JsonView(Views.AdminView.class)
     private String primaryImage;
 
 }

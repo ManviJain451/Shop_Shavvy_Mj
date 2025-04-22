@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.dto.productDto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonView;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
@@ -39,7 +40,7 @@ public class ProductDTO {
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private CategoryDTO categoryDetails;
 
-    @JsonView(Views.CustomerView.class)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private Set<ProductVariationDTO> productVariations;
 }
