@@ -170,7 +170,7 @@ public class SellerService {
     public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource
-                        .getMessage("error.seller.not.found.toke", null, getCurrentLocale())));
+                        .getMessage("error.seller.not.found.token", null, getCurrentLocale())));
         Category category = categoryRepository.findById(dto.getCategoryId())
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.category.not.found", null, getCurrentLocale())));
@@ -307,10 +307,10 @@ public class SellerService {
             productVariationRepository.save(savedVariation);
 
         } catch (IOException e) {
-            throw new RuntimeException("Failed to upload images: " + e.getMessage());
+            throw new RuntimeException(messageSource.getMessage("error.failed.upload.images", null, getCurrentLocale()));
         }
 
-        return "Product variation created";
+        return messageSource.getMessage("success.created.product.variation", null, getCurrentLocale());
 
     }
 
@@ -546,7 +546,7 @@ public class SellerService {
                 fileStorageService.saveSecondaryImages(product.getId(), variationId, secondaryImages);
             }
         } catch (IOException e) {
-            throw new RuntimeException("Failed to update images: " + e.getMessage());
+            throw new RuntimeException(messageSource.getMessage("error.failed.upload.images", null, getCurrentLocale()));
         }
 
         productVariationRepository.save(variation);

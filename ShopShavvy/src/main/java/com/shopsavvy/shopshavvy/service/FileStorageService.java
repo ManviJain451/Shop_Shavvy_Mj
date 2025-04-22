@@ -150,7 +150,6 @@ public class FileStorageService {
         validateMimeType(file.getContentType());
 
         try {
-            System.out.println(productId +  " " + variationId);
             Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
             Files.createDirectories(variationDirectory);
 
@@ -204,6 +203,30 @@ public class FileStorageService {
         }
         return "/products/" + productId + "/variations/" + variationId + "/" + imageName;
     }
+
+    public List<String> getProductVariationSecondaryImageUrls(String productId, String variationId, String primaryImageName) {
+        List<String> secondaryImageUrls = new ArrayList<>();
+        Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+
+        if (!Files.exists(variationDirectory)) {
+            return secondaryImageUrls;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(variationDirectory)) {
+            for (Path file : stream) {
+                String fileName = file.getFileName().toString();
+                if (!fileName.equals(primaryImageName)) {
+                    String url = "/products/" + productId + "/variations/" + variationId + "/" + fileName;
+                    secondaryImageUrls.add(url);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(messageSource.getMessage("error.image.directory.access", null, getCurrentLocale()));
+        }
+
+        return secondaryImageUrls;
+    }
+
 
     public void deleteProductVariationImages(String productId, String variationId) throws IOException {
         Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
