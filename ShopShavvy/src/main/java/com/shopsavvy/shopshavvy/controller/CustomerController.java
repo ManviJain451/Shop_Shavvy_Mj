@@ -91,7 +91,7 @@ public class CustomerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @GetMapping("/category")
+    @GetMapping("/categories")
     public ResponseEntity<List<CategoryDTO>> viewCategories(@RequestParam(required = false) String categoryId) throws BadRequestException {
         List<CategoryDTO> categories = customerService.viewAllCategories(categoryId);
         return ResponseEntity.ok(categories);
@@ -103,9 +103,23 @@ public class CustomerController {
         return ResponseEntity.ok(dto);
     }
 
-    @GetMapping("/product")
-    public ResponseEntity<ProductDTO> viewProduct(@RequestParam String productId) throws BadRequestException {
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<ProductDTO> viewProduct(@PathVariable String productId) throws BadRequestException {
         ProductDTO dto = customerService.viewProduct(productId);
         return ResponseEntity.ok(dto);
     }
+
+    @GetMapping("/products")
+    public ResponseEntity<List<ProductDTO>> viewAllProducts(
+            @RequestParam String categoryId,
+            @RequestParam(required = false, defaultValue = "name") String sort,
+            @RequestParam(required = false, defaultValue = "asc") String order,
+            @RequestParam(required = false, defaultValue = "10") int max,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false) String query) throws BadRequestException {
+
+        List<ProductDTO> products = customerService.viewAllProducts(categoryId, sort, order, max, offset, query);
+        return ResponseEntity.ok(products);
+    }
+
 }

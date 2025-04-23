@@ -6,7 +6,11 @@ import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductFilterDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationResponseDTO;
+import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -15,10 +19,17 @@ import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.specification.ProductSpecification;
+import com.shopsavvy.shopshavvy.utilities.StringToDtoParser;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -276,12 +287,13 @@ public class CustomerService {
             throw new BadRequestException(
                     messageSource.getMessage("error.product.deactive", null, getCurrentLocale()));
         }
-        if(product.getProductVariations().size() == 0){
+        if(product.getProductVariations().isEmpty()){
             throw new BadRequestException(
                     messageSource.getMessage("error.product.doesnt.have.variations", null, getCurrentLocale()));
         }
 
-        Set<ProductVariationDTO> variations = product.getProductVariations().stream()
+        Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
+                .filter(ProductVariation::isActive)
                 .map(variation -> {
                     String imageUrl = null;
                     if (variation.getPrimaryImage() != null) {
@@ -290,12 +302,15 @@ public class CustomerService {
                                 variation.getId(),
                                 variation.getPrimaryImage());
                     }
-
-                    return ProductVariationDTO.builder()
+                    List<String> secondaryImagesUrl = fileStorageService.getProductVariationSecondaryImageUrls(
+                            product.getId(), variation.getId(), variation.getPrimaryImage());
+                    return ProductVariationResponseDTO.builder()
+                            .productVariationId(variation.getId())
                             .price(variation.getPrice())
                             .quantity(variation.getQuantity())
                             .metadata(variation.getMetadata())
                             .primaryImage(imageUrl)
+                            .secondaryImages(secondaryImagesUrl)
                             .build();
                 })
                 .collect(Collectors.toSet());
@@ -313,6 +328,72 @@ public class CustomerService {
                         .name(product.getCategory().getName())
                         .build())
                 .productVariations(variations)
+                .sellerId(product.getSeller().getId())
                 .build();
     }
+
+    public List<ProductDTO> viewAllProducts(String categoryId, String sort, String order, int max, int offset, String query) throws BadRequestException {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BadRequestException(messageSource
+                        .getMessage("error.category.not.found", null, getCurrentLocale())));
+
+        Pageable pageable = PageRequest.of(offset / max, max,
+                Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
+
+
+        ProductFilterDTO filterDTO = StringToDtoParser.parseQueryToFilterDTO(query);
+
+        Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, category);
+
+        List<Product> products = new ArrayList<>();
+
+        if (category.getSubCategories() == null || category.getSubCategories().isEmpty()) {
+            Page<Product> page = productRepository.findAll(specification, pageable);
+            products.addAll(page.getContent());
+        } else {
+            for (Category subCategory : category.getSubCategories()) {
+                Page<Product> page = productRepository.findAll(specification, pageable);
+                products.addAll(page.getContent());
+            }
+        }
+
+        return products.stream()
+                .map(product -> {
+                    Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
+                            .filter(ProductVariation::isActive)
+                            .map(variation -> ProductVariationResponseDTO.builder()
+                                    .productVariationId(variation.getId())
+                                    .price(variation.getPrice())
+                                    .quantity(variation.getQuantity())
+                                    .metadata(variation.getMetadata())
+                                    .primaryImage(variation.getPrimaryImage() != null ?
+                                            fileStorageService.getProductVariationImageUrl(
+                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
+                                    .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(product.getId(), variation.getId(), variation.getPrimaryImage()))
+                                    .build()
+                            )
+                            .collect(Collectors.toSet());
+
+                    return ProductDTO.builder()
+                            .productId(product.getId())
+                            .productName(product.getName())
+                            .sellerId(product.getSeller().getId())
+                            .brand(product.getBrand())
+                            .description(product.getDescription())
+                            .active(product.isActive())
+                            .cancellable(product.isCancellable())
+                            .returnable(product.isReturnable())
+                            .categoryDetails(CategoryDTO.builder()
+                                    .id(product.getCategory().getCategoryId())
+                                    .name(product.getCategory().getName())
+                                    .build())
+                            .productVariations(variations)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+
+
+
 }
