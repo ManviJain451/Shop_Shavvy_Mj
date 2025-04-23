@@ -3,8 +3,9 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.*;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductFilterDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
+import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
@@ -14,10 +15,12 @@ import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValueId;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
 import com.shopsavvy.shopshavvy.model.products.Product;
+import com.shopsavvy.shopshavvy.model.products.ProductVariation;
 import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.*;
+import com.shopsavvy.shopshavvy.specification.ProductSpecification;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
@@ -27,6 +30,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -498,7 +502,10 @@ public class AdminService {
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
-        Set<ProductVariationDTO> variations = product.getProductVariations().stream()
+        if(product.isDeleted()){
+            throw new BadRequestException(messageSource.getMessage("error.deleted.product", null, getCurrentLocale()));
+        }
+        Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
                 .map(variation -> {
                     String imageUrl = null;
                     if (variation.getPrimaryImage() != null) {
@@ -508,8 +515,7 @@ public class AdminService {
                                 variation.getPrimaryImage());
                     }
 
-                    return ProductVariationDTO.builder()
-                            .productId(product.getId())
+                    return ProductVariationResponseDTO.builder()
                             .price(variation.getPrice())
                             .quantity(variation.getQuantity())
                             .metadata(variation.getMetadata())
@@ -521,6 +527,7 @@ public class AdminService {
         return ProductDTO.builder()
                 .productId(product.getId())
                 .productName(product.getName())
+                .sellerId(product.getSeller().getId())
                 .brand(product.getBrand())
                 .description(product.getDescription())
                 .active(product.isActive())
@@ -538,6 +545,10 @@ public class AdminService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if(product.isDeleted()){
+            throw new BadRequestException(messageSource.getMessage("error.deleted.product", null, getCurrentLocale()));
+        }
 
         if (!product.isActive()) {
             throw new BadRequestException(messageSource.getMessage(
@@ -561,6 +572,10 @@ public class AdminService {
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
+        if(product.isDeleted()){
+            throw new BadRequestException(messageSource.getMessage("error.deleted.product", null, getCurrentLocale()));
+        }
+
         if (product.isActive()) {
             throw new BadRequestException(messageSource.getMessage(
                     "error.product.already.active", null, getCurrentLocale()));
@@ -578,6 +593,81 @@ public class AdminService {
 
         return messageSource.getMessage("success.product.activated", null, getCurrentLocale());
     }
+
+    public List<ProductDTO> viewAllProducts(String sort, String order, int max, int offset, String query) {
+        Pageable pageable = PageRequest.of(offset / max, max,
+                Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
+
+        ProductFilterDTO filterDTO = parseQueryToFilterDTO(query);
+        System.out.println(filterDTO);
+
+        Specification<Product> specification = ProductSpecification.getAllByFilter(filterDTO);
+
+        Page<Product> productsPage = productRepository.findAll(specification, pageable);
+
+        return productsPage.getContent().stream()
+                .map(product -> {
+                    Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
+                            .filter(ProductVariation::isActive)
+                            .map(variation -> ProductVariationResponseDTO.builder()
+                                    .productVariationId(variation.getId())
+                                    .price(variation.getPrice())
+                                    .quantity(variation.getQuantity())
+                                    .metadata(variation.getMetadata())
+                                    .primaryImage(variation.getPrimaryImage() != null ?
+                                            fileStorageService.getProductVariationImageUrl(
+                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
+                                    .build()
+                            )
+                            .collect(Collectors.toSet());
+
+                    return ProductDTO.builder()
+                            .productId(product.getId())
+                            .productName(product.getName())
+                            .sellerId(product.getSeller().getId())
+                            .brand(product.getBrand())
+                            .description(product.getDescription())
+                            .active(product.isActive())
+                            .cancellable(product.isCancellable())
+                            .returnable(product.isReturnable())
+                            .categoryDetails(CategoryDTO.builder()
+                                    .id(product.getCategory().getCategoryId())
+                                    .name(product.getCategory().getName())
+                                    .build())
+                            .productVariations(variations)
+                            .build();
+                })
+                .collect(Collectors.toList());
+    }
+
+
+    private ProductFilterDTO parseQueryToFilterDTO(String query) {
+        ProductFilterDTO.ProductFilterDTOBuilder builder = ProductFilterDTO.builder();
+
+        if (query != null && !query.isBlank()) {
+            String[] pairs = query.split(",");
+            for (String pair : pairs) {
+                String[] keyValue = pair.split(":", 2);
+                if (keyValue.length == 2) {
+                    String key = keyValue[0].trim().toLowerCase();
+                    String value = keyValue[1].trim();
+
+                    switch (key) {
+                        case "name": builder.name(value); break;
+                        case "brand": builder.brand(value); break;
+                        case "description": builder.description(value); break;
+                        case "categoryid": builder.categoryId(value); break;
+                        case "sellerid": builder.sellerId(value); break;
+                        case "active" : builder.active(Boolean.parseBoolean(value)); break;
+                    }
+                }
+            }
+        }
+
+        return builder.build();
+    }
+
+
 
 
 }

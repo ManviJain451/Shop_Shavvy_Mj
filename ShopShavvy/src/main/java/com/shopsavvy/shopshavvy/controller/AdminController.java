@@ -1,7 +1,6 @@
 package com.shopsavvy.shopshavvy.controller;
 
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
@@ -9,11 +8,9 @@ import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
-import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
-import com.shopsavvy.shopshavvy.validation.groups.Views;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -173,6 +169,18 @@ public class AdminController {
             @PathVariable String productId) throws BadRequestException {
         return ResponseEntity.ok(SuccessMessageResponse.success(
                 adminService.activateProduct(productId)));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProductDTO>> viewAllProducts(
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "asc") String order,
+            @RequestParam(defaultValue = "10") int max,
+            @RequestParam(defaultValue = "0") int offset,
+            @RequestParam(required = false) String query) {
+
+        List<ProductDTO> products = adminService.viewAllProducts(sort, order, max, offset, query);
+        return ResponseEntity.ok(products);
     }
 
 }
