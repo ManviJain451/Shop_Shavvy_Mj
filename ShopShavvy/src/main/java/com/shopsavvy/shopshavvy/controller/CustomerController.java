@@ -122,4 +122,18 @@ public class CustomerController {
         return ResponseEntity.ok(products);
     }
 
+    @GetMapping("/products/similar")
+    public ResponseEntity<List<ProductDTO>> similarProducts(
+            @RequestParam String productId,
+            @RequestParam(required = false, defaultValue = "name") String sort,
+            @RequestParam(required = false, defaultValue = "asc") String order,
+            @RequestParam(required = false, defaultValue = "10") int max,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false) String query) throws BadRequestException {
+
+        List<ProductDTO> products = customerService.viewSimilarProducts(productId, sort, order, max, offset, query);
+        return ResponseEntity.ok(products);
+    }
+
+
 }

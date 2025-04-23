@@ -343,15 +343,15 @@ public class CustomerService {
 
         ProductFilterDTO filterDTO = StringToDtoParser.parseQueryToFilterDTO(query);
 
-        Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, category);
-
         List<Product> products = new ArrayList<>();
 
         if (category.getSubCategories() == null || category.getSubCategories().isEmpty()) {
+            Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, category);
             Page<Product> page = productRepository.findAll(specification, pageable);
             products.addAll(page.getContent());
         } else {
             for (Category subCategory : category.getSubCategories()) {
+                Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, subCategory);
                 Page<Product> page = productRepository.findAll(specification, pageable);
                 products.addAll(page.getContent());
             }
@@ -393,7 +393,56 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
+    public List<ProductDTO> viewSimilarProducts(String productId, String sort, String order, int max, int offset, String query) throws BadRequestException {
+        Product product = productRepository.findById(productId)
+                .orElseThrow(() -> new BadRequestException(messageSource
+                        .getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        Pageable pageable = PageRequest.of(offset / max, max,
+                Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
+
+        ProductFilterDTO filterDTO = StringToDtoParser.parseQueryToFilterDTO(query);
+
+        Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, product.getCategory());
+
+        Page<Product> page = productRepository.findAll(specification, pageable);
+
+        return page.getContent().stream()
+                .map(prod -> {
+                    Set<ProductVariationResponseDTO> variations = prod.getProductVariations().stream()
+                            .filter(ProductVariation::isActive)
+                            .map(variation -> ProductVariationResponseDTO.builder()
+                                    .productVariationId(variation.getId())
+                                    .price(variation.getPrice())
+                                    .quantity(variation.getQuantity())
+                                    .metadata(variation.getMetadata())
+                                    .primaryImage(variation.getPrimaryImage() != null ?
+                                            fileStorageService.getProductVariationImageUrl(
+                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
+                                    .build()
+                            )
+                            .collect(Collectors.toSet());
+
+                    return ProductDTO.builder()
+                            .productId(prod.getId())
+                            .productName(prod.getName())
+                            .sellerId(prod.getSeller().getId())
+                            .brand(prod.getBrand())
+                            .description(prod.getDescription())
+                            .active(prod.isActive())
+                            .cancellable(prod.isCancellable())
+                            .returnable(prod.isReturnable())
+                            .categoryDetails(CategoryDTO.builder()
+                                    .id(prod.getCategory().getCategoryId())
+                                    .name(prod.getCategory().getName())
+                                    .build())
+                            .productVariations(variations)
+                            .build();
+                })
+                .collect(Collectors.toList());
+
+    }
 
 
 
-}
+    }
