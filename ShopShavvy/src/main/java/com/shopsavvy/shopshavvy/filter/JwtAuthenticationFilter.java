@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.filter;
 
+import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.JwtService;
 import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -10,7 +11,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -21,6 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.servlet.HandlerExceptionResolver;
 
 import java.io.IOException;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
@@ -29,7 +34,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final HandlerExceptionResolver handlerExceptionResolver;
     private final JwtService jwtService;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
-    private final Logger logger= LoggerFactory.getLogger(HandlerExceptionResolver.class);
+    private final MessageSource messageSource;
+    private Locale locale;
+
+    private Locale getCurrentLocale() {
+        return LocaleContextHolder.getLocale();
+    }
 
     @Override
     protected void doFilterInternal(
@@ -54,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
             if (userEmail != null && authentication == null) {
-                UserDetails userDetails = this.userDetailsServiceImpl.loadUserByUsername(userEmail);
+                UserDetailsImpl userDetails = this.userDetailsServiceImpl.loadUserByUsername(userEmail);
 
                 if (jwtService.isTokenValid(jwt, userDetails, "access")) {
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
@@ -65,6 +75,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+
+                if(!userDetails.isAccountNonLocked()){
+                    throw new LockedException(messageSource.getMessage("error.user.locked", null, getCurrentLocale()));
                 }
             }
 
