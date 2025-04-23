@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.specification;
 
 import com.shopsavvy.shopshavvy.dto.productDto.ProductFilterDTO;
+import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.products.Product;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
@@ -26,5 +27,13 @@ public class ProductSpecification {
                 predicates.add(cb.equal(root.get("isActive"), filterDTO.isActive()));
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    public static Specification<Product> getAllByFilterWithCategory(ProductFilterDTO filterDTO, Category category) {
+        Specification<Product> baseSpec = getAllByFilter(filterDTO);
+        Specification<Product> categorySpec = (root, query, cb) ->
+                cb.equal(root.get("category"), category);
+
+        return baseSpec.and(categorySpec);
     }
 }

@@ -5,7 +5,11 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 
 @Getter
@@ -15,6 +19,7 @@ import java.util.Map;
 @Builder
 @Entity
 @Table(name = "product_variations")
+@EntityListeners(AuditingEntityListener.class)
 public class ProductVariation {
 
     @Id
@@ -37,4 +42,12 @@ public class ProductVariation {
     private boolean isActive=true;
 
     private String primaryImage;
+
+    @CreatedDate
+    @Column(name = "date_created", nullable = false)
+    private LocalDateTime dateCreated;
+
+    @LastModifiedDate
+    @Column(name = "last_updated_date", nullable = false)
+    private LocalDateTime lastUpdated;
 }

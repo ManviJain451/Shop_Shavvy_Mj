@@ -21,6 +21,7 @@ import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductSpecification;
+import com.shopsavvy.shopshavvy.utilities.StringToDtoParser;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
@@ -598,7 +599,7 @@ public class AdminService {
         Pageable pageable = PageRequest.of(offset / max, max,
                 Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
 
-        ProductFilterDTO filterDTO = parseQueryToFilterDTO(query);
+        ProductFilterDTO filterDTO = StringToDtoParser.parseQueryToFilterDTO(query);
         System.out.println(filterDTO);
 
         Specification<Product> specification = ProductSpecification.getAllByFilter(filterDTO);
@@ -639,35 +640,5 @@ public class AdminService {
                 })
                 .collect(Collectors.toList());
     }
-
-
-    private ProductFilterDTO parseQueryToFilterDTO(String query) {
-        ProductFilterDTO.ProductFilterDTOBuilder builder = ProductFilterDTO.builder();
-
-        if (query != null && !query.isBlank()) {
-            String[] pairs = query.split(",");
-            for (String pair : pairs) {
-                String[] keyValue = pair.split(":", 2);
-                if (keyValue.length == 2) {
-                    String key = keyValue[0].trim().toLowerCase();
-                    String value = keyValue[1].trim();
-
-                    switch (key) {
-                        case "name": builder.name(value); break;
-                        case "brand": builder.brand(value); break;
-                        case "description": builder.description(value); break;
-                        case "categoryid": builder.categoryId(value); break;
-                        case "sellerid": builder.sellerId(value); break;
-                        case "active" : builder.active(Boolean.parseBoolean(value)); break;
-                    }
-                }
-            }
-        }
-
-        return builder.build();
-    }
-
-
-
 
 }

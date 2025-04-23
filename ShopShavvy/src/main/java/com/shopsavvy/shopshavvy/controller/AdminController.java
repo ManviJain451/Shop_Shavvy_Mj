@@ -150,9 +150,9 @@ public class AdminController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @GetMapping("/product")
+    @GetMapping("/products/{id}")
     public ResponseEntity<SuccessMessageResponse<ProductDTO>> viewProduct(
-            @RequestParam String id) throws BadRequestException {
+            @PathVariable String id) throws BadRequestException {
         return ResponseEntity.ok(SuccessMessageResponse.success(
                 adminService.viewProduct(id)));
     }
@@ -171,7 +171,7 @@ public class AdminController {
                 adminService.activateProduct(productId)));
     }
 
-    @GetMapping("/search")
+    @GetMapping("/products")
     public ResponseEntity<List<ProductDTO>> viewAllProducts(
             @RequestParam(defaultValue = "name") String sort,
             @RequestParam(defaultValue = "asc") String order,
