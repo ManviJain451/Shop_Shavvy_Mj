@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.exception;
 
+import com.shopsavvy.shopshavvy.utilities.ErrorDetails;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -106,15 +107,6 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
                 exception.getMessage(), request.getDescription(false));
         return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.CONFLICT);
     }
-
-
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<ErrorDetails> handleEmailAlreadyExistsException(EmailAlreadyExistsException exception, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
-                exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<ErrorDetails>(errorDetails, HttpStatus.CONFLICT);
-    }
-
 
     @ExceptionHandler(DuplicateEntryExistsException.class)
     public final ResponseEntity<ErrorDetails> handleDuplicateEntryExistsException(DuplicateEntryExistsException exception, WebRequest request) {

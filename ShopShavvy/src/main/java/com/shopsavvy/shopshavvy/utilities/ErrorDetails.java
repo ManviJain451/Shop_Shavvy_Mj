@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.exception;
+package com.shopsavvy.shopshavvy.utilities;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
