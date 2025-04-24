@@ -16,11 +16,18 @@ import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.specification.ProductSpecification;
+import com.shopsavvy.shopshavvy.specification.ProductVariationSpecification;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.jmx.export.metadata.InvalidMetadataException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -245,13 +252,18 @@ public class SellerService {
                 .build();
     }
 
-    public List<ProductDTO> viewAllProducts(UserDetailsImpl userDetails){
+    public List<ProductDTO> viewAllProducts(UserDetailsImpl userDetails, String sort, String order, int max, int offset, Map<String, String> filter ){
         Seller seller = sellerRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource
                         .getMessage("user.not.found", null, getCurrentLocale())));
 
-        List<Product> products = productRepository.findBySeller(seller);
-        return products
+        Pageable pageable = PageRequest.of(offset / max, max,
+                Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
+
+        Specification<Product> specification = ProductSpecification.getAllByFilterWithSeller(filter, seller);
+        Page<Product> productsPage = productRepository.findAll(specification, pageable);
+
+        return productsPage
                 .stream()
                 .map(product -> ProductDTO.builder()
                         .productId(product.getId())
@@ -406,7 +418,10 @@ public class SellerService {
 
     }
 
-    public List<ProductVariationResponseDTO> viewProductVariations(UserDetailsImpl userDetails, String productId) throws BadRequestException {
+    public List<ProductVariationResponseDTO> viewAllProductVariation(UserDetailsImpl userDetails,
+             String productId, String sort, String order, int max,
+             int offset, Map<String, Object> filter) throws BadRequestException {
+
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -421,7 +436,14 @@ public class SellerService {
                     messageSource.getMessage("error.product.deleted", null, getCurrentLocale()));
         }
 
-        return product.getProductVariations().stream()
+        Pageable pageable = PageRequest.of(offset / max, max,
+                Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
+
+        Specification<ProductVariation> specification = ProductVariationSpecification.getByProductIdAndFilters(productId, filter);
+        Page<ProductVariation> productsPage = productVariationRepository.findAll(specification, pageable);
+
+
+        return productsPage.getContent().stream()
                 .map(variation -> ProductVariationResponseDTO.builder()
                         .productVariationId(variation.getId())
                         .price(variation.getPrice())
@@ -429,6 +451,8 @@ public class SellerService {
                         .metadata(variation.getMetadata())
                         .primaryImage(fileStorageService
                                 .getProductVariationImageUrl(productId, variation.getId(), variation.getPrimaryImage()))
+                        .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(
+                                product.getId(), variation.getId(), variation.getPrimaryImage()))
                         .build())
                 .collect(Collectors.toList());
     }

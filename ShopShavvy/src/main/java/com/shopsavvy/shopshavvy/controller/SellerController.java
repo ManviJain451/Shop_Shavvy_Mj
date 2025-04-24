@@ -1,6 +1,5 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.fasterxml.jackson.annotation.JsonView;
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.*;
@@ -10,14 +9,12 @@ import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.SellerService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
-import com.shopsavvy.shopshavvy.validation.groups.Views;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -26,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -82,15 +80,21 @@ public class SellerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @GetMapping("/product")
-    public ResponseEntity<ProductDTO> viewProduct(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestParam String productId) throws BadRequestException {
+    @GetMapping("/products/{productId}")
+    public ResponseEntity<ProductDTO> viewProduct(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable String productId) throws BadRequestException {
         ProductDTO dto = sellerService.viewProduct(userDetails, productId);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/products")
-    public ResponseEntity<List<ProductDTO>> viewAllProducts(@AuthenticationPrincipal UserDetailsImpl userDetails){
-        List<ProductDTO> products = sellerService.viewAllProducts(userDetails);
+    public ResponseEntity<List<ProductDTO>> viewAllProducts(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @RequestParam(required = false, defaultValue = "name") String sort,
+            @RequestParam(required = false,defaultValue = "asc") String order,
+            @RequestParam(required = false, defaultValue = "10") int max,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false) Map<String, String> filter){
+        List<ProductDTO> products = sellerService.viewAllProducts(userDetails, sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 
@@ -114,8 +118,14 @@ public class SellerController {
     @GetMapping("/product/{id}/variations")
     public ResponseEntity<List<ProductVariationResponseDTO>> viewProductVariations(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @PathVariable("id") String productId) throws BadRequestException {
-        List<ProductVariationResponseDTO> variations = sellerService.viewProductVariations(userDetails, productId);
+            @PathVariable("id") String productId,
+            @RequestParam(required = false, defaultValue = "price") String sort,
+            @RequestParam(required = false, defaultValue = "asc") String order,
+            @RequestParam(required = false, defaultValue = "10") int max,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false) Map<String, Object> filter) throws BadRequestException {
+        List<ProductVariationResponseDTO> variations = sellerService.viewAllProductVariation(userDetails, productId,
+                sort, order, max, offset, filter);
         return ResponseEntity.ok(variations);
     }
 
