@@ -1,6 +1,5 @@
 package com.shopsavvy.shopshavvy.configuration;
 
-import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;

@@ -4,9 +4,8 @@ import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.*;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
-import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
-import com.shopsavvy.shopshavvy.service.AuthenticationService;
-import com.shopsavvy.shopshavvy.service.SellerService;
+import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.service.*;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.mail.MessagingException;
@@ -32,6 +31,9 @@ public class SellerController {
 
     private final AuthenticationService authenticationService;
     private final SellerService sellerService;
+    private final CategoryService categoryService;
+    private final ProductService productService;
+    private final ProductVariationService productVariationService;
 
     @GetMapping("/hello")
     public String sayHello( String token){
@@ -69,20 +71,20 @@ public class SellerController {
 
     @GetMapping("/category")
     public ResponseEntity<List<CategoryDetailsForSellerDTO>> viewCatgeory(){
-        List<CategoryDetailsForSellerDTO> categories = sellerService.viewCategory();
+        List<CategoryDetailsForSellerDTO> categories = categoryService.viewCategory();
         return ResponseEntity.ok(categories);
     }
 
     @PostMapping("/product")
     public ResponseEntity<SuccessMessageResponse<String>> addProduct(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
                                                                      @Valid @RequestBody ProductDTO productDTO) throws BadRequestException {
-        String message = sellerService.addProduct(userDetailsImpl, productDTO);
+        String message = productService.addProduct(userDetailsImpl, productDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
     @GetMapping("/products/{productId}")
     public ResponseEntity<ProductDTO> viewProduct(@AuthenticationPrincipal UserDetailsImpl userDetails, @PathVariable String productId) throws BadRequestException {
-        ProductDTO dto = sellerService.viewProduct(userDetails, productId);
+        ProductDTO dto = productService.viewProduct(userDetails, productId);
         return ResponseEntity.ok(dto);
     }
 
@@ -94,7 +96,7 @@ public class SellerController {
             @RequestParam(required = false, defaultValue = "10") int max,
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false) Map<String, String> filter){
-        List<ProductDTO> products = sellerService.viewAllProducts(userDetails, sort, order, max, offset, filter);
+        List<ProductDTO> products = productService.viewAllProducts(userDetails, sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 
@@ -103,7 +105,7 @@ public class SellerController {
             @RequestPart("primaryImage") MultipartFile primaryImage,
             @RequestPart(value = "secondaryImages", required = false) List<MultipartFile> secondaryImages
     ) throws BadRequestException {
-        String message = sellerService.addProductVariations(dto,primaryImage,secondaryImages);
+        String message = productVariationService.addProductVariations(dto,primaryImage,secondaryImages);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
@@ -111,7 +113,7 @@ public class SellerController {
     public ResponseEntity<ProductVariationResponseDTO> viewProductVariation(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable("id") String productVariationId) throws BadRequestException {
-        ProductVariationResponseDTO dto = sellerService.viewProductVariation(userDetails, productVariationId);
+        ProductVariationResponseDTO dto = productVariationService.viewProductVariation(userDetails, productVariationId);
         return ResponseEntity.ok(dto);
     }
 
@@ -124,7 +126,7 @@ public class SellerController {
             @RequestParam(required = false, defaultValue = "10") int max,
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false) Map<String, Object> filter) throws BadRequestException {
-        List<ProductVariationResponseDTO> variations = sellerService.viewAllProductVariation(userDetails, productId,
+        List<ProductVariationResponseDTO> variations = productVariationService.viewAllProductVariation(userDetails, productId,
                 sort, order, max, offset, filter);
         return ResponseEntity.ok(variations);
     }
@@ -133,7 +135,7 @@ public class SellerController {
     public ResponseEntity<SuccessMessageResponse<String>> deleteProduct(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam("id") String productId) throws BadRequestException {
-        String response = sellerService.deleteProduct(userDetails, productId);
+        String response = productService.deleteProduct(userDetails, productId);
         return ResponseEntity.ok(SuccessMessageResponse.success(response));
     }
 
@@ -142,7 +144,7 @@ public class SellerController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam("id") String productId,
             @Valid @RequestBody ProductUpdateDTO updateDTO) throws BadRequestException {
-        String response = sellerService.updateProduct(userDetails, productId, updateDTO);
+        String response = productService.updateProduct(userDetails, productId, updateDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(response));
     }
 
@@ -153,7 +155,7 @@ public class SellerController {
             @RequestPart(value = "data", required = false) ProductVariationUpdateDTO updateDTO,
             @RequestPart(value = "primaryImage", required = false) MultipartFile primaryImage,
             @RequestPart(value = "secondaryImages", required = false) List<MultipartFile> secondaryImages) throws BadRequestException {
-        String response = sellerService.updateProductVariation(userDetails, variationId, updateDTO, primaryImage, secondaryImages);
+        String response = productVariationService.updateProductVariation(userDetails, variationId, updateDTO, primaryImage, secondaryImages);
         return ResponseEntity.ok(SuccessMessageResponse.success(response));
     }
 

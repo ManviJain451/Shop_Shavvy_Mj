@@ -1,4 +1,4 @@
-package com.shopsavvy.shopshavvy.security.configurations;
+package com.shopsavvy.shopshavvy.configuration;
 
 import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;

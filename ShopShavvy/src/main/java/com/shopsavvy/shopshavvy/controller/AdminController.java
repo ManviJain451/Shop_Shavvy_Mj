@@ -10,6 +10,8 @@ import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
+import com.shopsavvy.shopshavvy.service.CategoryService;
+import com.shopsavvy.shopshavvy.service.ProductService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import jakarta.mail.MessagingException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -31,6 +33,8 @@ public class AdminController {
 
     private final AuthenticationService authenticationService;
     private final AdminService adminService;
+    private final CategoryService categoryService;
+    private final ProductService productService;
 
     @PostMapping("/logout")
     public ResponseEntity<SuccessMessageResponse<String>> logout(
@@ -93,7 +97,7 @@ public class AdminController {
 
     @PostMapping("/metadata-fields")
     public ResponseEntity<SuccessMessageResponse<String>> addField(@RequestParam String fieldName){
-        String message = adminService.addMetadataField(fieldName);
+        String message = categoryService.addMetadataField(fieldName);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
@@ -104,7 +108,7 @@ public class AdminController {
             @RequestParam(required = false, defaultValue = "name") String sort,
             @RequestParam(required = false, defaultValue = "ASC") String order,
             @RequestParam(required = false) String query){
-        List<CategoryMetadataField> metadataFields = adminService.getAllFields(max, offset, sort, order, query);
+        List<CategoryMetadataField> metadataFields = categoryService.getAllMetadataFields(max, offset, sort, order, query);
         return ResponseEntity.ok(SuccessMessageResponse.success(metadataFields));
 
     }
@@ -113,13 +117,13 @@ public class AdminController {
     public ResponseEntity<SuccessMessageResponse<String>> addNewCategory(
             @RequestParam String categoryName,
             @RequestParam(required = false) String parentCategoryId) throws BadRequestException {
-        String message = adminService.addCategory(categoryName, parentCategoryId);
+        String message = categoryService.addCategory(categoryName, parentCategoryId);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
     @GetMapping("/category")
     public ResponseEntity<CategoryDetailsDTO> viewCategory(@RequestParam String categoryId) throws BadRequestException {
-        CategoryDetailsDTO categeoryDetailsDTO = adminService.viewCategory(categoryId);
+        CategoryDetailsDTO categeoryDetailsDTO = categoryService.viewCategory(categoryId);
         return ResponseEntity.ok(categeoryDetailsDTO);
 
     }
@@ -132,28 +136,28 @@ public class AdminController {
             @RequestParam(required = false, defaultValue = "ASC") String order,
             @RequestParam(required = false) String query
     ) {
-        List<CategoryDetailsDTO> categeoryDetailsDTOS = adminService.viewAllCategories(max, offset, sort, order, query);
+        List<CategoryDetailsDTO> categeoryDetailsDTOS = categoryService.viewAllCategories(max, offset, sort, order, query);
         return ResponseEntity.ok(categeoryDetailsDTOS);
     }
 
     @PutMapping("/category")
     public ResponseEntity<SuccessMessageResponse<String>> updateCategory(@RequestParam(required = true) String categoryName,
                                                  @RequestParam(required = true) String categoryId) throws BadRequestException {
-        String message = adminService.updateCategory(categoryId, categoryName);
+        String message = categoryService.updateCategory(categoryId, categoryName);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
     @PostMapping("/category/metadata-field")
     public ResponseEntity<SuccessMessageResponse<String>> addMetadataFieldValues(
             @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException {
-        String message = adminService.addMetadataFieldToCategory(dto);
+        String message = categoryService.addMetadataFieldToCategory(dto);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
     @PutMapping("/category/metadata-field")
     public ResponseEntity<SuccessMessageResponse<String>> updateMetadataFieldValues(
             @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException{
-        String message = adminService.updateMetadataFieldToCategory(dto);
+        String message = categoryService.updateMetadataFieldToCategory(dto);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
@@ -161,21 +165,14 @@ public class AdminController {
     public ResponseEntity<SuccessMessageResponse<ProductDTO>> viewProduct(
             @PathVariable String id) throws BadRequestException {
         return ResponseEntity.ok(SuccessMessageResponse.success(
-                adminService.viewProduct(id)));
+                productService.viewProduct(id)));
     }
 
-    @PutMapping("/products/{productId}/deactivate")
-    public ResponseEntity<SuccessMessageResponse<String>> deactivateProduct(
+    @PutMapping("/products/{productId}/toggle-status")
+    public ResponseEntity<SuccessMessageResponse<String>> toggleStatus(
             @PathVariable String productId) throws BadRequestException {
         return ResponseEntity.ok(SuccessMessageResponse.success(
-                adminService.deactivateProduct(productId)));
-    }
-
-    @PutMapping("/products/{productId}/activate")
-    public ResponseEntity<SuccessMessageResponse<String>> activateProduct(
-            @PathVariable String productId) throws BadRequestException {
-        return ResponseEntity.ok(SuccessMessageResponse.success(
-                adminService.activateProduct(productId)));
+                productService.toggleProductStatus(productId)));
     }
 
     @GetMapping("/products")
@@ -186,7 +183,7 @@ public class AdminController {
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false) Map<String, String> filter) {
 
-        List<ProductDTO> products = adminService.viewAllProducts(sort, order, max, offset, filter);
+        List<ProductDTO> products = productService.viewAllProducts(sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 

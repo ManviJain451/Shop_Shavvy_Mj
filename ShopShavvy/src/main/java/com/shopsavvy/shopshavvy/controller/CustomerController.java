@@ -6,9 +6,11 @@ import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
-import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
+import com.shopsavvy.shopshavvy.service.CategoryService;
 import com.shopsavvy.shopshavvy.service.CustomerService;
+import com.shopsavvy.shopshavvy.service.ProductService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import com.shopsavvy.shopshavvy.validation.groups.OnCreate;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
@@ -33,6 +35,8 @@ public class CustomerController {
 
     private final AuthenticationService authenticationService;
     private final CustomerService customerService;
+    private final CategoryService categoryService;
+    private final ProductService productService;
 
     @GetMapping("/hello")
     public String sayHello(String token){
@@ -94,19 +98,19 @@ public class CustomerController {
 
     @GetMapping("/categories")
     public ResponseEntity<List<CategoryDTO>> viewCategories(@RequestParam(required = false) String categoryId) throws BadRequestException {
-        List<CategoryDTO> categories = customerService.viewAllCategories(categoryId);
+        List<CategoryDTO> categories = categoryService.viewAllCategories(categoryId);
         return ResponseEntity.ok(categories);
     }
 
     @GetMapping("/filtering-details")
     public ResponseEntity<FilteringDetailsDTO> getFilteringDetails(@RequestParam String categoryId) throws BadRequestException {
-        FilteringDetailsDTO dto = customerService.getFilteringDetails(categoryId);
+        FilteringDetailsDTO dto = categoryService.getFilteringDetails(categoryId);
         return ResponseEntity.ok(dto);
     }
 
     @GetMapping("/products/{productId}")
     public ResponseEntity<ProductDTO> viewProduct(@PathVariable String productId) throws BadRequestException {
-        ProductDTO dto = customerService.viewProduct(productId);
+        ProductDTO dto = productService.viewProductCustomer(productId);
         return ResponseEntity.ok(dto);
     }
 
@@ -119,7 +123,7 @@ public class CustomerController {
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false) Map<String, String> filter) throws BadRequestException {
 
-        List<ProductDTO> products = customerService.viewAllProducts(categoryId, sort, order, max, offset, filter);
+        List<ProductDTO> products = productService.viewAllProducts(categoryId, sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 
@@ -132,7 +136,7 @@ public class CustomerController {
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false) Map<String, String> filter) throws BadRequestException {
 
-        List<ProductDTO> products = customerService.viewSimilarProducts(productId, sort, order, max, offset, filter);
+        List<ProductDTO> products = productService.viewSimilarProducts(productId, sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 
