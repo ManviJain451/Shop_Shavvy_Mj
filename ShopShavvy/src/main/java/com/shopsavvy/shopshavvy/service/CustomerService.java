@@ -6,11 +6,7 @@ import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductFilterDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationResponseDTO;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
-import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -20,7 +16,6 @@ import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.specification.ProductSpecification;
-import com.shopsavvy.shopshavvy.utilities.StringToDtoParser;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
@@ -332,7 +327,7 @@ public class CustomerService {
                 .build();
     }
 
-    public List<ProductDTO> viewAllProducts(String categoryId, String sort, String order, int max, int offset, String query) throws BadRequestException {
+    public List<ProductDTO> viewAllProducts(String categoryId, String sort, String order, int max, int offset, Map<String, String> filter) throws BadRequestException {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new BadRequestException(messageSource
                         .getMessage("error.category.not.found", null, getCurrentLocale())));
@@ -340,18 +335,15 @@ public class CustomerService {
         Pageable pageable = PageRequest.of(offset / max, max,
                 Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
 
-
-        ProductFilterDTO filterDTO = StringToDtoParser.parseQueryToFilterDTO(query);
-
         List<Product> products = new ArrayList<>();
 
         if (category.getSubCategories() == null || category.getSubCategories().isEmpty()) {
-            Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, category);
+            Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filter, category);
             Page<Product> page = productRepository.findAll(specification, pageable);
             products.addAll(page.getContent());
         } else {
             for (Category subCategory : category.getSubCategories()) {
-                Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, subCategory);
+                Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filter, subCategory);
                 Page<Product> page = productRepository.findAll(specification, pageable);
                 products.addAll(page.getContent());
             }
@@ -393,7 +385,7 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-    public List<ProductDTO> viewSimilarProducts(String productId, String sort, String order, int max, int offset, String query) throws BadRequestException {
+    public List<ProductDTO> viewSimilarProducts(String productId, String sort, String order, int max, int offset, Map<String, String> filter) throws BadRequestException {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(messageSource
                         .getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -401,9 +393,7 @@ public class CustomerService {
         Pageable pageable = PageRequest.of(offset / max, max,
                 Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
 
-        ProductFilterDTO filterDTO = StringToDtoParser.parseQueryToFilterDTO(query);
-
-        Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filterDTO, product.getCategory());
+        Specification<Product> specification = ProductSpecification.getAllByFilterWithCategory(filter, product.getCategory());
 
         Page<Product> page = productRepository.findAll(specification, pageable);
 

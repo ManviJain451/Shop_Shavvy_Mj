@@ -3,7 +3,6 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.*;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductFilterDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
@@ -21,7 +20,6 @@ import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductSpecification;
-import com.shopsavvy.shopshavvy.utilities.StringToDtoParser;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
@@ -336,8 +334,15 @@ public class AdminService {
         return metadataFieldsWithValues;
     }
 
-    public List<CategoryDetailsDTO> viewAllCategories() {
-        return categoryRepository.findAll().stream()
+    public List<CategoryDetailsDTO> viewAllCategories(int max, int offset, String sortBy, String order, String query) {
+        Sort sort = Sort.by(Sort.Order.by(sortBy).ignoreCase().with(Sort.Direction.valueOf(order.toUpperCase())));
+        Pageable pageable = PageRequest.of(offset, max, sort);
+
+        Page<Category> categories = (query != null && !query.isEmpty()) ?
+                categoryRepository.findByNameContainingIgnoreCase(query, pageable) :
+                categoryRepository.findAll(pageable);
+
+        return categories.getContent().stream()
                 .map(category -> {
                     try {
                         return viewCategory(category.getCategoryId());
@@ -595,14 +600,11 @@ public class AdminService {
         return messageSource.getMessage("success.product.activated", null, getCurrentLocale());
     }
 
-    public List<ProductDTO> viewAllProducts(String sort, String order, int max, int offset, String query) {
+    public List<ProductDTO> viewAllProducts(String sort, String order, int max, int offset, Map<String, String> filter) {
         Pageable pageable = PageRequest.of(offset / max, max,
                 Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
 
-        ProductFilterDTO filterDTO = StringToDtoParser.parseQueryToFilterDTO(query);
-        System.out.println(filterDTO);
-
-        Specification<Product> specification = ProductSpecification.getAllByFilter(filterDTO);
+        Specification<Product> specification = ProductSpecification.getAllByFilterMap(filter);
 
         Page<Product> productsPage = productRepository.findAll(specification, pageable);
 

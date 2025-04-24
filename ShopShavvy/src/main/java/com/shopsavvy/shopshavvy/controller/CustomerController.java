@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -116,9 +117,9 @@ public class CustomerController {
             @RequestParam(required = false, defaultValue = "asc") String order,
             @RequestParam(required = false, defaultValue = "10") int max,
             @RequestParam(required = false, defaultValue = "0") int offset,
-            @RequestParam(required = false) String query) throws BadRequestException {
+            @RequestParam(required = false) Map<String, String> filter) throws BadRequestException {
 
-        List<ProductDTO> products = customerService.viewAllProducts(categoryId, sort, order, max, offset, query);
+        List<ProductDTO> products = customerService.viewAllProducts(categoryId, sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 
@@ -129,9 +130,9 @@ public class CustomerController {
             @RequestParam(required = false, defaultValue = "asc") String order,
             @RequestParam(required = false, defaultValue = "10") int max,
             @RequestParam(required = false, defaultValue = "0") int offset,
-            @RequestParam(required = false) String query) throws BadRequestException {
+            @RequestParam(required = false) Map<String, String> filter) throws BadRequestException {
 
-        List<ProductDTO> products = customerService.viewSimilarProducts(productId, sort, order, max, offset, query);
+        List<ProductDTO> products = customerService.viewSimilarProducts(productId, sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 

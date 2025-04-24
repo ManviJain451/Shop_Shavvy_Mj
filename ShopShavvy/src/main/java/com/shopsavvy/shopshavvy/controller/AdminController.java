@@ -22,6 +22,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -100,7 +101,7 @@ public class AdminController {
     public ResponseEntity<SuccessMessageResponse<List<CategoryMetadataField>>> getAllMetadataFields(
             @RequestParam(required = false, defaultValue = "10") int max,
             @RequestParam(required = false, defaultValue = "0") int offset,
-            @RequestParam(required = false, defaultValue = "id") String sort,
+            @RequestParam(required = false, defaultValue = "name") String sort,
             @RequestParam(required = false, defaultValue = "ASC") String order,
             @RequestParam(required = false) String query){
         List<CategoryMetadataField> metadataFields = adminService.getAllFields(max, offset, sort, order, query);
@@ -124,8 +125,14 @@ public class AdminController {
     }
 
     @GetMapping("/all/categories")
-    public ResponseEntity<List<CategoryDetailsDTO>> viewAllCategories() {
-        List<CategoryDetailsDTO> categeoryDetailsDTOS = adminService.viewAllCategories();
+    public ResponseEntity<List<CategoryDetailsDTO>> viewAllCategories(
+            @RequestParam(required = false, defaultValue = "10") int max,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false, defaultValue = "name") String sort,
+            @RequestParam(required = false, defaultValue = "ASC") String order,
+            @RequestParam(required = false) String query
+    ) {
+        List<CategoryDetailsDTO> categeoryDetailsDTOS = adminService.viewAllCategories(max, offset, sort, order, query);
         return ResponseEntity.ok(categeoryDetailsDTOS);
     }
 
@@ -173,13 +180,13 @@ public class AdminController {
 
     @GetMapping("/products")
     public ResponseEntity<List<ProductDTO>> viewAllProducts(
-            @RequestParam(defaultValue = "name") String sort,
-            @RequestParam(defaultValue = "asc") String order,
-            @RequestParam(defaultValue = "10") int max,
-            @RequestParam(defaultValue = "0") int offset,
-            @RequestParam(required = false) String query) {
+            @RequestParam(required = false, defaultValue = "name") String sort,
+            @RequestParam(required = false, defaultValue = "asc") String order,
+            @RequestParam(required = false, defaultValue = "10") int max,
+            @RequestParam(required = false, defaultValue = "0") int offset,
+            @RequestParam(required = false) Map<String, String> filter) {
 
-        List<ProductDTO> products = adminService.viewAllProducts(sort, order, max, offset, query);
+        List<ProductDTO> products = adminService.viewAllProducts(sort, order, max, offset, filter);
         return ResponseEntity.ok(products);
     }
 
