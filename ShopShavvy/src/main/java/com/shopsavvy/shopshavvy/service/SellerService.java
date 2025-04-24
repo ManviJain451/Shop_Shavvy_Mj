@@ -35,7 +35,7 @@ public class SellerService {
     @Value("${file.storage.base-path}")
     private String basePath;
 
-    public SellerProfileDTO getSellerProfile(UserDetailsImpl userDetailsImpl) {
+    public SellerProfileDTO getSellerProfile(UserDetailsImpl userDetailsImpl) throws IOException {
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(
                         messageSource.getMessage("error.seller.not.found.token", null, getCurrentLocale())));

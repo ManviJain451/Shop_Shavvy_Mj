@@ -10,8 +10,10 @@ import com.shopsavvy.shopshavvy.model.products.ProductVariation;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductSpecification;
+import jakarta.mail.SendFailedException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -22,12 +24,14 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ProductService {
 
     private final MessageSource messageSource;
@@ -42,6 +46,7 @@ public class ProductService {
 
     //admin
     public ProductDTO viewProduct(String productId) throws BadRequestException {
+        log.info("Admin viewing product: {}", productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -82,7 +87,8 @@ public class ProductService {
                 .build();
     }
 
-    public String toggleProductStatus(String productId) throws BadRequestException {
+    public String toggleProductStatus(String productId) throws BadRequestException, SendFailedException {
+        log.info("Toggling product status: {}", productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -110,6 +116,7 @@ public class ProductService {
     }
 
     public List<ProductDTO> viewAllProducts(String sort, String order, int max, int offset, Map<String, String> filter) {
+        log.info("Admin viewing all products");
         Pageable pageable = PageRequest.of(offset / max, max,
                 Sort.by(Sort.Direction.fromString(order.toUpperCase()), sort));
 
@@ -118,6 +125,7 @@ public class ProductService {
         Page<Product> productsPage = productRepository.findAll(specification, pageable);
 
         return productsPage.getContent().stream()
+                .filter(Product::isActive)
                 .map(product -> {
                     Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
                             .filter(ProductVariation::isActive)
@@ -154,6 +162,7 @@ public class ProductService {
 
     //customer
     public ProductDTO viewProductCustomer(String productId) throws BadRequestException {
+        log.info("Customer viewing product: {}", productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -181,8 +190,13 @@ public class ProductService {
                                 variation.getId(),
                                 variation.getPrimaryImage());
                     }
-                    List<String> secondaryImagesUrl = fileStorageService.getProductVariationSecondaryImageUrls(
-                            product.getId(), variation.getId(), variation.getPrimaryImage());
+                    List<String> secondaryImagesUrl = null;
+                    try {
+                        secondaryImagesUrl = fileStorageService.getProductVariationSecondaryImageUrls(
+                                product.getId(), variation.getId(), variation.getPrimaryImage());
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
                     return ProductVariationResponseDTO.builder()
                             .productVariationId(variation.getId())
                             .price(variation.getPrice())
@@ -212,6 +226,7 @@ public class ProductService {
     }
 
     public List<ProductDTO> viewAllProducts(String categoryId, String sort, String order, int max, int offset, Map<String, String> filter) throws BadRequestException {
+        log.info("Customer viewing products by category: {}", categoryId);
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new BadRequestException(messageSource
                         .getMessage("error.category.not.found", null, getCurrentLocale())));
@@ -234,19 +249,26 @@ public class ProductService {
         }
 
         return products.stream()
+                .filter(Product::isActive)
                 .map(product -> {
                     Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
                             .filter(ProductVariation::isActive)
-                            .map(variation -> ProductVariationResponseDTO.builder()
-                                    .productVariationId(variation.getId())
-                                    .price(variation.getPrice())
-                                    .quantity(variation.getQuantity())
-                                    .metadata(variation.getMetadata())
-                                    .primaryImage(variation.getPrimaryImage() != null ?
-                                            fileStorageService.getProductVariationImageUrl(
-                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
-                                    .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(product.getId(), variation.getId(), variation.getPrimaryImage()))
-                                    .build()
+                            .map(variation -> {
+                                        try {
+                                            return ProductVariationResponseDTO.builder()
+                                                    .productVariationId(variation.getId())
+                                                    .price(variation.getPrice())
+                                                    .quantity(variation.getQuantity())
+                                                    .metadata(variation.getMetadata())
+                                                    .primaryImage(variation.getPrimaryImage() != null ?
+                                                            fileStorageService.getProductVariationImageUrl(
+                                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
+                                                    .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(product.getId(), variation.getId(), variation.getPrimaryImage()))
+                                                    .build();
+                                        } catch (IOException e) {
+                                            throw new RuntimeException(e);
+                                        }
+                                    }
                             )
                             .collect(Collectors.toSet());
 
@@ -270,6 +292,7 @@ public class ProductService {
     }
 
     public List<ProductDTO> viewSimilarProducts(String productId, String sort, String order, int max, int offset, Map<String, String> filter) throws BadRequestException {
+        log.info("Viewing similar products to: {}", productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(messageSource
                         .getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -282,6 +305,7 @@ public class ProductService {
         Page<Product> page = productRepository.findAll(specification, pageable);
 
         return page.getContent().stream()
+                .filter(Product::isActive)
                 .map(prod -> {
                     Set<ProductVariationResponseDTO> variations = prod.getProductVariations().stream()
                             .filter(ProductVariation::isActive)
@@ -320,6 +344,7 @@ public class ProductService {
 
     //seller
     public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException {
+        log.info("Seller adding new product: {}", dto.getProductName());
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource
                         .getMessage("error.seller.not.found.token", null, getCurrentLocale())));
@@ -365,6 +390,7 @@ public class ProductService {
     }
 
     public ProductDTO viewProduct(UserDetailsImpl userDetailsImpl, String productId) throws BadRequestException {
+        log.info("Seller viewing product: {}", productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -378,6 +404,7 @@ public class ProductService {
     }
 
     public List<ProductDTO> viewAllProducts(UserDetailsImpl userDetails, String sort, String order, int max, int offset, Map<String, String> filter ){
+        log.info("Seller viewing all products");
         Seller seller = sellerRepository.findByEmail(userDetails.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource
                         .getMessage("user.not.found", null, getCurrentLocale())));
@@ -395,6 +422,7 @@ public class ProductService {
     }
 
     public String deleteProduct(UserDetailsImpl userDetails, String productId) throws BadRequestException {
+        log.info("Seller deleting product: {}", productId);
         Product product = getProductAndValidateWithSeller(userDetails, productId);
         product.setDeleted(true);
         productRepository.save(product);
@@ -403,6 +431,7 @@ public class ProductService {
     }
 
     public String updateProduct(UserDetailsImpl userDetails, String productId, ProductUpdateDTO updateDTO) throws BadRequestException {
+        log.info("Seller updating product: {}", productId);
         Product product = getProductAndValidateWithSeller(userDetails, productId);
         if (updateDTO.getName() != null && !updateDTO.getName().equals(product.getName())) {
             boolean exists = productRepository.existsByNameAndBrandAndCategoryAndSellerAndIdNot(

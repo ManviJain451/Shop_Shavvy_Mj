@@ -8,6 +8,7 @@ import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,6 +20,7 @@ import java.util.Locale;
 import java.util.Set;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -38,6 +40,7 @@ public class SellerAuthenticationService {
 
 
     public String registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
+        log.info("Registering seller: {}", sellerRegistrationDTO.getEmail());
 
         if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
             throw new DuplicateEntryExistsException(
@@ -92,6 +95,7 @@ public class SellerAuthenticationService {
                     "Account Created",
                     "Seller Account has been created. Waiting for Approval");
         } catch (Exception e) {
+            log.error("Email verification failed: {}", e.getMessage());
             throw new Exception(
                     messageSource.getMessage("error.verification.email.not.sent", null, getCurrentLocale()));
         }

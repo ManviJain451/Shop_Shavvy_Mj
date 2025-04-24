@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -76,32 +75,20 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
         claims.put("roles", userDetails.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toList()));
+                .toList());
         return generateToken(claims, userDetails, tokenType);
     }
 
 
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails, String tokenType) {
-        long expirationTime;
-        switch (tokenType) {
-            case "refresh":
-                expirationTime = refreshTokenExpirationTime;
-                break;
-            case "activation":
-                expirationTime = activateTokenExpirationTime;
-                break;
-            case "access":
-                expirationTime = accessTokenExpirationTime;
-                break;
-            default:
-                expirationTime = resetPasswordTokenTime;
-                break;
-
-        }
+        long expirationTime = switch (tokenType) {
+            case "refresh" -> refreshTokenExpirationTime;
+            case "activation" -> activateTokenExpirationTime;
+            case "access" -> accessTokenExpirationTime;
+            default -> resetPasswordTokenTime;
+        };
         return buildToken(extraClaims, userDetails, expirationTime, tokenType);
     }
-
-
 
     private String buildToken(
             Map<String, Object> extraClaims,

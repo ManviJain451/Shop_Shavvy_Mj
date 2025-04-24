@@ -21,6 +21,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -47,7 +48,7 @@ public class SellerController {
     }
 
     @GetMapping("/view-profile")
-    public ResponseEntity<SuccessMessageResponse<SellerProfileDTO>> getSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
+    public ResponseEntity<SuccessMessageResponse<SellerProfileDTO>> getSellerProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) throws IOException {
         SellerProfileDTO sellerProfile = sellerService.getSellerProfile(userDetailsImpl);
         return ResponseEntity.ok(SuccessMessageResponse.success(sellerProfile));
     }
@@ -104,15 +105,15 @@ public class SellerController {
     public ResponseEntity<SuccessMessageResponse<String>> addProductVariation(@RequestPart("productData") @Valid ProductVariationDTO dto,
             @RequestPart("primaryImage") MultipartFile primaryImage,
             @RequestPart(value = "secondaryImages", required = false) List<MultipartFile> secondaryImages
-    ) throws BadRequestException {
-        String message = productVariationService.addProductVariations(dto,primaryImage,secondaryImages);
+    ) throws IOException {
+    String message = productVariationService.addProductVariations(dto,primaryImage,secondaryImages);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
     @GetMapping("/product/variations/{id}")
     public ResponseEntity<ProductVariationResponseDTO> viewProductVariation(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
-            @PathVariable("id") String productVariationId) throws BadRequestException {
+            @PathVariable("id") String productVariationId) throws IOException {
         ProductVariationResponseDTO dto = productVariationService.viewProductVariation(userDetails, productVariationId);
         return ResponseEntity.ok(dto);
     }

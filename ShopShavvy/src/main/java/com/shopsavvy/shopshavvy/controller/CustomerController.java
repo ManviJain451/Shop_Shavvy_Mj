@@ -52,7 +52,7 @@ public class CustomerController {
     }
 
     @GetMapping("/view-profile")
-    public ResponseEntity<SuccessMessageResponse<CustomerProfileDTO>> getProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
+    public ResponseEntity<SuccessMessageResponse<CustomerProfileDTO>> getProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) throws IOException {
         CustomerProfileDTO customerProfileDTO = customerService.getCustomerProfile(userDetailsImpl);
         return ResponseEntity.ok(SuccessMessageResponse.success(customerProfileDTO));
     }

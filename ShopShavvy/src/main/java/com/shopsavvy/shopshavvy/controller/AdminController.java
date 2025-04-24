@@ -14,6 +14,7 @@ import com.shopsavvy.shopshavvy.service.CategoryService;
 import com.shopsavvy.shopshavvy.service.ProductService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import jakarta.mail.MessagingException;
+import jakarta.mail.SendFailedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -170,7 +171,7 @@ public class AdminController {
 
     @PutMapping("/products/{productId}/toggle-status")
     public ResponseEntity<SuccessMessageResponse<String>> toggleStatus(
-            @PathVariable String productId) throws BadRequestException {
+            @PathVariable String productId) throws BadRequestException, SendFailedException {
         return ResponseEntity.ok(SuccessMessageResponse.success(
                 productService.toggleProductStatus(productId)));
     }

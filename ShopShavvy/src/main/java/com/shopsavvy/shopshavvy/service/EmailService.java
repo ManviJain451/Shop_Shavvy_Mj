@@ -2,6 +2,7 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import jakarta.mail.MessagingException;
+import jakarta.mail.SendFailedException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;
@@ -52,6 +53,7 @@ public class EmailService {
         sendVerificationEmail(email, subject, text);
     }
 
+    @Async
     public void sendPasswordChangeNotification(String email) throws MessagingException {
         try {
             var message = emailSender.createMimeMessage();
@@ -60,14 +62,14 @@ public class EmailService {
             helper.setSubject("Password Changed Successfully");
             helper.setText("Your password has been changed successfully. If this was not you, please contact support immediately.");
             emailSender.send(message);
-        } catch (MessagingException e) {
-            throw new RuntimeException( messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
+        } catch (SendFailedException e) {
+            throw new SendFailedException( messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
         }
     }
 
     @Async
     public void sendProductStatusUpdateEmail(String email, String productName, boolean isActive,
-                                             String brand, String description) {
+                                             String brand, String description) throws SendFailedException {
         try {
             MimeMessage message = emailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
@@ -80,7 +82,8 @@ public class EmailService {
 
             emailSender.send(message);
         } catch (MessagingException e) {
-            throw new RuntimeException("Failed to send email", e);
+            throw new SendFailedException( messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
+
         }
     }
 

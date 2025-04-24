@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
@@ -14,6 +15,7 @@ import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FileStorageService {
     private final MessageSource messageSource;
 
@@ -29,6 +31,7 @@ public class FileStorageService {
 
 
     public String saveOrUpdateUserPhoto(String userId, MultipartFile file) throws IOException {
+        log.info("Saving photo for user: {}", userId);
 
         if (file == null || file.isEmpty()) {
             throw new BadRequestException(messageSource.getMessage("error.invalid.file", null, getCurrentLocale()));
@@ -58,11 +61,13 @@ public class FileStorageService {
                     messageSource.getMessage("success.photo.updated", null, getCurrentLocale()) :
                     messageSource.getMessage("success.photo.uploaded", null, getCurrentLocale());
         } catch (IOException e) {
+            log.error("Failed to store file for user {}", userId);
             throw new IOException(messageSource.getMessage("error.file.store", null, getCurrentLocale()), e);
         }
     }
 
     public String deleteUserPhoto(String userId) throws IOException {
+        log.info("Deleting photo for user: {}", userId);
         Path userDirectory = Paths.get(BASE_PATH, "users", userId);
         if (Files.exists(userDirectory)) {
             deleteExistingPhoto(userDirectory);
@@ -80,7 +85,7 @@ public class FileStorageService {
         }
     }
 
-    public String getUserImageUrl(String userId) {
+    public String getUserImageUrl(String userId) throws IOException {
         Path userDirectory = Path.of(BASE_PATH, "users", userId);
 
         if (!Files.exists(userDirectory)) {
@@ -97,7 +102,8 @@ public class FileStorageService {
                 return "/users/" + userId + "/" + fileName;
             }
         } catch (IOException e) {
-            throw new RuntimeException(messageSource.getMessage("error.image.directory.access", null, getCurrentLocale()));
+            log.error("Failed to access image directory for user {}", userId);
+            throw new IOException(messageSource.getMessage("error.image.directory.access", null, getCurrentLocale()));
         }
         return null;
     }
@@ -133,8 +139,8 @@ public class FileStorageService {
         return fileName.substring(lastDotIndex + 1).toLowerCase();
     }
 
-    public String saveProductVariationImage(String productId, String variationId, MultipartFile file) throws IOException, BadRequestException {
-        System.out.println("primary image ");
+    public String saveProductVariationImage(String productId, String variationId, MultipartFile file) throws IOException {
+        log.info("Saving primary image for product: {}, variation: {}", productId, variationId);
         if (file == null || file.isEmpty()) {
             throw new BadRequestException(
                     messageSource.getMessage("error.invalid.file", null, getCurrentLocale()));
@@ -161,12 +167,14 @@ public class FileStorageService {
 
             return fileName;
         } catch (IOException e) {
+            log.error("Failed to store file for product: {}, variation: {}", productId, variationId);
             throw new IOException(
                     messageSource.getMessage("error.file.store", null, getCurrentLocale()), e);
         }
     }
 
-    public void saveSecondaryImages(String productId, String variationId, List<MultipartFile> files) throws IOException, BadRequestException {
+    public void saveSecondaryImages(String productId, String variationId, List<MultipartFile> files) throws IOException{
+        log.info("Saving secondary images for product: {}, variation: {}", productId, variationId);
         if (files == null || files.isEmpty()) {
             return;
         }
@@ -204,7 +212,7 @@ public class FileStorageService {
         return "/products/" + productId + "/variations/" + variationId + "/" + imageName;
     }
 
-    public List<String> getProductVariationSecondaryImageUrls(String productId, String variationId, String primaryImageName) {
+    public List<String> getProductVariationSecondaryImageUrls(String productId, String variationId, String primaryImageName) throws IOException {
         List<String> secondaryImageUrls = new ArrayList<>();
         Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
 
@@ -221,7 +229,8 @@ public class FileStorageService {
                 }
             }
         } catch (IOException e) {
-            throw new RuntimeException(messageSource.getMessage("error.image.directory.access", null, getCurrentLocale()));
+            log.error("Failed to access image directory for product: {}, variation: {}", productId, variationId);
+            throw new IOException(messageSource.getMessage("error.image.directory.access", null, getCurrentLocale()));
         }
 
         return secondaryImageUrls;
@@ -229,6 +238,7 @@ public class FileStorageService {
 
 
     public void deleteProductVariationImages(String productId, String variationId) throws IOException {
+        log.info("Deleting images for product: {}, variation: {}", productId, variationId);
         Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
         if (Files.exists(variationDirectory)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(variationDirectory)) {
@@ -240,4 +250,3 @@ public class FileStorageService {
         }
     }
 }
-

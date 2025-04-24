@@ -14,6 +14,7 @@ import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductVariationSpecification;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -30,6 +31,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -44,7 +46,8 @@ public class ProductVariationService {
         return LocaleContextHolder.getLocale();
     }
 
-    public String addProductVariations(ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws BadRequestException {
+    public String addProductVariations(ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws IOException {
+        log.info("Adding product variation for product ID: {}", dto.getProductId());
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new BadRequestException(messageSource.getMessage("product.not.found", new Object[]{dto.getProductId()}, getCurrentLocale())));
 
@@ -55,8 +58,9 @@ public class ProductVariationService {
 
         boolean alreadyExists = product.getProductVariations().stream()
                 .anyMatch(v -> Objects.equals(v.getMetadata(), dto.getMetadata()));
-        if (alreadyExists)
+        if (alreadyExists) {
             throw new DuplicateEntryExistsException(messageSource.getMessage("product.variation.duplicate", null, getCurrentLocale()));
+        }
 
         validateMetadata(dto.getMetadata(), category, product);
 
@@ -79,7 +83,8 @@ public class ProductVariationService {
             productVariationRepository.save(savedVariation);
 
         } catch (IOException e) {
-            throw new RuntimeException(messageSource.getMessage("error.failed.upload.images", null, getCurrentLocale()));
+            log.error("Failed to upload images for variation: {}", e.getMessage());
+            throw new IOException(messageSource.getMessage("error.failed.upload.images", null, getCurrentLocale()));
         }
 
         return messageSource.getMessage("success.created.product.variation", null, getCurrentLocale());
@@ -129,14 +134,17 @@ public class ProductVariationService {
             String fieldName = entry.getKey().toLowerCase();
             String value = entry.getValue().toString().toLowerCase();
 
-            if (!existingMetadata.containsKey(fieldName))
+            if (!existingMetadata.containsKey(fieldName)) {
                 throw new InvalidMetadataException(messageSource.getMessage("metadata.field.invalid", new Object[]{fieldName}, getCurrentLocale()));
-            if (!existingMetadata.get(fieldName).contains(value))
+            }
+            if (!existingMetadata.get(fieldName).contains(value)) {
                 throw new InvalidMetadataException(messageSource.getMessage("metadata.value.invalid", new Object[]{value, fieldName}, getCurrentLocale()));
+            }
         }
     }
 
-    public ProductVariationResponseDTO viewProductVariation(UserDetailsImpl userDetails, String productVariationId) throws BadRequestException {
+    public ProductVariationResponseDTO viewProductVariation(UserDetailsImpl userDetails, String productVariationId) throws IOException {
+        log.info("Fetching product variation: {}", productVariationId);
         ProductVariation variation = productVariationRepository.findById(productVariationId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.variation.not.found", null, getCurrentLocale())));
@@ -176,7 +184,7 @@ public class ProductVariationService {
     public List<ProductVariationResponseDTO> viewAllProductVariation(UserDetailsImpl userDetails,
                                                                      String productId, String sort, String order, int max,
                                                                      int offset, Map<String, Object> filter) throws BadRequestException {
-
+        log.info("Fetching all variations for product: {}", productId);
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
@@ -192,25 +200,31 @@ public class ProductVariationService {
         Specification<ProductVariation> specification = ProductVariationSpecification.getByProductIdAndFilters(productId, filter);
         Page<ProductVariation> productsPage = productVariationRepository.findAll(specification, pageable);
 
-
         return productsPage.getContent().stream()
-                .map(variation -> ProductVariationResponseDTO.builder()
-                        .productVariationId(variation.getId())
-                        .price(variation.getPrice())
-                        .quantity(variation.getQuantity())
-                        .metadata(variation.getMetadata())
-                        .primaryImage(fileStorageService
-                                .getProductVariationImageUrl(productId, variation.getId(), variation.getPrimaryImage()))
-                        .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(
-                                product.getId(), variation.getId(), variation.getPrimaryImage()))
-                        .build())
-                .collect(Collectors.toList());
+                .map(variation -> {
+                    try {
+                        return ProductVariationResponseDTO.builder()
+                                .productVariationId(variation.getId())
+                                .price(variation.getPrice())
+                                .quantity(variation.getQuantity())
+                                .metadata(variation.getMetadata())
+                                .primaryImage(fileStorageService
+                                        .getProductVariationImageUrl(productId, variation.getId(), variation.getPrimaryImage()))
+                                .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(
+                                        product.getId(), variation.getId(), variation.getPrimaryImage()))
+                                .build();
+                    } catch (IOException e) {
+                        log.error("Error retrieving images: {}", e.getMessage());
+                        throw new RuntimeException(e);
+                    }
+                })
+                .toList();
     }
 
     public String updateProductVariation(UserDetailsImpl userDetails, String variationId,
                                          ProductVariationUpdateDTO updateDTO, MultipartFile primaryImage,
                                          List<MultipartFile> secondaryImages) throws BadRequestException {
-
+        log.info("Updating product variation: {}", variationId);
         ProductVariation variation = productVariationRepository.findById(variationId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.variation.not.found", null, getCurrentLocale())));
@@ -255,6 +269,7 @@ public class ProductVariationService {
                 fileStorageService.saveSecondaryImages(product.getId(), variationId, secondaryImages);
             }
         } catch (IOException e) {
+            log.error("Failed to upload images: {}", e.getMessage());
             throw new RuntimeException(messageSource.getMessage("error.failed.upload.images", null, getCurrentLocale()));
         }
 
