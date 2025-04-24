@@ -21,7 +21,7 @@ public class SellerProfileDTO extends UserProfileDTO {
     private String companyContact;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @Size(min = 3, max = 100,
+    @Size(min = 3, max = 255,
             message = "{validation.seller.company.name.size}",
             groups = OnUpdate.class)
     private String companyName;

@@ -22,7 +22,7 @@ public class SellerRegistrationDTO extends UserRegistrationDTO {
     private String gst;
 
     @NotBlank(message = "{validation.seller.company.name.required}")
-    @Size(min = 3, max = 100, message = "{validation.seller.company.name.size}")
+    @Size(min = 3, max = 255, message = "{validation.seller.company.name.size}")
     private String companyName;
 
     @Pattern(regexp = "^[0-9]{10}$",

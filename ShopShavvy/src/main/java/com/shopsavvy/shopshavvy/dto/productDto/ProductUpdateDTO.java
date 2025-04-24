@@ -10,7 +10,7 @@ import lombok.*;
 @Builder
 public class ProductUpdateDTO {
 
-    @Size(max = 255, message = "{validation.max.name.size}")
+    @Size(max = 255, message = "{validation.productName.size}")
     private String name;
 
     @Size(max = 255, message = "{validation.max.description.size}")
