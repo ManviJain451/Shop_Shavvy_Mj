@@ -20,7 +20,7 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(unique = true)
+    @Column(name = "authority", nullable = false)
     private String authority;
 
     @ManyToMany(mappedBy = "roles")

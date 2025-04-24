@@ -17,10 +17,13 @@ import java.util.Set;
 @PrimaryKeyJoinColumn(name = "seller_id")
 public class Seller extends User {
 
+    @Column(name = "gst", nullable = false, unique = true)
     private String gst;
 
+    @Column(name = "company_contact", nullable = false, unique = true)
     private String companyContact;
 
+    @Column(name = "company_name", nullable = false, unique = true)
     private String companyName;
 
     @OneToMany(mappedBy = "seller", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -27,29 +27,38 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(unique = true)
+    @Column(name = "email", unique = true, nullable = false)
     private String email;
 
+    @Column(name = "first_name", nullable = false)
     private String firstName;
 
+    @Column(name = "middle_name", nullable = false)
     private String middleName;
 
+    @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(name = "password", nullable = false)
     private String password;
 
+    @Column(name = "is_deleted", nullable = false)
     private Boolean isDeleted=false;
 
+    @Column(name = "is_active", nullable = false)
     private Boolean isActive=false;
 
+    @Column(name = "is_expired", nullable = false)
     private boolean isExpired=false;
 
+    @Column(name = "is_locked", nullable = false)
     private boolean isLocked=false;
 
-    @Column(name = "invalid_attempt_count")
+    @Column(name = "invalid_attempt_count", nullable = false)
     private int invalidAttemptCount=0;
 
     @LastModifiedDate
+    @Column(name = "password_update_date")
     private LocalDateTime passwordUpdateDate;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
@@ -66,14 +75,18 @@ public class User {
     private Set<Role> roles;
 
     @CreatedDate
+    @Column(name = "date_created", nullable = false, updatable = false)
     private LocalDateTime dateCreated;
 
     @LastModifiedDate
+    @Column(name = "last_updated", nullable = false)
     private LocalDateTime lastUpdated;
 
     @LastModifiedBy
+    @Column(name = "updated_by")
     private String updatedBy;
 
+    @Column(name = "default_address_id")
     private String defaultAddressId;
 
     public Optional<Address> getDefaultAddress() {

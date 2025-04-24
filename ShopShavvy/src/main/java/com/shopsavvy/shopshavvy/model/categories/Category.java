@@ -29,19 +29,22 @@ public class Category {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_category")
+    @Column(name = "parent_category")
     private Category parentCategory;
 
     @OneToMany(mappedBy = "parentCategory")
     private Set<Category> subCategories;
 
     @CreatedDate
+    @Column(name = "date_created")
     private LocalDateTime dateCreated;
 
     @CreatedBy
+    @Column(name = "created_by")
     private String createdBy;
 
     @LastModifiedBy
+    @Column(name = "updated_by")
     private String updatedBy;
-
 
 }

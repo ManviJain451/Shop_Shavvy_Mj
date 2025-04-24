@@ -47,7 +47,7 @@ public class Product {
     @Column(name = "is_returnable", nullable = false)
     private boolean isReturnable;
 
-    @Column(nullable = false)
+    @Column(name = "brand", nullable = false)
     private String brand;
 
     @Column(name = "is_active", nullable = false)

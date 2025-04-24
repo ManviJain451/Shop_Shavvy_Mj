@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.model.categories;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import lombok.*;
 

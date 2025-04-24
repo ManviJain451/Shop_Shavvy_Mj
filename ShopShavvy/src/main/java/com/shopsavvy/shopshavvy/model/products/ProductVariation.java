@@ -33,14 +33,16 @@ public class ProductVariation {
     @JdbcTypeCode(SqlTypes.JSON)
     private Map<String, Object> metadata;
 
-    @Column(nullable = false)
+    @Column(name = "price", nullable = false)
     private Double price;
 
-    @Column(nullable = false)
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
 
+    @Column(name = "is_active", nullable = false)
     private boolean isActive=true;
 
+    @Column(name = "primary_image", nullable = false)
     private String primaryImage;
 
     @CreatedDate
