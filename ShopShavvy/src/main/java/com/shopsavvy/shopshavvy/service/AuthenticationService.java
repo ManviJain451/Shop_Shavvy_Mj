@@ -116,9 +116,7 @@ public class AuthenticationService {
     public LoginResponseDTO authenticate(LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException, MessagingException {
         log.info("Authentication attempt for user: {}", loginRequestDTO.getEmail());
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
-                .orElseThrow(() -> {
-                    return new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale()));
-                });
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
 
         if (user.isLocked()) {
             throw new LockedException(messageSource.getMessage("account.locked", null, getCurrentLocale()));
@@ -194,9 +192,7 @@ public class AuthenticationService {
         log.debug("Checking password expiration for user: {}", email);
         LocalDateTime passwordLastUpdateDate = userRepository.findPasswordUpdateDateByEmail(email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    return new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale()));
-                });
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
 
         if (passwordLastUpdateDate.isBefore(LocalDateTime.now().minus(passwordValidity, ChronoUnit.MONTHS))) {
             user.setExpired(true);
@@ -274,9 +270,8 @@ public class AuthenticationService {
     public String forgotPassword(String email) throws MessagingException {
         log.info("Processing forgot password request for email: {}", email);
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> {
-                    return new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale()));
-                });
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
+
 
         if (Boolean.FALSE.equals(user.getIsActive())) {
             throw new AlreadyDeactivatedException(messageSource.getMessage("account.not.activated", null, getCurrentLocale()));

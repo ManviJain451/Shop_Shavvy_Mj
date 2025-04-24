@@ -80,7 +80,7 @@ public class CustomerService {
                         address.getLabel(),
                         address.getZipCode()
                 ))
-                .collect(Collectors.toList());
+                .toList();
 
         log.debug("Retrieved {} addresses for customer ID: {}", addresses.size(), customer.getId());
         return addresses;

@@ -24,10 +24,10 @@ public class FileStorageService {
     }
 
     @Value("${file.storage.base-path}")
-    private String BASE_PATH;
+    private String basePath;
 
-    private static String[] ALLOWED_FORMATS = {"jpg", "jpeg", "png", "bmp"};
-    private static final long MAX_FILE_SIZE = 5 * 1024 * 1024;
+    private static String[] allowedFormats = {"jpg", "jpeg", "png", "bmp"};
+    private static final long MAX_FILE_SIZE = 5L * 1024 * 1024;
 
 
     public String saveOrUpdateUserPhoto(String userId, MultipartFile file) throws IOException {
@@ -46,7 +46,7 @@ public class FileStorageService {
         validateMimeType(file.getContentType());
 
         try {
-            Path userDirectory = Paths.get(BASE_PATH, "users", userId);
+            Path userDirectory = Paths.get(basePath, "users", userId);
             Files.createDirectories(userDirectory);
 
             boolean photoExists = Files.list(userDirectory).findAny().isPresent();
@@ -68,7 +68,7 @@ public class FileStorageService {
 
     public String deleteUserPhoto(String userId) throws IOException {
         log.info("Deleting photo for user: {}", userId);
-        Path userDirectory = Paths.get(BASE_PATH, "users", userId);
+        Path userDirectory = Paths.get(basePath, "users", userId);
         if (Files.exists(userDirectory)) {
             deleteExistingPhoto(userDirectory);
         } else {
@@ -86,7 +86,7 @@ public class FileStorageService {
     }
 
     public String getUserImageUrl(String userId) throws IOException {
-        Path userDirectory = Path.of(BASE_PATH, "users", userId);
+        Path userDirectory = Path.of(basePath, "users", userId);
 
         if (!Files.exists(userDirectory)) {
             return null;
@@ -110,7 +110,7 @@ public class FileStorageService {
 
     private void validateFileFormat(String fileName) throws BadRequestException {
         String fileExtension = getFileExtension(fileName);
-        boolean isValid = Arrays.stream(ALLOWED_FORMATS)
+        boolean isValid = Arrays.stream(allowedFormats)
                 .anyMatch(format -> format.equalsIgnoreCase(fileExtension));
 
         if (!isValid) {
@@ -156,7 +156,7 @@ public class FileStorageService {
         validateMimeType(file.getContentType());
 
         try {
-            Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+            Path variationDirectory = Paths.get(basePath, "products", productId, "variations", variationId);
             Files.createDirectories(variationDirectory);
 
             String fileExtension = getFileExtension(originalFilename);
@@ -179,7 +179,7 @@ public class FileStorageService {
             return;
         }
 
-        Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+        Path variationDirectory = Paths.get(basePath, "products", productId, "variations", variationId);
         Files.createDirectories(variationDirectory);
 
         for (int i = 0; i < files.size(); i++) {
@@ -205,7 +205,7 @@ public class FileStorageService {
     }
 
     public String getProductVariationImageUrl(String productId, String variationId, String imageName) {
-        Path imagePath = Paths.get(BASE_PATH, "products", productId, "variations", variationId, imageName);
+        Path imagePath = Paths.get(basePath, "products", productId, "variations", variationId, imageName);
         if (!Files.exists(imagePath)) {
             return null;
         }
@@ -214,7 +214,7 @@ public class FileStorageService {
 
     public List<String> getProductVariationSecondaryImageUrls(String productId, String variationId, String primaryImageName) throws IOException {
         List<String> secondaryImageUrls = new ArrayList<>();
-        Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+        Path variationDirectory = Paths.get(basePath, "products", productId, "variations", variationId);
 
         if (!Files.exists(variationDirectory)) {
             return secondaryImageUrls;
@@ -239,7 +239,7 @@ public class FileStorageService {
 
     public void deleteProductVariationImages(String productId, String variationId) throws IOException {
         log.info("Deleting images for product: {}, variation: {}", productId, variationId);
-        Path variationDirectory = Paths.get(BASE_PATH, "products", productId, "variations", variationId);
+        Path variationDirectory = Paths.get(basePath, "products", productId, "variations", variationId);
         if (Files.exists(variationDirectory)) {
             try (DirectoryStream<Path> stream = Files.newDirectoryStream(variationDirectory)) {
                 for (Path file : stream) {

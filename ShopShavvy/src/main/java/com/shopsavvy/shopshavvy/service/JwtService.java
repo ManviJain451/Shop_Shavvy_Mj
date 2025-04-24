@@ -139,8 +139,7 @@ public class JwtService {
 
         boolean tokenExists;
         switch (tokenType) {
-            case "activation":
-            case "reset_password":
+            case "activation", "reset_password":
                 tokenExists = authTokenRepository.existsByToken(token);
                 if (!tokenExists) {
                     throw new TokenNotFoundException(

@@ -80,7 +80,7 @@ public class AdminService {
                         customer.getLastName(),
                 customer.getEmail(),
                 customer.getIsActive()
-        )).collect(Collectors.toList());
+        )).toList();
     }
 
     public List<SellerResponseDTO> getAllSellers(int pageSize, int pageOffset, String sort, String email) {
@@ -102,7 +102,7 @@ public class AdminService {
                 seller.getCompanyName(),
                 seller.getAddresses(),
                 seller.getCompanyContact()
-        )).collect(Collectors.toList());
+        )).toList();
     }
 
     public String activateCustomer(String customerID) {
@@ -114,7 +114,7 @@ public class AdminService {
                             messageSource.getMessage("customer.not.found", new Object[]{customerID}, getCurrentLocale()));
                 });
 
-        if (customer.getIsActive()) {
+        if (Boolean.TRUE.equals(customer.getIsActive())) {
             log.warn("Customer with ID {} is already activated", customerID);
             throw new AlreadyActivatedException(messageSource.getMessage("customer.already.activated", null, getCurrentLocale()));
         }
@@ -142,7 +142,7 @@ public class AdminService {
                     return new UserNotFoundException(
                             messageSource.getMessage("seller.not.found", new Object[]{sellerID}, getCurrentLocale()));
                 });
-        if (seller.getIsActive()) {
+        if (Boolean.TRUE.equals(seller.getIsActive())) {
             log.warn("Seller with ID {} is already activated", sellerID);
             throw new AlreadyActivatedException(messageSource.getMessage("seller.already.activated", null, getCurrentLocale()));
         }
@@ -201,7 +201,7 @@ public class AdminService {
                             messageSource.getMessage("seller.not.found", new Object[]{sellerID}, getCurrentLocale()));
                 });
 
-        if (!seller.getIsActive()) {
+        if (Boolean.FALSE.equals(seller.getIsActive())) {
             log.info("Seller with ID {} is already deactivated", sellerID);
             return messageSource.getMessage("seller.already.deactivated", null, getCurrentLocale());
         }
