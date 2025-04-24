@@ -11,11 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public interface AddressRepository extends JpaRepository<Address, String> {
 
-
     @Modifying
     @Transactional
     @Query("UPDATE Address a SET a.isDeleted = true WHERE a.id = :id")
     void deleteById(@Param("id") String id);
-
 
 }

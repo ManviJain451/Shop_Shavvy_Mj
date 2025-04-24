@@ -3,8 +3,6 @@ package com.shopsavvy.shopshavvy.dto.productDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
-import com.shopsavvy.shopshavvy.model.users.User;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;

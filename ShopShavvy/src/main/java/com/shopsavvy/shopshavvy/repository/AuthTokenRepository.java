@@ -18,9 +18,6 @@ public interface AuthTokenRepository extends JpaRepository<AuthToken, Long> {
 
     boolean existsByToken(String token);
 
-    @Query("SELECT COUNT(a) > 0 FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = 'reset_password'")
-    boolean existsResetPasswordTokenByEmail(@Param("email") String email);
-
     @Query("DELETE FROM AuthToken a WHERE a.userEmail = :email AND a.tokenType = 'reset_password'")
     @Modifying
     void deleteResetPasswordTokenByEmail(@Param("email") String email);

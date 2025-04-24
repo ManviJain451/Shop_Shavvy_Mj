@@ -12,8 +12,6 @@ import java.util.Optional;
 @Repository
 public interface BlackListedTokenRepository extends JpaRepository<BlackListedToken, Long> {
 
-
     boolean existsByToken(String token);
-
 }
 

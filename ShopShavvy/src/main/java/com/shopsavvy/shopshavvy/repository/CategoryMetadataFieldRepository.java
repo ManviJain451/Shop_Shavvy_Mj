@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface CategoryMetadataFieldRepository extends JpaRepository<CategoryMetadataField, String> {
+
     boolean existsByName(String name);
 
     Page<CategoryMetadataField> findByNameContainingIgnoreCase(String query, Pageable pageable);
