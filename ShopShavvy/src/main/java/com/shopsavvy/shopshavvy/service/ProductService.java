@@ -10,6 +10,7 @@ import com.shopsavvy.shopshavvy.model.products.ProductVariation;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductSpecification;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
@@ -26,6 +27,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ProductService {
 
     private final MessageSource messageSource;

@@ -1,6 +1,5 @@
 package com.shopsavvy.shopshavvy.model.products;
 
-import io.swagger.v3.core.util.Json;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;

@@ -5,7 +5,6 @@ import com.shopsavvy.shopshavvy.exception.*;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.users.*;
-import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
@@ -15,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -37,14 +35,10 @@ public class CustomerAuthenticationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
     private final EmailService emailService;
     private final JwtService jwtService;
     private final AuthTokenRepository authTokenRepository;
-    private final AuthenticationService authenticationService;
     private final RoleRepository roleRepository;
-    private final BlackListedTokenRepository blackListedTokenRepository;
-    private final BlackListedTokenService blackListedTokenService;
     private final MessageSource messageSource;
 
     private Locale getCurrentLocale() {
@@ -54,7 +48,7 @@ public class CustomerAuthenticationService {
     public String registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(customerRegistrationDTO.getEmail())){
-            throw new EmailAlreadyExistsException(messageSource.getMessage("error.emailExists", null, getCurrentLocale()));
+            throw new DuplicateEntryExistsException(messageSource.getMessage("error.emailExists", null, getCurrentLocale()));
         }
 
         Customer customer = Customer.builder()

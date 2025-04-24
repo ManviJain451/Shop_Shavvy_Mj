@@ -3,9 +3,6 @@ package com.shopsavvy.shopshavvy.model.users;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.hibernate.annotations.SQLDelete;
-import org.hibernate.annotations.SQLRestriction;
-import org.hibernate.annotations.Where;
 
 @Getter
 @Setter

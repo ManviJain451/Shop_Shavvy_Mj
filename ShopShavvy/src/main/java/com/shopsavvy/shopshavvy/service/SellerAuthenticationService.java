@@ -1,7 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
-import com.shopsavvy.shopshavvy.exception.EmailAlreadyExistsException;
 import com.shopsavvy.shopshavvy.exception.PasswordMismatchException;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.users.*;
@@ -41,7 +40,7 @@ public class SellerAuthenticationService {
     public String registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
 
         if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
-            throw new EmailAlreadyExistsException(
+            throw new DuplicateEntryExistsException(
                     messageSource.getMessage("error.emailExists", null, getCurrentLocale()));
         }
         if (userRepository.existsByCompanyName(sellerRegistrationDTO.getCompanyName())) {
