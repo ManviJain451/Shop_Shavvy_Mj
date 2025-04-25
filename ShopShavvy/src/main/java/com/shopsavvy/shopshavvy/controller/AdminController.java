@@ -1,18 +1,21 @@
 package com.shopsavvy.shopshavvy.controller;
 
 
+import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsDTO;
 import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.userDto.UserProfileDTO;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CategoryService;
 import com.shopsavvy.shopshavvy.service.ProductService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
+import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.mail.MessagingException;
 import jakarta.mail.SendFailedException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -22,20 +25,37 @@ import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/shop-shavvy/admin")
+@RequestMapping("/api/v1/admin")
 public class AdminController {
 
     private final AuthenticationService authenticationService;
     private final AdminService adminService;
     private final CategoryService categoryService;
     private final ProductService productService;
+
+    @GetMapping("/profile")
+    public ResponseEntity<SuccessMessageResponse<UserProfileDTO>> viewProfile(@AuthenticationPrincipal UserDetailsImpl userDetails) throws IOException {
+        UserProfileDTO dto = adminService.getProfile(userDetails);
+        return ResponseEntity.ok(SuccessMessageResponse.success(dto));
+    }
+
+    @PutMapping("/profile")
+    public ResponseEntity<SuccessMessageResponse<String>> updateProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
+                                                                        @Validated(OnUpdate.class) @ModelAttribute UserProfileDTO userProfileDTO) throws IOException {
+
+        String message = adminService.updateProfile(userDetailsImpl, userProfileDTO);
+        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+    }
 
     @PostMapping("/logout")
     public ResponseEntity<SuccessMessageResponse<String>> logout(
@@ -46,53 +66,53 @@ public class AdminController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PutMapping("/unlock/user")
+    @PutMapping("/users/unlock")
     public ResponseEntity<SuccessMessageResponse<String>> unlockUser(@Valid @RequestBody EmailDTO emailDTO) {
         String message = adminService.unlockUser(emailDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @GetMapping("/registered-customers")
+    @GetMapping("/customers")
     public ResponseEntity<SuccessMessageResponse<List<CustomerResponseDTO>>> getAllCustomers(
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "0") int pageOffset,
-            @RequestParam(defaultValue = "dateCreated") String sort,
+            @RequestParam(required = false, defaultValue = "10") int pageSize,
+            @RequestParam(required = false, defaultValue = "0") int pageOffset,
+            @RequestParam(required = false, defaultValue = "dateCreated") String sort,
             @RequestParam(required = false) String email) {
         List<CustomerResponseDTO> customers = adminService.getAllCustomers(pageSize, pageOffset, sort, email);
         return ResponseEntity.ok(SuccessMessageResponse.success(customers));
     }
 
-    @GetMapping("/registered-sellers")
+    @GetMapping("/sellers")
     public ResponseEntity<SuccessMessageResponse<List<SellerResponseDTO>>> getAllSellers(
-            @RequestParam(defaultValue = "10") int pageSize,
-            @RequestParam(defaultValue = "0") int pageOffset,
-            @RequestParam(defaultValue = "dateCreated") String sort,
+            @RequestParam(required = false, defaultValue = "10") int pageSize,
+            @RequestParam(required = false, defaultValue = "0") int pageOffset,
+            @RequestParam(required = false, defaultValue = "dateCreated") String sort,
             @RequestParam(required = false) String email) {
         List<SellerResponseDTO> sellers = adminService.getAllSellers(pageSize, pageOffset, sort, email);
         return ResponseEntity.ok(SuccessMessageResponse.success(sellers));
     }
 
-    @PutMapping("/activate-customer")
-    public ResponseEntity<SuccessMessageResponse<String>> activateCustomer(@RequestParam String customerID) {
-        String message = adminService.activateCustomer(customerID);
+    @PutMapping("/customers/{customerId}/activate")
+    public ResponseEntity<SuccessMessageResponse<String>> activateCustomer(@PathVariable String customerId) {
+        String message = adminService.activateCustomer(customerId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PutMapping("/activate-seller")
-    public ResponseEntity<SuccessMessageResponse<String>> activateSeller(@RequestParam String sellerID) {
-        String message = adminService.activateSeller(sellerID);
+    @PutMapping("/sellers/{sellerId}/activate")
+    public ResponseEntity<SuccessMessageResponse<String>> activateSeller(@PathVariable String sellerId) {
+        String message = adminService.activateSeller(sellerId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PutMapping("/deactivate-customer")
-    public ResponseEntity<SuccessMessageResponse<String>> deactivateCustomer(@RequestParam String customerID) {
-        String message = adminService.deactivateCustomer(customerID);
+    @PutMapping("/customers/{customerId}/deactivate")
+    public ResponseEntity<SuccessMessageResponse<String>> deactivateCustomer(@PathVariable String customerId) {
+        String message = adminService.deactivateCustomer(customerId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PutMapping("/deactivate-seller")
-    public ResponseEntity<SuccessMessageResponse<String>> deactivateSeller(@RequestParam String sellerID) {
-        String message = adminService.deactivateSeller(sellerID);
+    @PutMapping("/sellers/{sellerId}/deactivate")
+    public ResponseEntity<SuccessMessageResponse<String>> deactivateSeller(@PathVariable String sellerId) {
+        String message = adminService.deactivateSeller(sellerId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
@@ -114,7 +134,7 @@ public class AdminController {
 
     }
 
-    @PostMapping("/category")
+    @PostMapping("/categories")
     public ResponseEntity<SuccessMessageResponse<String>> addNewCategory(
             @RequestParam String categoryName,
             @RequestParam(required = false) String parentCategoryId) throws BadRequestException {
@@ -122,15 +142,15 @@ public class AdminController {
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
-    @GetMapping("/category")
-    public ResponseEntity<CategoryDetailsDTO> viewCategory(@RequestParam String categoryId) throws BadRequestException {
+    @GetMapping("/categories/{categoryId}")
+    public ResponseEntity<SuccessMessageResponse<CategoryDetailsDTO>> viewCategory(@PathVariable String categoryId) throws BadRequestException {
         CategoryDetailsDTO categeoryDetailsDTO = categoryService.viewCategory(categoryId);
-        return ResponseEntity.ok(categeoryDetailsDTO);
+        return ResponseEntity.ok(SuccessMessageResponse.success(categeoryDetailsDTO));
 
     }
 
-    @GetMapping("/all/categories")
-    public ResponseEntity<List<CategoryDetailsDTO>> viewAllCategories(
+    @GetMapping("/categories")
+    public ResponseEntity<SuccessMessageResponse<List<CategoryDetailsDTO>>> viewAllCategories(
             @RequestParam(required = false, defaultValue = "10") int max,
             @RequestParam(required = false, defaultValue = "0") int offset,
             @RequestParam(required = false, defaultValue = "name") String sort,
@@ -138,35 +158,33 @@ public class AdminController {
             @RequestParam(required = false) String query
     ) {
         List<CategoryDetailsDTO> categeoryDetailsDTOS = categoryService.viewAllCategories(max, offset, sort, order, query);
-        return ResponseEntity.ok(categeoryDetailsDTOS);
+        return ResponseEntity.ok(SuccessMessageResponse.success(categeoryDetailsDTOS));
     }
 
-    @PutMapping("/category")
-    public ResponseEntity<SuccessMessageResponse<String>> updateCategory(@RequestParam(required = true) String categoryName,
-                                                 @RequestParam(required = true) String categoryId) throws BadRequestException {
+    @PutMapping("/categories/{categoryId}")
+    public ResponseEntity<SuccessMessageResponse<String>> updateCategory(@RequestParam String categoryName,
+                                                 @PathVariable String categoryId) throws BadRequestException {
         String message = categoryService.updateCategory(categoryId, categoryName);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PostMapping("/category/metadata-field")
+    @PostMapping("/categories/metadata-fields")
     public ResponseEntity<SuccessMessageResponse<String>> addMetadataFieldValues(
-            @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException {
+            @Valid @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException {
         String message = categoryService.addMetadataFieldToCategory(dto);
-        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+        return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
-    @PutMapping("/category/metadata-field")
+    @PutMapping("/categories/metadata-fields")
     public ResponseEntity<SuccessMessageResponse<String>> updateMetadataFieldValues(
-            @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException{
+            @Valid @RequestBody CategoryMetadataFieldValueDTO dto) throws BadRequestException{
         String message = categoryService.updateMetadataFieldToCategory(dto);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
     @GetMapping("/products/{id}")
-    public ResponseEntity<SuccessMessageResponse<ProductDTO>> viewProduct(
-            @PathVariable String id) throws BadRequestException {
-        return ResponseEntity.ok(SuccessMessageResponse.success(
-                productService.viewProduct(id)));
+    public ResponseEntity<SuccessMessageResponse<ProductDTO>> viewProduct(@PathVariable String id) throws BadRequestException {
+        return ResponseEntity.ok(SuccessMessageResponse.success(productService.viewProduct(id)));
     }
 
     @PutMapping("/products/{productId}/toggle-status")

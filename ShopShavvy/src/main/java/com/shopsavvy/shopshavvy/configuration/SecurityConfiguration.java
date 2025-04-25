@@ -24,11 +24,11 @@ public class SecurityConfiguration {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/shop-shavvy/customer/**").hasRole("CUSTOMER")
-                        .requestMatchers("/shop-shavvy/seller/**").hasRole("SELLER")
-                        .requestMatchers("/shop-shavvy/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/shop-shavvy/auth/signup/admin").hasRole("ADMIN")
-                        .requestMatchers("/shop-shavvy/users/**").hasAnyRole("ADMIN", "CUSTOMER", "SELLER")
+                        .requestMatchers("/api/v1/customers/**").hasRole("CUSTOMER")
+                        .requestMatchers("/api/v1/sellers/**").hasRole("SELLER")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/auth/register/admin").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/users/**").hasAnyRole("ADMIN", "CUSTOMER", "SELLER")
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session

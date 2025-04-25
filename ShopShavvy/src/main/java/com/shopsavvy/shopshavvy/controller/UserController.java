@@ -18,14 +18,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/shop-shavvy/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final FileStorageService fileStorageService;
     private final UserService userService;
 
-    @PostMapping("/{userId}/upload-photo")
+    @PostMapping("/{userId}/photos")
     public ResponseEntity<?> uploadUserPhoto(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
         try {
             String message = fileStorageService.saveOrUpdateUserPhoto(userId, file);
@@ -37,14 +37,14 @@ public class UserController {
         }
     }
 
-    @DeleteMapping("/{userId}/delete-photo")
+    @DeleteMapping("/{userId}/photos")
     public ResponseEntity<SuccessMessageResponse<String>> deleteProfilePhoto(@PathVariable String userId) throws IOException {
         String message = fileStorageService.deleteUserPhoto(userId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
 
     }
 
-    @PutMapping("/update-password")
+    @PutMapping("/password")
     public ResponseEntity<SuccessMessageResponse<String>> updatePassword(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
                                                                          @Valid @RequestBody UpdatePasswordDTO updatePasswordDTO) throws MessagingException, BadRequestException {
 

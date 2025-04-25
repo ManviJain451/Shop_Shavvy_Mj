@@ -27,28 +27,28 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/shop-shavvy/auth")
+@RequestMapping("/api/v1/auth")
 public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
     private final CustomerAuthenticationService customerAuthenticationService;
     private final SellerAuthenticationService sellerAuthenticationService;
 
-    @PostMapping("/signup/customer")
+    @PostMapping("/register/customer")
     public ResponseEntity<SuccessMessageResponse<String>> registerCustomer(
             @Valid @RequestBody CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
         String message = customerAuthenticationService.registerCustomer(customerRegistrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
-    @PostMapping("/signup/seller")
+    @PostMapping("/register/seller")
     public ResponseEntity<SuccessMessageResponse<String>> registerSeller(
             @Valid @RequestBody SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
         String message = sellerAuthenticationService.registerSeller(sellerRegistrationDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
-    @PostMapping("/signup/admin")
+    @PostMapping("/register/admin")
     public ResponseEntity<SuccessMessageResponse<String>> registerAdmin(
             @Valid @RequestBody UserRegistrationDTO userRegistrationDTO) throws Exception {
         String message = authenticationService.registerAdmin(userRegistrationDTO);
@@ -69,14 +69,14 @@ public class AuthenticationController {
         }
     }
 
-    @PostMapping("/resend-ActivationLink/customer")
+    @PostMapping("/resend-activation/customer")
     public ResponseEntity<SuccessMessageResponse<String>> resendActivationLink(
             @Valid @RequestBody EmailDTO emailDTO) throws Exception {
         String message = customerAuthenticationService.resendActivationLink(emailDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PostMapping("/customer/login")
+    @PostMapping("/login/customer")
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateCustomer(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
             HttpServletResponse httpServletResponse) throws MessagingException {
@@ -84,7 +84,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }
 
-    @PostMapping("/seller/login")
+    @PostMapping("/login/seller")
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateSeller(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
             HttpServletResponse httpServletResponse) throws MessagingException {
@@ -92,7 +92,7 @@ public class AuthenticationController {
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }
 
-    @PostMapping("/admin/login")
+    @PostMapping("/login/admin")
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateAdmin(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
             HttpServletResponse httpServletResponse) throws MessagingException {

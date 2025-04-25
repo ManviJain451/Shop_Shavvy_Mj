@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -30,7 +31,7 @@ import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/shop-shavvy/customer")
+@RequestMapping("/api/v1/customers")
 public class CustomerController {
 
     private final AuthenticationService authenticationService;
@@ -51,19 +52,19 @@ public class CustomerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @GetMapping("/view-profile")
+    @GetMapping("/profile")
     public ResponseEntity<SuccessMessageResponse<CustomerProfileDTO>> getProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) throws IOException {
         CustomerProfileDTO customerProfileDTO = customerService.getCustomerProfile(userDetailsImpl);
         return ResponseEntity.ok(SuccessMessageResponse.success(customerProfileDTO));
     }
 
-    @GetMapping("/view-addresses")
+    @GetMapping("/addresses")
     public ResponseEntity<SuccessMessageResponse<List<AddressDTO>>> getAddresses(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl) {
         List<AddressDTO> addresses = customerService.getCustomerAddresses(userDetailsImpl);
         return ResponseEntity.ok(SuccessMessageResponse.success(addresses));
     }
 
-    @PutMapping("/update-profile")
+    @PutMapping("/profile")
     public ResponseEntity<SuccessMessageResponse<String>> updateProfile(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @Validated(OnUpdate.class) @ModelAttribute CustomerProfileDTO customerProfileDTO) throws IOException {
 
@@ -71,25 +72,25 @@ public class CustomerController {
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PostMapping("/address")
+    @PostMapping("/addresses")
     public ResponseEntity<SuccessMessageResponse<String>> addAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
             @Validated(OnCreate.class) @RequestBody CustomerAddressDTO customerAddressDTO) {
 
         String message = customerService.addCustomerAddress(userDetailsImpl, customerAddressDTO);
-        return ResponseEntity.ok(SuccessMessageResponse.success(message));
+        return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
-    @DeleteMapping("/address")
+    @DeleteMapping("/addresses/{addressId}")
     public ResponseEntity<SuccessMessageResponse<String>> deleteAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestParam String addressId) throws BadRequestException {
+            @PathVariable String addressId) throws BadRequestException {
 
         String message = customerService.deleteCustomerAddress(userDetailsImpl, addressId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 
-    @PutMapping("/address")
+    @PutMapping("/addresses/{addressId}")
     public ResponseEntity<SuccessMessageResponse<String>> updateCustomerAddress(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-            @RequestParam String addressId,
+            @PathVariable String addressId,
             @Validated(OnUpdate.class) @RequestBody CustomerAddressDTO customerAddressDTO) throws BadRequestException {
 
         String message = customerService.updateCustomerAddress(userDetailsImpl, addressId, customerAddressDTO);
@@ -97,26 +98,26 @@ public class CustomerController {
     }
 
     @GetMapping("/categories")
-    public ResponseEntity<List<CategoryDTO>> viewCategories(@RequestParam(required = false) String categoryId) throws BadRequestException {
+    public ResponseEntity<SuccessMessageResponse<List<CategoryDTO>>> viewCategories(@RequestParam (required = false) String categoryId) throws BadRequestException {
         List<CategoryDTO> categories = categoryService.viewAllCategories(categoryId);
-        return ResponseEntity.ok(categories);
+        return ResponseEntity.ok(SuccessMessageResponse.success(categories));
     }
 
-    @GetMapping("/filtering-details")
-    public ResponseEntity<FilteringDetailsDTO> getFilteringDetails(@RequestParam String categoryId) throws BadRequestException {
+    @GetMapping("/categories/{categoryId}/filtering-details")
+    public ResponseEntity<SuccessMessageResponse<FilteringDetailsDTO>> getFilteringDetails(@PathVariable String categoryId) throws BadRequestException {
         FilteringDetailsDTO dto = categoryService.getFilteringDetails(categoryId);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(SuccessMessageResponse.success(dto));
     }
 
     @GetMapping("/products/{productId}")
-    public ResponseEntity<ProductDTO> viewProduct(@PathVariable String productId) throws BadRequestException {
+    public ResponseEntity<SuccessMessageResponse<ProductDTO>> viewProduct(@PathVariable String productId) throws BadRequestException {
         ProductDTO dto = productService.viewProductCustomer(productId);
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(SuccessMessageResponse.success(dto));
     }
 
-    @GetMapping("/products")
-    public ResponseEntity<List<ProductDTO>> viewAllProducts(
-            @RequestParam String categoryId,
+    @GetMapping("/categories/{categoryId}/products")
+    public ResponseEntity<SuccessMessageResponse<List<ProductDTO>>> viewAllProductsByCategory(
+            @PathVariable String categoryId,
             @RequestParam(required = false, defaultValue = "name") String sort,
             @RequestParam(required = false, defaultValue = "asc") String order,
             @RequestParam(required = false, defaultValue = "10") int max,
@@ -124,12 +125,12 @@ public class CustomerController {
             @RequestParam(required = false) Map<String, String> filter) throws BadRequestException {
 
         List<ProductDTO> products = productService.viewAllProducts(categoryId, sort, order, max, offset, filter);
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(SuccessMessageResponse.success(products));
     }
 
-    @GetMapping("/products/similar")
-    public ResponseEntity<List<ProductDTO>> similarProducts(
-            @RequestParam String productId,
+    @GetMapping("/products/{productId}/similar")
+    public ResponseEntity<SuccessMessageResponse<List<ProductDTO>>> similarProducts(
+            @PathVariable String productId,
             @RequestParam(required = false, defaultValue = "name") String sort,
             @RequestParam(required = false, defaultValue = "asc") String order,
             @RequestParam(required = false, defaultValue = "10") int max,
@@ -137,8 +138,7 @@ public class CustomerController {
             @RequestParam(required = false) Map<String, String> filter) throws BadRequestException {
 
         List<ProductDTO> products = productService.viewSimilarProducts(productId, sort, order, max, offset, filter);
-        return ResponseEntity.ok(products);
+        return ResponseEntity.ok(SuccessMessageResponse.success(products));
     }
-
 
 }
