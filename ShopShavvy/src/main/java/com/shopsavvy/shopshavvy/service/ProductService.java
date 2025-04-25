@@ -199,7 +199,8 @@ public class ProductService {
 
         return page.getContent().stream()
                 .filter(Product::isActive)
-                .map(prod -> mapProductVariationsWithImagesToProduction(product))
+                .filter(prod -> !prod.getId().equals(productId))
+                .map(this::mapProductVariationsWithImagesToProduction)
                 .toList();
 
     }
