@@ -2,10 +2,9 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
-import com.shopsavvy.shopshavvy.dto.userDto.UserProfileDTO;
+import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.seller_dto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.user_dto.UserProfileDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Customer;

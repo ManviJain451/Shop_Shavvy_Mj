@@ -1,8 +1,8 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.*;
+import com.shopsavvy.shopshavvy.dto.category_dto.CategoryDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.*;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -50,6 +50,11 @@ public class ProductService {
         Product product = productRepository.findById(productId)
                 .orElseThrow(() -> new BadRequestException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
+
+        if(!product.isActive()){
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.deactive", null, getCurrentLocale()));
+        }
 
         Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
                 .map(variation -> {
@@ -426,7 +431,6 @@ public class ProductService {
         Product product = getProductAndValidateWithSeller(userDetails, productId);
         product.setDeleted(true);
         productRepository.save(product);
-
         return messageSource.getMessage("success.product.deleted", null, getCurrentLocale());
     }
 

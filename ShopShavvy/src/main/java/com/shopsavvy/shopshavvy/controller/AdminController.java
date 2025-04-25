@@ -3,11 +3,11 @@ package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.*;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
-import com.shopsavvy.shopshavvy.dto.userDto.UserProfileDTO;
+import com.shopsavvy.shopshavvy.dto.category_dto.*;
+import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.seller_dto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.user_dto.UserProfileDTO;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.service.AdminService;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;

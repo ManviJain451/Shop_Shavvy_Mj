@@ -1,9 +1,9 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.userDto.UserRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.user_dto.UserRegistrationDTO;
 import com.shopsavvy.shopshavvy.exception.*;
-import com.shopsavvy.shopshavvy.dto.loginDto.LoginResponseDTO;
-import com.shopsavvy.shopshavvy.dto.loginDto.LoginRequestDTO;
+import com.shopsavvy.shopshavvy.dto.login_dto.LoginResponseDTO;
+import com.shopsavvy.shopshavvy.dto.login_dto.LoginRequestDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.users.Role;
 import com.shopsavvy.shopshavvy.model.users.User;
@@ -71,6 +71,17 @@ public class AuthenticationService {
     @Transactional
     public String registerAdmin(UserRegistrationDTO userRegistrationDTO) throws MessagingException {
         log.info("Registering new admin with email: {}", userRegistrationDTO.getEmail());
+
+        if(userRepository.existsByEmail(userRegistrationDTO.getEmail())){
+            log.warn("Email already exists: {}", userRegistrationDTO.getEmail());
+            throw new DuplicateEntryExistsException(messageSource.getMessage("error.emailExists", null, getCurrentLocale()));
+        }
+
+        if (!userRegistrationDTO.getConfirmPassword().equals(userRegistrationDTO.getPassword())) {
+            log.warn("Password mismatch for: {}", userRegistrationDTO.getEmail());
+            throw new PasswordMismatchException(messageSource.getMessage("error.passwordMismatch", null, getCurrentLocale()));
+        }
+
         User adminUser = User.builder()
                 .email(userRegistrationDTO.getEmail())
                 .firstName(userRegistrationDTO.getFirstName())
@@ -85,20 +96,6 @@ public class AuthenticationService {
         adminUser.addRole(role);
 
         userRepository.save(adminUser);
-
-        UserDetailsImpl userDetails = new UserDetailsImpl(adminUser);
-        String token = jwtService.generateToken(userDetails, "activation");
-        Claims claims = jwtService.extractAllClaims(token);
-
-        AuthToken authToken = AuthToken.builder()
-                .userEmail(adminUser.getEmail())
-                .token(token)
-                .tokenType("activation")
-                .expirationTime(claims.getExpiration())
-                .build();
-
-        authTokenRepository.save(authToken);
-
         try {
             emailService.sendVerificationEmail(
                     adminUser.getEmail(),
@@ -109,7 +106,6 @@ public class AuthenticationService {
         } catch (SendFailedException e) {
             throw e;
         }
-
         return messageSource.getMessage("admin.register.success", null, getCurrentLocale());
     }
 

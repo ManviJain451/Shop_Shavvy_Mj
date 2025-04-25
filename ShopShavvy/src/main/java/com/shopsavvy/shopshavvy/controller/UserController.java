@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.shopsavvy.shopshavvy.dto.passwordDto.UpdatePasswordDTO;
+import com.shopsavvy.shopshavvy.dto.password_dto.UpdatePasswordDTO;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.FileStorageService;
 import com.shopsavvy.shopshavvy.service.UserService;

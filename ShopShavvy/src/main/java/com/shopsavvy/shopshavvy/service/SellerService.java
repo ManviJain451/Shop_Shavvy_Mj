@@ -1,7 +1,7 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.seller_dto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Seller;

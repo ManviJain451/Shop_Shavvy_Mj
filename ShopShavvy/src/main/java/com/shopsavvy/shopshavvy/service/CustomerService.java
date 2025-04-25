@@ -1,8 +1,8 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;

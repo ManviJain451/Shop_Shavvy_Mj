@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.passwordDto.UpdatePasswordDTO;
+import com.shopsavvy.shopshavvy.dto.password_dto.UpdatePasswordDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;

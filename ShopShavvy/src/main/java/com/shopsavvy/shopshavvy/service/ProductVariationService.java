@@ -1,10 +1,10 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductResponseDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationResponseDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductVariationUpdateDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.ProductResponseDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationResponseDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationUpdateDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;

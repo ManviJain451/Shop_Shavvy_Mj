@@ -1,11 +1,11 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.FilteringDetailsDTO;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.category_dto.CategoryDTO;
+import com.shopsavvy.shopshavvy.dto.category_dto.FilteringDetailsDTO;
+import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.ProductDTO;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.AuthenticationService;
 import com.shopsavvy.shopshavvy.service.CategoryService;
@@ -38,11 +38,6 @@ public class CustomerController {
     private final CustomerService customerService;
     private final CategoryService categoryService;
     private final ProductService productService;
-
-    @GetMapping("/hello")
-    public String sayHello(String token){
-        return "hello customer";
-    }
 
     @PostMapping("/logout")
     public ResponseEntity<SuccessMessageResponse<String>> logout(@RequestParam  String accessToken,

@@ -2,7 +2,7 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
 import com.shopsavvy.shopshavvy.exception.*;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
 import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;

@@ -1,9 +1,9 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsForSellerDTO;
-import com.shopsavvy.shopshavvy.dto.productDto.*;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.category_dto.CategoryDetailsForSellerDTO;
+import com.shopsavvy.shopshavvy.dto.product_dto.*;
+import com.shopsavvy.shopshavvy.dto.seller_dto.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.*;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
@@ -36,11 +36,6 @@ public class SellerController {
     private final CategoryService categoryService;
     private final ProductService productService;
     private final ProductVariationService productVariationService;
-
-    @GetMapping("/hello")
-    public String sayHello( String token){
-        return "hello seller";
-    }
 
     @PostMapping("/logout")
     public ResponseEntity<SuccessMessageResponse<String>> logout(@RequestParam String accessToken, HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) throws MessagingException {

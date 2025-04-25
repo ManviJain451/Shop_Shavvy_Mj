@@ -1,12 +1,12 @@
 package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerRegistrationDTO;
-import com.shopsavvy.shopshavvy.dto.loginDto.LoginRequestDTO;
-import com.shopsavvy.shopshavvy.dto.loginDto.LoginResponseDTO;
-import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerRegistrationDTO;
-import com.shopsavvy.shopshavvy.dto.userDto.UserRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.login_dto.LoginRequestDTO;
+import com.shopsavvy.shopshavvy.dto.login_dto.LoginResponseDTO;
+import com.shopsavvy.shopshavvy.dto.password_dto.PasswordDTO;
+import com.shopsavvy.shopshavvy.dto.seller_dto.SellerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.user_dto.UserRegistrationDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.InvalidTokenException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
