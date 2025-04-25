@@ -19,7 +19,6 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class EmailService {
 
-
     private final JavaMailSender emailSender;
     private final UserRepository userRepository;
     private final MessageSource messageSource;
@@ -28,6 +27,21 @@ public class EmailService {
         return LocaleContextHolder.getLocale();
     }
 
+    private String wrapWithEmailTemplate(String title, String bodyContent) {
+        return """
+            <html>
+                <body style="font-family: Arial, sans-serif; background-color: #f8f9fa; padding: 20px;">
+                    <div style="max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                        <h1 style="color: #007bff;">Shop-Shavvy</h1>
+                        <h2 style="color: #343a40;">%s</h2>
+                        <div style="margin-top: 10px; color: #495057;">%s</div>
+                        <hr style="margin: 30px 0;">
+                        <p style="font-size: 0.9em; color: #6c757d;">This is an automated email from Shop-Shavvy. Please do not reply directly to this email.</p>
+                    </div>
+                </body>
+            </html>
+            """.formatted(title, bodyContent);
+    }
 
     @Async
     public void sendVerificationEmail(String to, String subject, String text) throws MessagingException {
@@ -36,34 +50,39 @@ public class EmailService {
 
         helper.setTo(to);
         helper.setSubject(subject);
-        helper.setText(text, true);
+        helper.setText(wrapWithEmailTemplate(subject, text), true);
 
         emailSender.send(message);
     }
 
     @Async
-    public void  sendActivationLink(String email, String jwtToken) throws MessagingException {
+    public void sendActivationLink(String email, String jwtToken) throws MessagingException {
         String activationLink = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/shop-shavvy/activate")
                 .queryParam("token", jwtToken)
                 .toUriString();
 
-        String subject = "Activate your account";
-        String text = "Please activate your account by clicking the link: " + activationLink;
+        String subject = "Activate your Shop-Shavvy Account";
+        String body = """
+            <p>Welcome to Shop-Shavvy! Please activate your account by clicking the button below:</p>
+            <p><a href="%s" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px;">Activate Account</a></p>
+            """.formatted(activationLink);
 
-        sendVerificationEmail(email, subject, text);
+        sendVerificationEmail(email, subject, body);
     }
 
     @Async
     public void sendPasswordChangeNotification(String email) throws MessagingException {
         try {
-            var message = emailSender.createMimeMessage();
-            var helper = new MimeMessageHelper(message, true);
-            helper.setTo(email);
-            helper.setSubject("Password Changed Successfully");
-            helper.setText("Your password has been changed successfully. If this was not you, please contact support immediately.");
-            emailSender.send(message);
+            String subject = "Password Changed Successfully";
+            String body = """
+                <p>Your password has been changed successfully.</p>
+                <p>If this was not you, please contact our support team immediately.</p>
+                """;
+
+            sendVerificationEmail(email, subject, body);
         } catch (SendFailedException e) {
-            throw new SendFailedException( messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
+            throw new SendFailedException(
+                    messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
         }
     }
 
@@ -71,38 +90,25 @@ public class EmailService {
     public void sendProductStatusUpdateEmail(String email, String productName, boolean isActive,
                                              String brand, String description) throws SendFailedException {
         try {
-            MimeMessage message = emailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true);
+            String subject = isActive ? "Product Activation Notification" : "Product Deactivation Notification";
+            String contentTitle = isActive ? "Product Successfully Activated" : "Product Has Been Deactivated";
+            String body = """
+                <p>Product Details:</p>
+                <ul>
+                    <li><strong>Product Name:</strong> %s</li>
+                    <li><strong>Brand:</strong> %s</li>
+                    <li><strong>Description:</strong> %s</li>
+                </ul>
+                <p>%s</p>
+                """.formatted(productName, brand, description,
+                    isActive ? "Your product has been activated and is now visible to customers." :
+                            "Your product has been deactivated and is no longer visible to customers.");
 
-            helper.setTo(email);
-            helper.setSubject(isActive ? "Product Activation Notification" : "Product Deactivation Notification");
+            sendVerificationEmail(email, subject, wrapWithEmailTemplate(contentTitle, body));
 
-            String emailText = buildProductStatusEmail(productName, isActive, brand, description);
-            helper.setText(emailText, true);
-
-            emailSender.send(message);
         } catch (MessagingException e) {
-            throw new SendFailedException( messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
-
+            throw new SendFailedException(
+                    messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
         }
     }
-
-    private String buildProductStatusEmail(String productName, boolean isActive, String brand, String description) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("<html><body>");
-        builder.append("<h2>").append(isActive ? "Product Successfully Activated" : "Product Has Been Deactivated").append("</h2>");
-        builder.append("<p>Product Details:</p>");
-        builder.append("<ul>");
-        builder.append("<li>Product Name: ").append(productName).append("</li>");
-        builder.append("<li>Brand: ").append(brand).append("</li>");
-        builder.append("<li>Description: ").append(description).append("</li>");
-        builder.append("</ul>");
-        builder.append("<p>").append(isActive ?
-                "Your product has been activated and is now visible to customers." :
-                "Your product has been deactivated and is no longer visible to customers.").append("</p>");
-        builder.append("</body></html>");
-
-        return builder.toString();
-    }
-
 }
