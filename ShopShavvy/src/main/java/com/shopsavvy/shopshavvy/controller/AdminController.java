@@ -66,7 +66,7 @@ public class AdminController {
     }
 
     @PutMapping("/users/unlock")
-    public ResponseEntity<SuccessMessageResponse<String>> unlockUser(@Valid @RequestBody EmailDTO emailDTO) {
+    public ResponseEntity<SuccessMessageResponse<String>> unlockUser(@Valid @RequestBody EmailDTO emailDTO) throws MessagingException {
         String message = adminService.unlockUser(emailDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }

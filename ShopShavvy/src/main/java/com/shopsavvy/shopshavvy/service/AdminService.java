@@ -11,6 +11,7 @@ import com.shopsavvy.shopshavvy.model.users.Customer;
 import com.shopsavvy.shopshavvy.model.users.Seller;
 import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.*;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -94,7 +95,7 @@ public class AdminService {
     }
 
 
-    public String unlockUser(EmailDTO emailDTO) {
+    public String unlockUser(EmailDTO emailDTO) throws MessagingException {
         log.info("Attempting to unlock user with email: {}", emailDTO.getEmail());
         User user = userRepository.findByEmail(emailDTO.getEmail())
                 .orElseThrow(() -> {
@@ -111,6 +112,8 @@ public class AdminService {
         user.setLocked(false);
         user.setInvalidAttemptCount(0);
         userRepository.save(user);
+        emailService.sendVerificationEmail(user.getEmail(), "Account Unlocked", "Your account has been unlocked. Now, you can login.");
+
         log.info("Successfully unlocked user with email: {}", emailDTO.getEmail());
         return messageSource.getMessage("user.unlocked.success", null, getCurrentLocale());
     }

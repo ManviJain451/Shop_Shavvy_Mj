@@ -488,13 +488,7 @@ public class CategoryService {
                 .map(category -> CategoryDetailsForSellerDTO.builder()
                         .id(category.getCategoryId())
                         .name(category.getName())
-                        .parentCategories(category.getParentCategory() != null
-                                ? List.of(CategoryResponseDTO.builder()
-                                .categoryId(category.getParentCategory().getCategoryId())
-                                .categoryName(category.getParentCategory().getName())
-                                .parentCategoryId(category.getParentCategory().getParentCategory().getCategoryId())
-                                .build())
-                                : null)
+                        .parentCategories(getParentCategoriesDetails(category))
                         .metadataFieldsWithValues(getMetadataFieldsWithValues(category))
                         .build())
                 .toList();

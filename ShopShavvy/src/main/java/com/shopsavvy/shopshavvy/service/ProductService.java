@@ -55,41 +55,7 @@ public class ProductService {
             throw new BadRequestException(
                     messageSource.getMessage("error.product.deactive", null, getCurrentLocale()));
         }
-
-        Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
-                .map(variation -> {
-                    String imageUrl = null;
-                    if (variation.getPrimaryImage() != null) {
-                        imageUrl = fileStorageService.getProductVariationImageUrl(
-                                product.getId(),
-                                variation.getId(),
-                                variation.getPrimaryImage());
-                    }
-
-                    return ProductVariationResponseDTO.builder()
-                            .price(variation.getPrice())
-                            .quantity(variation.getQuantity())
-                            .metadata(variation.getMetadata())
-                            .primaryImage(imageUrl)
-                            .build();
-                })
-                .collect(Collectors.toSet());
-
-        return ProductDTO.builder()
-                .productId(product.getId())
-                .productName(product.getName())
-                .sellerId(product.getSeller().getId())
-                .brand(product.getBrand())
-                .description(product.getDescription())
-                .active(product.isActive())
-                .cancellable(product.isCancellable())
-                .returnable(product.isReturnable())
-                .categoryDetails(CategoryDTO.builder()
-                        .id(product.getCategory().getCategoryId())
-                        .name(product.getCategory().getName())
-                        .build())
-                .productVariations(variations)
-                .build();
+        return mapProductVariationsAndProductToProductDto(product);
     }
 
     public String toggleProductStatus(String productId) throws BadRequestException, SendFailedException {
@@ -131,39 +97,40 @@ public class ProductService {
 
         return productsPage.getContent().stream()
                 .filter(Product::isActive)
-                .map(product -> {
-                    Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
-                            .filter(ProductVariation::isActive)
-                            .map(variation -> ProductVariationResponseDTO.builder()
-                                    .productVariationId(variation.getId())
-                                    .price(variation.getPrice())
-                                    .quantity(variation.getQuantity())
-                                    .metadata(variation.getMetadata())
-                                    .primaryImage(variation.getPrimaryImage() != null ?
-                                            fileStorageService.getProductVariationImageUrl(
-                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
-                                    .build()
-                            )
-                            .collect(Collectors.toSet());
-
-                    return ProductDTO.builder()
-                            .productId(product.getId())
-                            .productName(product.getName())
-                            .sellerId(product.getSeller().getId())
-                            .brand(product.getBrand())
-                            .description(product.getDescription())
-                            .active(product.isActive())
-                            .cancellable(product.isCancellable())
-                            .returnable(product.isReturnable())
-                            .categoryDetails(CategoryDTO.builder()
-                                    .id(product.getCategory().getCategoryId())
-                                    .name(product.getCategory().getName())
-                                    .build())
-                            .productVariations(variations)
-                            .build();
-                })
+                .map(this::mapProductVariationsAndProductToProductDto)
                 .toList();
     }
+
+    private ProductDTO mapProductVariationsAndProductToProductDto(Product product){
+        return ProductDTO.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .sellerId(product.getSeller().getId())
+                .brand(product.getBrand())
+                .description(product.getDescription())
+                .active(product.isActive())
+                .cancellable(product.isCancellable())
+                .returnable(product.isReturnable())
+                .categoryDetails(CategoryDTO.builder()
+                        .id(product.getCategory().getCategoryId())
+                        .name(product.getCategory().getName())
+                        .build())
+                .productVariations(product.getProductVariations().stream()
+                        .filter(ProductVariation::isActive)
+                        .map(variation -> ProductVariationResponseDTO.builder()
+                                .productVariationId(variation.getId())
+                                .price(variation.getPrice())
+                                .quantity(variation.getQuantity())
+                                .metadata(variation.getMetadata())
+                                .primaryImage(variation.getPrimaryImage() != null ?
+                                        fileStorageService.getProductVariationImageUrl(
+                                                product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
+                                .build()
+                        )
+                        .collect(Collectors.toSet()))
+                .build();
+    }
+
 
     //customer
     public ProductDTO viewProductCustomer(String productId) throws BadRequestException {
@@ -185,49 +152,7 @@ public class ProductService {
                     messageSource.getMessage("error.product.doesnt.have.variations", null, getCurrentLocale()));
         }
 
-        Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
-                .filter(ProductVariation::isActive)
-                .map(variation -> {
-                    String imageUrl = null;
-                    if (variation.getPrimaryImage() != null) {
-                        imageUrl = fileStorageService.getProductVariationImageUrl(
-                                product.getId(),
-                                variation.getId(),
-                                variation.getPrimaryImage());
-                    }
-                    List<String> secondaryImagesUrl = null;
-                    try {
-                        secondaryImagesUrl = fileStorageService.getProductVariationSecondaryImageUrls(
-                                product.getId(), variation.getId(), variation.getPrimaryImage());
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                    return ProductVariationResponseDTO.builder()
-                            .productVariationId(variation.getId())
-                            .price(variation.getPrice())
-                            .quantity(variation.getQuantity())
-                            .metadata(variation.getMetadata())
-                            .primaryImage(imageUrl)
-                            .secondaryImages(secondaryImagesUrl)
-                            .build();
-                })
-                .collect(Collectors.toSet());
-
-        return ProductDTO.builder()
-                .productId(product.getId())
-                .productName(product.getName())
-                .brand(product.getBrand())
-                .description(product.getDescription())
-                .active(product.isActive())
-                .cancellable(product.isCancellable())
-                .returnable(product.isReturnable())
-                .categoryDetails(CategoryDTO.builder()
-                        .id(product.getCategory().getCategoryId())
-                        .name(product.getCategory().getName())
-                        .build())
-                .productVariations(variations)
-                .sellerId(product.getSeller().getId())
-                .build();
+        return mapProductVariationsWithImagesToProduction(product);
     }
 
     public List<ProductDTO> viewAllProducts(String categoryId, String sort, String order, int max, int offset, Map<String, String> filter) throws BadRequestException {
@@ -255,44 +180,7 @@ public class ProductService {
 
         return products.stream()
                 .filter(Product::isActive)
-                .map(product -> {
-                    Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
-                            .filter(ProductVariation::isActive)
-                            .map(variation -> {
-                                        try {
-                                            return ProductVariationResponseDTO.builder()
-                                                    .productVariationId(variation.getId())
-                                                    .price(variation.getPrice())
-                                                    .quantity(variation.getQuantity())
-                                                    .metadata(variation.getMetadata())
-                                                    .primaryImage(variation.getPrimaryImage() != null ?
-                                                            fileStorageService.getProductVariationImageUrl(
-                                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
-                                                    .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(product.getId(), variation.getId(), variation.getPrimaryImage()))
-                                                    .build();
-                                        } catch (IOException e) {
-                                            throw new RuntimeException(e);
-                                        }
-                                    }
-                            )
-                            .collect(Collectors.toSet());
-
-                    return ProductDTO.builder()
-                            .productId(product.getId())
-                            .productName(product.getName())
-                            .sellerId(product.getSeller().getId())
-                            .brand(product.getBrand())
-                            .description(product.getDescription())
-                            .active(product.isActive())
-                            .cancellable(product.isCancellable())
-                            .returnable(product.isReturnable())
-                            .categoryDetails(CategoryDTO.builder()
-                                    .id(product.getCategory().getCategoryId())
-                                    .name(product.getCategory().getName())
-                                    .build())
-                            .productVariations(variations)
-                            .build();
-                })
+                .map(this::mapProductVariationsWithImagesToProduction)
                 .toList();
     }
 
@@ -311,41 +199,49 @@ public class ProductService {
 
         return page.getContent().stream()
                 .filter(Product::isActive)
-                .map(prod -> {
-                    Set<ProductVariationResponseDTO> variations = prod.getProductVariations().stream()
-                            .filter(ProductVariation::isActive)
-                            .map(variation -> ProductVariationResponseDTO.builder()
-                                    .productVariationId(variation.getId())
-                                    .price(variation.getPrice())
-                                    .quantity(variation.getQuantity())
-                                    .metadata(variation.getMetadata())
-                                    .primaryImage(variation.getPrimaryImage() != null ?
-                                            fileStorageService.getProductVariationImageUrl(
-                                                    product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
-                                    .build()
-                            )
-                            .collect(Collectors.toSet());
-
-                    return ProductDTO.builder()
-                            .productId(prod.getId())
-                            .productName(prod.getName())
-                            .sellerId(prod.getSeller().getId())
-                            .brand(prod.getBrand())
-                            .description(prod.getDescription())
-                            .active(prod.isActive())
-                            .cancellable(prod.isCancellable())
-                            .returnable(prod.isReturnable())
-                            .categoryDetails(CategoryDTO.builder()
-                                    .id(prod.getCategory().getCategoryId())
-                                    .name(prod.getCategory().getName())
-                                    .build())
-                            .productVariations(variations)
-                            .build();
-                })
+                .map(prod -> mapProductVariationsWithImagesToProduction(product))
                 .toList();
 
     }
 
+    private ProductDTO mapProductVariationsWithImagesToProduction(Product product){
+        Set<ProductVariationResponseDTO> variations = product.getProductVariations().stream()
+                .filter(ProductVariation::isActive)
+                .map(variation -> {
+                            try {
+                                return ProductVariationResponseDTO.builder()
+                                        .productVariationId(variation.getId())
+                                        .price(variation.getPrice())
+                                        .quantity(variation.getQuantity())
+                                        .metadata(variation.getMetadata())
+                                        .primaryImage(variation.getPrimaryImage() != null ?
+                                                fileStorageService.getProductVariationImageUrl(
+                                                        product.getId(), variation.getId(), variation.getPrimaryImage()) : null)
+                                        .secondaryImages(fileStorageService.getProductVariationSecondaryImageUrls(product.getId(), variation.getId(), variation.getPrimaryImage()))
+                                        .build();
+                            } catch (IOException e) {
+                                throw new RuntimeException(e);
+                            }
+                        }
+                )
+                .collect(Collectors.toSet());
+
+        return ProductDTO.builder()
+                .productId(product.getId())
+                .productName(product.getName())
+                .sellerId(product.getSeller().getId())
+                .brand(product.getBrand())
+                .description(product.getDescription())
+                .active(product.isActive())
+                .cancellable(product.isCancellable())
+                .returnable(product.isReturnable())
+                .categoryDetails(CategoryDTO.builder()
+                        .id(product.getCategory().getCategoryId())
+                        .name(product.getCategory().getName())
+                        .build())
+                .productVariations(variations)
+                .build();
+    }
 
     //seller
     public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException {
