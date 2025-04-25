@@ -5,27 +5,39 @@ import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
-import java.util.Locale;
 
 @Component
 @Order(2)
 @RequiredArgsConstructor
+@Slf4j
 public class AdminInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    @Value("${admin.first.name}")
+    private String adminFirstName;
+
+    @Value("${admin.last.name}")
+    private String adminLastName;
+
+    @Value("${admin.email}")
+    private String adminEmail;
+
+    @Value("${admin.password}")
+    private String adminPassword;
+
     @Override
     public void run(String... args) throws Exception {
-        if (userRepository.existsByEmail("manvi.jain1@tothenew.com")) {
+        if (userRepository.existsByEmail(adminEmail)) {
             return;
         }
 
@@ -35,14 +47,14 @@ public class AdminInitializer implements CommandLineRunner {
         }
 
         User adminUser = new User();
-        adminUser.setEmail("manvi.jain1@tothenew.com");
-        adminUser.setFirstName("Admin");
-        adminUser.setLastName("User");
-        adminUser.setPassword(passwordEncoder.encode("Admin123@"));
+        adminUser.setEmail(adminEmail);
+        adminUser.setFirstName(adminFirstName);
+        adminUser.setLastName(adminLastName);
+        adminUser.setPassword(passwordEncoder.encode(adminPassword));
         adminUser.setIsActive(true);
         adminUser.addRole(adminRole);
 
         userRepository.save(adminUser);
-        System.out.println("Admin is registered successfully.");
+        log.info("Admin is registered successfully.");
     }
 }
