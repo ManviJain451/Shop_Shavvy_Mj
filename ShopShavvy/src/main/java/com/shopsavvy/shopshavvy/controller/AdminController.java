@@ -3,8 +3,7 @@ package com.shopsavvy.shopshavvy.controller;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryDetailsDTO;
-import com.shopsavvy.shopshavvy.dto.categoryDto.CategoryMetadataFieldValueDTO;
+import com.shopsavvy.shopshavvy.dto.categoryDto.*;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.productDto.ProductDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
@@ -117,8 +116,8 @@ public class AdminController {
     }
 
     @PostMapping("/metadata-fields")
-    public ResponseEntity<SuccessMessageResponse<String>> addField(@RequestParam String fieldName){
-        String message = categoryService.addMetadataField(fieldName);
+    public ResponseEntity<SuccessMessageResponse<String>> addField(@RequestBody @Valid MetadataFieldNameDTO dto){
+        String message = categoryService.addMetadataField(dto.getFieldName());
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
@@ -135,10 +134,8 @@ public class AdminController {
     }
 
     @PostMapping("/categories")
-    public ResponseEntity<SuccessMessageResponse<String>> addNewCategory(
-            @RequestParam String categoryName,
-            @RequestParam(required = false) String parentCategoryId) throws BadRequestException {
-        String message = categoryService.addCategory(categoryName, parentCategoryId);
+    public ResponseEntity<SuccessMessageResponse<String>> addNewCategory(@RequestBody @Valid CategoryRequestDTO dto) throws BadRequestException {
+        String message = categoryService.addCategory(dto.getCategoryName(), dto.getParentCategoryId());
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 
@@ -161,10 +158,9 @@ public class AdminController {
         return ResponseEntity.ok(SuccessMessageResponse.success(categeoryDetailsDTOS));
     }
 
-    @PutMapping("/categories/{categoryId}")
-    public ResponseEntity<SuccessMessageResponse<String>> updateCategory(@RequestParam String categoryName,
-                                                 @PathVariable String categoryId) throws BadRequestException {
-        String message = categoryService.updateCategory(categoryId, categoryName);
+    @PutMapping("/categories")
+    public ResponseEntity<SuccessMessageResponse<String>> updateCategory(@RequestBody @Valid CategoryDTO categoryDTO) throws BadRequestException {
+        String message = categoryService.updateCategory(categoryDTO.getId(), categoryDTO.getName());
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 

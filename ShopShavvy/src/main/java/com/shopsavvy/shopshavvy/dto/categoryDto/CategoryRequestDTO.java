@@ -10,13 +10,12 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CategoryDTO {
+public class CategoryRequestDTO {
 
-    @NotBlank(message = "{validation.categoryId.mandatory}")
-    private String id;
+    private String parentCategoryId;
 
     @NotBlank(message = "{validation.category.name.mandatory}")
     @Size(min = 2, max = 255, message = "{validation.category.name.max.size}")
     @Pattern(regexp = "^[A-Za-z ]+$", message = "{validation.category.name.pattern}")
-    private String name;
+    private String categoryName;
 }
