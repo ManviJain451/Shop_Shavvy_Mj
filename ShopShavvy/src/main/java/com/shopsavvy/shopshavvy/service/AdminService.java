@@ -1,8 +1,11 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.dto.EmailDTO;
+import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.dto.customerDto.CustomerResponseDTO;
 import com.shopsavvy.shopshavvy.dto.sellerDto.SellerResponseDTO;
+import com.shopsavvy.shopshavvy.dto.userDto.UserProfileDTO;
 import com.shopsavvy.shopshavvy.exception.AlreadyActivatedException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Customer;
@@ -21,8 +24,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -35,6 +38,7 @@ public class AdminService {
     private final CustomerRepository customerRepository;
     private final SellerRepository sellerRepository;
     private final MessageSource messageSource;
+    private final FileStorageService fileStorageService;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -42,6 +46,54 @@ public class AdminService {
 
     @Value("${file.storage.base-path}")
     private String basePath;
+
+    public UserProfileDTO getProfile(UserDetailsImpl userDetails) throws IOException {
+        User admin = userRepository.findByEmail(userDetails.getUsername())
+                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
+
+        String imageUrl = fileStorageService.getUserImageUrl(admin.getId());
+        return UserProfileDTO.builder()
+                .id(admin.getId())
+                .firstName(admin.getFirstName())
+                .middleName(admin.getMiddleName())
+                .lastName(admin.getLastName())
+                .imageUrl(imageUrl)
+                .active(admin.getIsActive())
+                .build();
+    }
+
+    public String updateProfile(UserDetailsImpl userDetailsImpl, UserProfileDTO userProfileDTO) throws IOException {
+        log.debug("Updating profile for admin: {}", userDetailsImpl.getUsername());
+
+        User admin = userRepository.findByEmail(userDetailsImpl.getUsername())
+                .orElseThrow(() -> {
+                    log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
+                    return new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale()));
+                });
+
+        if (userProfileDTO.getFirstName() != null) {
+            admin.setFirstName(userProfileDTO.getFirstName());
+        }
+        if (userProfileDTO.getLastName() != null) {
+            admin.setLastName(userProfileDTO.getLastName());
+        }
+        if (userProfileDTO.getMiddleName() != null) {
+            admin.setMiddleName(userProfileDTO.getMiddleName());
+        }
+
+        if (userProfileDTO.getProfileImage() != null && !userProfileDTO.getProfileImage().isEmpty()) {
+            try {
+                fileStorageService.saveOrUpdateUserPhoto(admin.getId(), userProfileDTO.getProfileImage());
+            } catch (Exception e) {
+                log.error("Failed to update profile image for customer ID: {}", admin.getId(), e);
+                throw e;
+            }
+        }
+        userRepository.save(admin);
+        log.info("Profile updated successfully for customer ID: {}", admin.getId());
+        return messageSource.getMessage("success.profile.updated", null, getCurrentLocale());
+    }
+
 
     public String unlockUser(EmailDTO emailDTO) {
         log.info("Attempting to unlock user with email: {}", emailDTO.getEmail());

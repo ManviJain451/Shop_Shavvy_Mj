@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.dto.userDto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
@@ -19,6 +20,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @SuperBuilder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserProfileDTO {
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
