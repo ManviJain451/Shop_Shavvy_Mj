@@ -258,14 +258,14 @@ public class ProductVariationService {
 
         try {
             if (primaryImage != null) {
-                fileStorageService.deleteProductVariationImages(product.getId(), variationId);
+                fileStorageService.deletePrimaryProductVariationImage(product.getId(), variationId);
                 String primaryImageKey = fileStorageService.saveProductVariationImage(
                         product.getId(), variationId, primaryImage);
                 variation.setPrimaryImage(primaryImageKey);
             }
 
             if (secondaryImages != null && !secondaryImages.isEmpty()) {
-                fileStorageService.deleteProductVariationImages(product.getId(), variationId);
+                fileStorageService.deleteSecondaryProductVariationImages(product.getId(), variationId, secondaryImages.size());
                 fileStorageService.saveSecondaryImages(product.getId(), variationId, secondaryImages);
             }
         } catch (IOException e) {

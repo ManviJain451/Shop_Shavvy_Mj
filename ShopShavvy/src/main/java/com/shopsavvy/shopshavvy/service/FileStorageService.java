@@ -12,6 +12,8 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
@@ -236,17 +238,69 @@ public class FileStorageService {
         return secondaryImageUrls;
     }
 
-
-    public void deleteProductVariationImages(String productId, String variationId) throws IOException {
-        log.info("Deleting images for product: {}, variation: {}", productId, variationId);
+    public void deletePrimaryProductVariationImage(String productId, String variationId) throws IOException {
         Path variationDirectory = Paths.get(basePath, "products", productId, "variations", variationId);
-        if (Files.exists(variationDirectory)) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(variationDirectory)) {
-                for (Path file : stream) {
+        if (!Files.exists(variationDirectory)) {
+            return ;
+        }
+
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(variationDirectory)) {
+            for (Path file : stream) {
+                String fileName = file.getFileName().toString();
+                if (fileName.matches(variationId + "\\.[^.]+")) {
                     Files.deleteIfExists(file);
+                    log.info("Deleted primary image {} for variation {}", fileName, variationId);
+                    break;
                 }
             }
-            Files.deleteIfExists(variationDirectory);
+        } catch (IOException e) {
+            log.error("Failed to delete primary image for product: {}, variation: {}", productId, variationId, e);
+            throw new IOException(
+                    messageSource.getMessage("error.image.delete", null, getCurrentLocale()), e);
+        }
+
+    }
+
+    public void deleteSecondaryProductVariationImages(String productId, String variationId, int count) throws IOException {
+        if (count <= 0) {
+            return ;
+        }
+        Path variationDirectory = Paths.get(basePath, "products", productId, "variations", variationId);
+        if (!Files.exists(variationDirectory)) {
+            return ;
+        }
+        Map<Integer, Path> secondaryImages = new TreeMap<>();
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(variationDirectory)) {
+            for (Path file : stream) {
+                String fileName = file.getFileName().toString();
+                if (fileName.matches(variationId + "_\\d+\\.[^.]+")) {
+                    Matcher matcher = Pattern.compile(variationId + "_(\\d+)\\.[^.]+").matcher(fileName);
+                    if (matcher.find()) {
+                        int imageNumber = Integer.parseInt(matcher.group(1));
+                        secondaryImages.put(imageNumber, file);
+                    }
+                }
+            }
+        }
+
+        int deletedCount = 0;
+        for (Map.Entry<Integer, Path> entry : secondaryImages.entrySet()) {
+            if (deletedCount >= count) {
+                break;
+            }
+            try {
+                Files.deleteIfExists(entry.getValue());
+                deletedCount++;
+                log.info("Deleted secondary image #{} for variation {}", entry.getKey(), variationId);
+            } catch (IOException e) {
+                log.error("Failed to delete secondary image #{} for variation {}", entry.getKey(), variationId, e);
+            }
+        }
+
+        if (deletedCount < count) {
+            log.warn("Requested to delete {} secondary images, but only found and deleted {}", count, deletedCount);
         }
     }
+
+
 }
