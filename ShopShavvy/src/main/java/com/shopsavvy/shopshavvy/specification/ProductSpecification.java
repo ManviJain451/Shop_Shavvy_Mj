@@ -61,7 +61,7 @@ public class ProductSpecification {
     public static Specification<Product> getAllByFilterWithSeller(Map<String, String> filter, Seller seller) {
         Specification<Product> baseSpec = getAllByFilterMap(filter);
         Specification<Product> categorySpec = (root, query, cb) ->
-                cb.equal(root.get("category"), seller);
+                cb.equal(root.get("seller"), seller);
 
         return baseSpec.and(categorySpec);
     }
