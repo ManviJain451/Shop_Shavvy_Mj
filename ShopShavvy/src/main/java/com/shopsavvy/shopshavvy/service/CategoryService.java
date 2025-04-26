@@ -44,6 +44,7 @@ public class CategoryService {
 
     public String addMetadataField(String fieldName) {
         log.info("Attempting to add metadata field: {}", fieldName);
+        fieldName = fieldName.trim();
         if (categoryMetadataFieldRepository.existsByName(fieldName)) {
             log.warn("Metadata field with name '{}' already exists", fieldName);
             throw new DuplicateEntryExistsException(messageSource.getMessage("error.field.already.exists", null, getCurrentLocale()));
