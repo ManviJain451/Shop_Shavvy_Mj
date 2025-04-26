@@ -51,7 +51,7 @@ public class CategoryService {
             throw new DuplicateEntryExistsException(messageSource.getMessage("error.field.already.exists", null, getCurrentLocale()));
         }
         CategoryMetadataField categoryMetadataField = CategoryMetadataField.builder()
-                .name(fieldName).build();
+                .name(fieldName.replaceAll("\\s{2,}", " ")).build();
         categoryMetadataFieldRepository.save(categoryMetadataField);
         log.info("Successfully created metadata field with ID: {}", categoryMetadataField.getId());
         return messageSource.getMessage("success.created.metadata.field", new Object[]{categoryMetadataField.getId()}, getCurrentLocale());
@@ -106,7 +106,7 @@ public class CategoryService {
             log.debug("Adding as root category");
             newCategory = Category.builder()
                     .parentCategory(null)
-                    .name(categoryName)
+                    .name(categoryName.replaceAll("\\s{2,}", " "))
                     .build();
         }
         categoryRepository.save(newCategory);
@@ -248,7 +248,7 @@ public class CategoryService {
 
     public String updateCategory(String categoryId, String categoryName) throws ResourceNotFoundException {
         log.info("Updating category {} with new name: {}", categoryId, categoryName);
-        categoryName = categoryName.trim();
+        categoryName = categoryName.trim().replaceAll("\\s{2,}", " ");
         Category category = validateAndGetCategory(categoryId);
 
         validateRootCategoriesNameUniqueness(categoryName);

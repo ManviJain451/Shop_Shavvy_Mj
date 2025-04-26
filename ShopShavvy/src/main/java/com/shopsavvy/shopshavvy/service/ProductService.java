@@ -272,7 +272,7 @@ public class ProductService {
 
         Product product = Product.builder()
                 .seller(seller)
-                .name(dto.getProductName().trim())
+                .name(dto.getProductName().trim().replaceAll("\\s{2,}", " "))
                 .description(dto.getDescription() != null ? dto.getDescription() : null)
                 .category(category)
                 .isCancellable(dto.isCancellable())
@@ -347,7 +347,7 @@ public class ProductService {
                 throw new BadRequestException(
                         messageSource.getMessage("error.product.name.exists", null, getCurrentLocale()));
             }
-            product.setName(updateDTO.getName().trim());
+            product.setName(updateDTO.getName().trim().replaceAll("\\s{2,}", " "));
         }
 
         if (updateDTO.getDescription() != null) {
