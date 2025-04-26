@@ -2,6 +2,7 @@ package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.dto.category_dto.*;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
+import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValueId;
@@ -73,6 +74,10 @@ public class CategoryService {
     public String addCategory(String categoryName, String parentId) throws BadRequestException {
         log.info("Attempting to add category: '{}' with parentId: {}", categoryName, parentId);
 
+        if(!categoryRepository.existsById(parentId)){
+            throw new ResourceNotFoundException(messageSource.getMessage("error.category.not.found", null, getCurrentLocale()));
+
+        }
         categoryName = categoryName.trim();
         validateRootCategoriesNameUniqueness(categoryName);
 
@@ -158,12 +163,12 @@ public class CategoryService {
                 .build();
     }
 
-    private Category validateAndGetCategory(String categoryId) throws BadRequestException {
+    private Category validateAndGetCategory(String categoryId) throws ResourceNotFoundException {
         log.debug("Validating category existence for ID: {}", categoryId);
         return categoryRepository.findById(categoryId)
                 .orElseThrow(() -> {
                     log.warn("Category with ID '{}' not found", categoryId);
-                    return new BadRequestException("Category doesn't exists.");
+                    return new ResourceNotFoundException(messageSource.getMessage("error.category.not.found", null, getCurrentLocale()));
                 });
     }
 
@@ -241,7 +246,7 @@ public class CategoryService {
                 .toList();
     }
 
-    public String updateCategory(String categoryId, String categoryName) throws BadRequestException {
+    public String updateCategory(String categoryId, String categoryName) throws ResourceNotFoundException {
         log.info("Updating category {} with new name: {}", categoryId, categoryName);
         categoryName = categoryName.trim();
         Category category = validateAndGetCategory(categoryId);
@@ -267,7 +272,7 @@ public class CategoryService {
         return messageSource.getMessage("success.category.updated", null, getCurrentLocale());
     }
 
-    public String addMetadataFieldToCategory(CategoryMetadataFieldValueDTO dto) throws BadRequestException {
+    public String addMetadataFieldToCategory(CategoryMetadataFieldValueDTO dto) throws BadRequestException , ResourceNotFoundException{
         log.info("Adding metadata field to category: {}", dto.getCategoryId());
         Category category = validateAndGetCategory(dto.getCategoryId());
         HashMap<String, String> mapFieldWithValues = dto.getMetadataFieldWithValues();
@@ -309,11 +314,11 @@ public class CategoryService {
         return messageSource.getMessage("success.metadata.field.added", null, getCurrentLocale());
     }
 
-    private CategoryMetadataField validateAndGetMetadataField(String fieldId) throws BadRequestException {
+    private CategoryMetadataField validateAndGetMetadataField(String fieldId) {
         Optional<CategoryMetadataField> field = categoryMetadataFieldRepository.findById(fieldId);
         if (field.isEmpty()) {
             log.warn("Metadata field not found: {}", fieldId);
-            throw new BadRequestException(messageSource
+            throw new ResourceNotFoundException(messageSource
                     .getMessage("error.metadata.field.doesnt.exist", null, getCurrentLocale()));
         }
         return field.get();
@@ -398,7 +403,7 @@ public class CategoryService {
         }
     }
 
-    public List<CategoryDTO> viewAllCategories(String categoryId) throws BadRequestException {
+    public List<CategoryDTO> viewAllCategories(String categoryId){
         log.debug("Viewing categories for parent ID: {}", categoryId != null ? categoryId : "root");
         if(categoryId == null || categoryId.isBlank()) {
             List<CategoryDTO> rootCategories = categoryRepository.findByParentCategoryIsNull()
@@ -413,7 +418,7 @@ public class CategoryService {
         }
         if (!categoryRepository.existsById(categoryId)) {
             log.warn("Category not found: {}", categoryId);
-            throw new BadRequestException(messageSource.getMessage("error.category.doesnt.exist", null, getCurrentLocale()));
+            throw new ResourceNotFoundException(messageSource.getMessage("error.category.doesnt.exist", null, getCurrentLocale()));
         }
 
         Set<Category> childCategories = categoryRepository.findById(categoryId).get().getSubCategories();
@@ -427,12 +432,12 @@ public class CategoryService {
         return categories;
     }
 
-    public FilteringDetailsDTO getFilteringDetails(String categoryId) throws BadRequestException {
+    public FilteringDetailsDTO getFilteringDetails(String categoryId) throws ResourceNotFoundException {
         log.info("Getting filtering details for category: {}", categoryId);
         Optional<Category> categoryOpt = categoryRepository.findById(categoryId);
         if (categoryOpt.isEmpty()) {
             log.warn("Category not found: {}", categoryId);
-            throw new BadRequestException(messageSource
+            throw new ResourceNotFoundException(messageSource
                     .getMessage("error.category.doesnt.exist", null, getCurrentLocale()));
         }
         Category category = categoryOpt.get();

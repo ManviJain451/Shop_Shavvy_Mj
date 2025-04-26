@@ -6,6 +6,7 @@ import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationDTO;
 import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationResponseDTO;
 import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationUpdateDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
+import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -46,10 +47,10 @@ public class ProductVariationService {
         return LocaleContextHolder.getLocale();
     }
 
-    public String addProductVariations(ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws IOException {
+    public String addProductVariations(ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws IOException , ResourceNotFoundException{
         log.info("Adding product variation for product ID: {}", dto.getProductId());
         Product product = productRepository.findById(dto.getProductId())
-                .orElseThrow(() -> new BadRequestException(messageSource.getMessage("product.not.found", new Object[]{dto.getProductId()}, getCurrentLocale())));
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("product.not.found", new Object[]{dto.getProductId()}, getCurrentLocale())));
 
         if (!product.isActive()) {
             throw new BadRequestException(messageSource.getMessage("product.inactive", null, getCurrentLocale()));
@@ -143,10 +144,10 @@ public class ProductVariationService {
         }
     }
 
-    public ProductVariationResponseDTO viewProductVariation(UserDetailsImpl userDetails, String productVariationId) throws IOException {
+    public ProductVariationResponseDTO viewProductVariation(UserDetailsImpl userDetails, String productVariationId) throws IOException, ResourceNotFoundException {
         log.info("Fetching product variation: {}", productVariationId);
         ProductVariation variation = productVariationRepository.findById(productVariationId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.variation.not.found", null, getCurrentLocale())));
 
 
@@ -183,10 +184,10 @@ public class ProductVariationService {
 
     public List<ProductVariationResponseDTO> viewAllProductVariation(UserDetailsImpl userDetails,
                                                                      String productId, String sort, String order, int max,
-                                                                     int offset, Map<String, Object> filter) throws BadRequestException {
+                                                                     int offset, Map<String, Object> filter) throws BadRequestException, ResourceNotFoundException {
         log.info("Fetching all variations for product: {}", productId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
         if (!product.getSeller().getEmail().equals(userDetails.getUsername())) {
@@ -223,10 +224,10 @@ public class ProductVariationService {
 
     public String updateProductVariation(UserDetailsImpl userDetails, String variationId,
                                          ProductVariationUpdateDTO updateDTO, MultipartFile primaryImage,
-                                         List<MultipartFile> secondaryImages) throws BadRequestException {
+                                         List<MultipartFile> secondaryImages) throws BadRequestException, ResourceNotFoundException {
         log.info("Updating product variation: {}", variationId);
         ProductVariation variation = productVariationRepository.findById(variationId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.variation.not.found", null, getCurrentLocale())));
 
         if (!variation.getProduct().getSeller().getEmail().equals(userDetails.getUsername())) {

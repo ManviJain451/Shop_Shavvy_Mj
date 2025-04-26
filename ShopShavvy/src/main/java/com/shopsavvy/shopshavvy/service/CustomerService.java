@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
 import com.shopsavvy.shopshavvy.dto.address_dto.CustomerAddressDTO;
 import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;
@@ -150,7 +151,7 @@ public class CustomerService {
         return messageSource.getMessage("success.address.added", null, getCurrentLocale());
     }
 
-    public String deleteCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId) throws BadRequestException {
+    public String deleteCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId) {
         log.debug("Deleting address ID: {} for customer: {}", addressId, userDetailsImpl.getUsername());
 
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
@@ -164,7 +165,7 @@ public class CustomerService {
                 .findFirst()
                 .orElseThrow(() -> {
                     log.error("Address not found with ID: {} for customer ID: {}", addressId, customer.getId());
-                    return new BadRequestException(messageSource.getMessage("error.address.not.found", null, getCurrentLocale()));
+                    return new ResourceNotFoundException(messageSource.getMessage("error.address.not.found", null, getCurrentLocale()));
                 });
 
         if (addressId.equals(customer.getDefaultAddressId())) {
@@ -181,7 +182,7 @@ public class CustomerService {
         return messageSource.getMessage("success.address.deleted", null, getCurrentLocale());
     }
 
-    public String updateCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId, CustomerAddressDTO customerAddressDTO) throws BadRequestException {
+    public String updateCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId, CustomerAddressDTO customerAddressDTO) {
         log.debug("Updating address ID: {} for customer: {}", addressId, userDetailsImpl.getUsername());
 
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
@@ -195,7 +196,7 @@ public class CustomerService {
                 .findFirst()
                 .orElseThrow(() -> {
                     log.error("Address not found with ID: {} for customer ID: {}", addressId, customer.getId());
-                    return new BadRequestException(messageSource.getMessage("error.address.not.found.id", null, getCurrentLocale()));
+                    return new ResourceNotFoundException(messageSource.getMessage("error.address.not.found.id", null, getCurrentLocale()));
                 });
 
         if (customerAddressDTO.getCity() != null) addressToUpdate.setCity(customerAddressDTO.getCity());

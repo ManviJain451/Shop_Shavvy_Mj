@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.dto.category_dto.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.product_dto.*;
+import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -45,10 +46,10 @@ public class ProductService {
     }
 
     //admin
-    public ProductDTO viewProduct(String productId) throws BadRequestException {
+    public ProductDTO viewProduct(String productId) throws BadRequestException, ResourceNotFoundException{
         log.info("Admin viewing product: {}", productId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
         if(!product.isActive()){
@@ -58,10 +59,10 @@ public class ProductService {
         return mapProductVariationsAndProductToProductDto(product);
     }
 
-    public String toggleProductStatus(String productId) throws BadRequestException, SendFailedException {
+    public String toggleProductStatus(String productId) throws BadRequestException, SendFailedException, ResourceNotFoundException {
         log.info("Toggling product status: {}", productId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
         if (product.isDeleted()) {
@@ -133,10 +134,10 @@ public class ProductService {
 
 
     //customer
-    public ProductDTO viewProductCustomer(String productId) throws BadRequestException {
+    public ProductDTO viewProductCustomer(String productId) throws BadRequestException, ResourceNotFoundException {
         log.info("Customer viewing product: {}", productId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
         if (product.isDeleted()) {
@@ -155,10 +156,10 @@ public class ProductService {
         return mapProductVariationsWithImagesToProduction(product);
     }
 
-    public List<ProductDTO> viewAllProducts(String categoryId, String sort, String order, int max, int offset, Map<String, String> filter) throws BadRequestException {
+    public List<ProductDTO> viewAllProducts(String categoryId, String sort, String order, int max, int offset, Map<String, String> filter) throws ResourceNotFoundException {
         log.info("Customer viewing products by category: {}", categoryId);
         Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new BadRequestException(messageSource
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource
                         .getMessage("error.category.not.found", null, getCurrentLocale())));
 
         Pageable pageable = PageRequest.of(offset / max, max,
@@ -184,10 +185,10 @@ public class ProductService {
                 .toList();
     }
 
-    public List<ProductDTO> viewSimilarProducts(String productId, String sort, String order, int max, int offset, Map<String, String> filter) throws BadRequestException {
+    public List<ProductDTO> viewSimilarProducts(String productId, String sort, String order, int max, int offset, Map<String, String> filter) throws ResourceNotFoundException {
         log.info("Viewing similar products to: {}", productId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BadRequestException(messageSource
+                .orElseThrow(() -> new ResourceNotFoundException(messageSource
                         .getMessage("error.product.not.found", null, getCurrentLocale())));
 
         Pageable pageable = PageRequest.of(offset / max, max,
@@ -245,13 +246,13 @@ public class ProductService {
     }
 
     //seller
-    public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException {
+    public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException, ResourceNotFoundException {
         log.info("Seller adding new product: {}", dto.getProductName());
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource
                         .getMessage("error.seller.not.found.token", null, getCurrentLocale())));
         Category category = categoryRepository.findById(dto.getCategoryId())
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.category.not.found", null, getCurrentLocale())));
         if (category.getSubCategories() != null && !category.getSubCategories().isEmpty()) {
             throw new BadRequestException(
@@ -291,10 +292,10 @@ public class ProductService {
         return messageSource.getMessage("success.product.added", null, getCurrentLocale());
     }
 
-    public ProductDTO viewProduct(UserDetailsImpl userDetailsImpl, String productId) throws BadRequestException {
+    public ProductDTO viewProduct(UserDetailsImpl userDetailsImpl, String productId) throws BadRequestException, ResourceNotFoundException {
         log.info("Seller viewing product: {}", productId);
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
         if (!product.getSeller().getEmail().equals(userDetailsImpl.getUsername())) {
@@ -379,9 +380,9 @@ public class ProductService {
                 .build();
     }
 
-    private Product getProductAndValidateWithSeller(UserDetailsImpl userDetails, String productId) throws BadRequestException {
+    private Product getProductAndValidateWithSeller(UserDetailsImpl userDetails, String productId) throws BadRequestException, ResourceNotFoundException {
         Product product = productRepository.findById(productId)
-                .orElseThrow(() -> new BadRequestException(
+                .orElseThrow(() -> new ResourceNotFoundException(
                         messageSource.getMessage("error.product.not.found", null, getCurrentLocale())));
 
         if (!product.getSeller().getEmail().equals(userDetails.getUsername())) {

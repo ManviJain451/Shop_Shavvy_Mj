@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
+import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
@@ -74,7 +75,7 @@ public class FileStorageService {
         if (Files.exists(userDirectory)) {
             deleteExistingPhoto(userDirectory);
         } else {
-            throw new BadRequestException(messageSource.getMessage("error.photo.not.found", null, getCurrentLocale()));
+            throw new ResourceNotFoundException(messageSource.getMessage("error.photo.not.found", null, getCurrentLocale()));
         }
         return messageSource.getMessage("success.photo.deleted", null, getCurrentLocale());
     }
