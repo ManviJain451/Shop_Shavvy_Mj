@@ -259,7 +259,7 @@ public class ProductService {
         }
 
         List<Product> existingProducts = productRepository.findByNameAndCategoryAndBrandAndSeller(
-                dto.getProductName(),
+                dto.getProductName().trim(),
                 category,
                 dto.getBrand(),
                 seller
@@ -271,7 +271,7 @@ public class ProductService {
 
         Product product = Product.builder()
                 .seller(seller)
-                .name(dto.getProductName())
+                .name(dto.getProductName().trim())
                 .description(dto.getDescription() != null ? dto.getDescription() : null)
                 .category(category)
                 .isCancellable(dto.isCancellable())
@@ -334,9 +334,9 @@ public class ProductService {
     public String updateProduct(UserDetailsImpl userDetails, String productId, ProductUpdateDTO updateDTO) throws BadRequestException {
         log.info("Seller updating product: {}", productId);
         Product product = getProductAndValidateWithSeller(userDetails, productId);
-        if (updateDTO.getName() != null && !updateDTO.getName().equals(product.getName())) {
+        if (updateDTO.getName() != null && !updateDTO.getName().trim().equals(product.getName())) {
             boolean exists = productRepository.existsByNameAndBrandAndCategoryAndSellerAndIdNot(
-                    updateDTO.getName(),
+                    updateDTO.getName().trim(),
                     product.getBrand(),
                     product.getCategory(),
                     product.getSeller(),
@@ -346,7 +346,7 @@ public class ProductService {
                 throw new BadRequestException(
                         messageSource.getMessage("error.product.name.exists", null, getCurrentLocale()));
             }
-            product.setName(updateDTO.getName());
+            product.setName(updateDTO.getName().trim());
         }
 
         if (updateDTO.getDescription() != null) {
