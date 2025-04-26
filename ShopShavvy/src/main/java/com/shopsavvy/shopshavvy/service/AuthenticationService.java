@@ -298,7 +298,7 @@ public class AuthenticationService {
         try {
             emailService.sendVerificationEmail(email,
                     "Password Reset Request",
-                    "To reset your password, click the link below:\n" + "http://localhost:8080/shop-shavvy/auth/reset-password?token=" + resetPasswordToken);
+                    "To reset your password, click the link below:\n" + "http://localhost:8080/api/v1/auth/reset-password?token=" + resetPasswordToken);
         } catch (MessagingException e) {
             log.error("Failed to send reset password email to user: {}", email, e);
             throw e;
