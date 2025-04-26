@@ -22,7 +22,7 @@ public class ProductVariationDTO {
     private String productId;
 
     @NotNull(message = "{validation.price.mandatory}")
-    @Min(value = 0, message = "Price must be 0 or more")
+    @Min(value = 0, message = "{validation.price.value}")
     private Double price;
 
     @NotNull(message = "{validation.quantity.mandatory}")

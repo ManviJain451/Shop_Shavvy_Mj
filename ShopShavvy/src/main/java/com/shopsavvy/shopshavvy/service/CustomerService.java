@@ -44,7 +44,7 @@ public class CustomerService {
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> {
                     log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
-                    return new UserNotFoundException(messageSource.getMessage("error.custoomer.not.found", null, getCurrentLocale()));
+                    return new UserNotFoundException(messageSource.getMessage("error.customer.not.found", null, getCurrentLocale()));
                 });
 
         String imageUrl = fileStorageService.getUserImageUrl(customer.getId());

@@ -20,7 +20,7 @@ public class ProductDTO {
     private String productId;
 
     @NotBlank(message = "{validation.product.name.mandatory}")
-    @Size(max = 255, message = "{validation.productName.size")
+    @Size(max = 255, message = "{validation.productName.size}")
     private String productName;
 
     @NotBlank(message = "{validation.brand.mandatory}")
