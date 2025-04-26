@@ -109,10 +109,16 @@ public class AuthenticationService {
         return messageSource.getMessage("admin.register.success", null, getCurrentLocale());
     }
 
-    public LoginResponseDTO authenticate(LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse) throws InvalidRoleException, MessagingException {
+    public LoginResponseDTO authenticate(LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse, String expectedRole) throws InvalidRoleException, MessagingException {
         log.info("Authentication attempt for user: {}", loginRequestDTO.getEmail());
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
+
+        boolean hasExpectedRole = user.getRoles().stream()
+                .anyMatch(role -> role.getAuthority().equals(expectedRole));
+        if (!hasExpectedRole) {
+            throw new InvalidRoleException(messageSource.getMessage("error.invalid.role", new Object[]{expectedRole}, getCurrentLocale()));
+        }
 
         if (user.isLocked()) {
             throw new LockedException(messageSource.getMessage("account.locked", null, getCurrentLocale()));

@@ -80,7 +80,7 @@ public class AuthenticationController {
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateCustomer(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
             HttpServletResponse httpServletResponse) throws MessagingException {
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse);
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse, "ROLE_CUSTOMER");
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }
 
@@ -88,7 +88,7 @@ public class AuthenticationController {
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateSeller(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
             HttpServletResponse httpServletResponse) throws MessagingException {
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse);
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse, "ROLE_SELLER");
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }
 
@@ -96,7 +96,7 @@ public class AuthenticationController {
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateAdmin(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
             HttpServletResponse httpServletResponse) throws MessagingException {
-        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse);
+        LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse, "ROLE_ADMIN");
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }
 
