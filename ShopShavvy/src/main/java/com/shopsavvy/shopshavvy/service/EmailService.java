@@ -1,6 +1,5 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.repository.UserRepository;
 import jakarta.mail.MessagingException;
 import jakarta.mail.SendFailedException;
 import jakarta.mail.internet.MimeMessage;
@@ -20,7 +19,6 @@ import java.util.Locale;
 public class EmailService {
 
     private final JavaMailSender emailSender;
-    private final UserRepository userRepository;
     private final MessageSource messageSource;
 
     private Locale getCurrentLocale() {
@@ -57,7 +55,7 @@ public class EmailService {
 
     @Async
     public void sendActivationLink(String email, String jwtToken) throws MessagingException {
-        String activationLink = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/shop-shavvy/activate")
+        String activationLink = UriComponentsBuilder.fromHttpUrl("http://localhost:8080/api/v1/auth/activate/customer")
                 .queryParam("token", jwtToken)
                 .toUriString();
 

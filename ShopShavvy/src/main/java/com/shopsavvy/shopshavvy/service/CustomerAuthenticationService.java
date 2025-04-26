@@ -26,7 +26,6 @@ import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
 @Slf4j
 public class CustomerAuthenticationService {
 
@@ -50,6 +49,7 @@ public class CustomerAuthenticationService {
 
     private static final String ACTIVATION = "activation";
 
+    @Transactional
     public String registerCustomer(CustomerRegistrationDTO customerRegistrationDTO) throws Exception {
         log.info("Registering customer: {}", customerRegistrationDTO.getEmail());
 
@@ -126,6 +126,7 @@ public class CustomerAuthenticationService {
         return messageSource.getMessage("success.userActivated", null, getCurrentLocale());
     }
 
+    @Transactional
     public void verifyCustomer(String email, Locale locale) throws Exception {
         try {
             emailService.sendVerificationEmail(email,
@@ -137,6 +138,7 @@ public class CustomerAuthenticationService {
         }
     }
 
+    @Transactional
     public String resendActivationLink(EmailDTO emailDTO) throws Exception {
         String email = emailDTO.getEmail();
         log.info("Resending activation link: {}", email);
