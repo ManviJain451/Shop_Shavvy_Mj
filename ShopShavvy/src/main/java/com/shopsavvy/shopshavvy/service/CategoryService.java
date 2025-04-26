@@ -72,6 +72,7 @@ public class CategoryService {
     public String addCategory(String categoryName, String parentId) throws BadRequestException {
         log.info("Attempting to add category: '{}' with parentId: {}", categoryName, parentId);
 
+        categoryName = categoryName.trim();
         validateRootCategoriesNameUniqueness(categoryName);
 
         Category newCategory = null;
@@ -111,7 +112,7 @@ public class CategoryService {
         log.debug("Validating root category name uniqueness for: {}", categoryName);
         if (categoryRepository.findAll().stream()
                 .filter(category -> category.getParentCategory() == null)
-                .anyMatch(category -> category.getName().equalsIgnoreCase(categoryName))) {
+                .anyMatch(category -> category.getName().trim().equalsIgnoreCase(categoryName))) {
             log.warn("Category with name '{}' already exists at root level", categoryName);
             throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
         }
@@ -121,7 +122,7 @@ public class CategoryService {
         log.debug("Validating parent and sibling category name uniqueness for: {}", categoryName);
         Category currentParentCategory = parentCategory;
         while (currentParentCategory.getParentCategory() != null) {
-            if (currentParentCategory.getName().equalsIgnoreCase(categoryName)) {
+            if (currentParentCategory.getName().trim().equalsIgnoreCase(categoryName)) {
                 log.warn("Category with name '{}' already exists in parent hierarchy", categoryName);
                 throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
             }
@@ -241,6 +242,7 @@ public class CategoryService {
 
     public String updateCategory(String categoryId, String categoryName) throws BadRequestException {
         log.info("Updating category {} with new name: {}", categoryId, categoryName);
+        categoryName = categoryName.trim();
         Category category = validateAndGetCategory(categoryId);
 
         validateRootCategoriesNameUniqueness(categoryName);
