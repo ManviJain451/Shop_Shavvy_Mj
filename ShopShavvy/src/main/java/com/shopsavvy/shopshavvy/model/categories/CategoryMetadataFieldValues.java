@@ -2,9 +2,7 @@ package com.shopsavvy.shopshavvy.model.categories;
 
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.io.Serial;
-import java.io.Serializable;
+import lombok.experimental.SuperBuilder;
 
 @Entity
 @Table(name = "category_metadata_field_values")
@@ -12,6 +10,7 @@ import java.io.Serializable;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@SuperBuilder
 public class CategoryMetadataFieldValues {
 
     @EmbeddedId
@@ -27,22 +26,7 @@ public class CategoryMetadataFieldValues {
     @JoinColumn(name = "category_metadata_field_id")
     private CategoryMetadataField categoryMetadataField;
 
-    @Column(name = "metadataFieldValues")
+    @Column(name = "metadataFieldValues", nullable = false)
     private String values;
 }
 
-@Embeddable
-@Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-class CategoryMetadataFieldValueId implements Serializable {
-
-    @Serial
-    private static final long serialVersionUID = 1L;
-
-    private String categoryId;
-    private String categoryMetadataFieldId;
-
-}

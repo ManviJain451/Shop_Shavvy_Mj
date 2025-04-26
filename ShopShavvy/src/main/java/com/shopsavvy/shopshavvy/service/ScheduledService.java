@@ -7,7 +7,6 @@ import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-
 import java.util.Date;
 import java.util.List;
 
@@ -28,6 +27,7 @@ public class ScheduledService {
             userRepository.save(user);
         }
     }
+
     @Scheduled(cron = "0 0 0 * * *")
     public void deleteExpiredTokens() {
         Date now = new Date();

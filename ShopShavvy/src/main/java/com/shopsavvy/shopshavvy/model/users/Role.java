@@ -5,7 +5,6 @@ import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -20,7 +19,7 @@ public class Role implements GrantedAuthority {
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(unique = true)
+    @Column(name = "authority", nullable = false)
     private String authority;
 
     @ManyToMany(mappedBy = "roles")

@@ -1,61 +1,77 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.addressDto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.addressDto.CustomerAddressDTO;
-import com.shopsavvy.shopshavvy.dto.customerDto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.address_dto.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.users.Address;
 import com.shopsavvy.shopshavvy.model.users.Customer;
-import com.shopsavvy.shopshavvy.repository.AddressRepository;
-import com.shopsavvy.shopshavvy.repository.CustomerRepository;
-import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.repository.*;
+import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Locale;
-import java.util.stream.Collectors;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
+@Slf4j
 public class CustomerService {
     private final JwtService jwtService;
     private final CustomerRepository customerRepository;
     private final FileStorageService fileStorageService;
     private final AddressRepository addressRepository;
     private final MessageSource messageSource;
+    private final CategoryRepository categoryRepository;
+    private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
+    private final ProductRepository productRepository;
 
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
     }
 
-    public CustomerProfileDTO getCustomerProfile(UserDetailsImpl userDetailsImpl) {
+    public CustomerProfileDTO getCustomerProfile(UserDetailsImpl userDetailsImpl) throws IOException {
+        log.debug("Getting profile for customer: {}", userDetailsImpl.getUsername());
 
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.custoomer.not.found", null, getCurrentLocale())));
+                .orElseThrow(() -> {
+                    log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
+                    return new UserNotFoundException(messageSource.getMessage("error.customer.not.found", null, getCurrentLocale()));
+                });
 
         String imageUrl = fileStorageService.getUserImageUrl(customer.getId());
+        log.debug("Retrieved profile for customer ID: {}", customer.getId());
         return CustomerProfileDTO.builder()
                 .id(customer.getId())
                 .firstName(customer.getFirstName())
                 .middleName(customer.getMiddleName())
                 .lastName(customer.getLastName())
-                .isActive(customer.getIsActive())
+                .active(customer.getIsActive())
                 .contact(customer.getContact())
                 .imageUrl(imageUrl)
                 .build();
-
     }
 
     public List<AddressDTO> getCustomerAddresses(UserDetailsImpl userDetailsImpl) {
-        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale())));
+        log.debug("Getting addresses for customer: {}", userDetailsImpl.getUsername());
 
-        return customer.getAddresses().stream()
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
+                .orElseThrow(() -> {
+                    log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
+                    return new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale()));
+                });
+
+        List<AddressDTO> addresses = customer.getAddresses()
+                .stream()
+                .filter(address -> !address.isDeleted())
                 .map(address -> new AddressDTO(
                         address.getCity(),
                         address.getState(),
@@ -64,13 +80,20 @@ public class CustomerService {
                         address.getLabel(),
                         address.getZipCode()
                 ))
-                .collect(Collectors.toList());
+                .toList();
+
+        log.debug("Retrieved {} addresses for customer ID: {}", addresses.size(), customer.getId());
+        return addresses;
     }
 
-    public String updateCustomerProfile(UserDetailsImpl userDetailsImpl, CustomerProfileDTO customerProfileDTO) {
-        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale())));
+    public String updateCustomerProfile(UserDetailsImpl userDetailsImpl, CustomerProfileDTO customerProfileDTO) throws IOException {
+        log.debug("Updating profile for customer: {}", userDetailsImpl.getUsername());
 
+        Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
+                .orElseThrow(() -> {
+                    log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
+                    return new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale()));
+                });
 
         if (customerProfileDTO.getFirstName() != null) {
             customer.setFirstName(customerProfileDTO.getFirstName());
@@ -88,18 +111,26 @@ public class CustomerService {
         if (customerProfileDTO.getProfileImage() != null && !customerProfileDTO.getProfileImage().isEmpty()) {
             try {
                 fileStorageService.saveOrUpdateUserPhoto(customer.getId(), customerProfileDTO.getProfileImage());
-            } catch (IOException e) {
-                throw new RuntimeException(messageSource.getMessage("error.profile.image.upload", null, getCurrentLocale()), e);
+            } catch (Exception e) {
+                log.error("Failed to update profile image for customer ID: {}", customer.getId(), e);
+                throw e;
             }
         }
 
         customerRepository.save(customer);
+        log.info("Profile updated successfully for customer ID: {}", customer.getId());
         return messageSource.getMessage("success.profile.updated", null, getCurrentLocale());
     }
 
     public String addCustomerAddress(UserDetailsImpl userDetailsImpl, CustomerAddressDTO customerAddressDTO) {
+        log.debug("Adding new address for customer: {}", userDetailsImpl.getUsername());
+
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale())));
+                .orElseThrow(() -> {
+                    log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
+                    return new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale()));
+                });
+
         Address newAddress = Address.builder()
                 .city(customerAddressDTO.getCity())
                 .state(customerAddressDTO.getState())
@@ -109,24 +140,33 @@ public class CustomerService {
                 .label(customerAddressDTO.getLabel())
                 .build();
 
-
+        addressRepository.save(newAddress);
         customer.getAddresses().add(newAddress);
         if (customerAddressDTO.isMakeDefault() || customer.getAddresses().size() == 1) {
             customer.setDefaultAddressId(newAddress.getId());
         }
 
         customerRepository.save(customer);
+        log.info("Address added successfully for customer ID: {} with address ID: {}", customer.getId(), newAddress.getId());
         return messageSource.getMessage("success.address.added", null, getCurrentLocale());
     }
 
-    public String deleteCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId) throws BadRequestException {
+    public String deleteCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId) {
+        log.debug("Deleting address ID: {} for customer: {}", addressId, userDetailsImpl.getUsername());
+
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale())));
+                .orElseThrow(() -> {
+                    log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
+                    return new UserNotFoundException(messageSource.getMessage("error.customer.not.found.token", null, getCurrentLocale()));
+                });
 
         customer.getAddresses().stream()
-                .filter(a -> a.getId().equals(addressId))
+                .filter(a -> a.getId().equals(addressId) && !a.isDeleted())
                 .findFirst()
-                .orElseThrow(() -> new BadRequestException(messageSource.getMessage("error.address.not.found", null, getCurrentLocale())));
+                .orElseThrow(() -> {
+                    log.error("Address not found with ID: {} for customer ID: {}", addressId, customer.getId());
+                    return new ResourceNotFoundException(messageSource.getMessage("error.address.not.found", null, getCurrentLocale()));
+                });
 
         if (addressId.equals(customer.getDefaultAddressId())) {
             Address newDefaultAddress = customer.getAddresses().stream()
@@ -138,17 +178,26 @@ public class CustomerService {
 
         addressRepository.deleteById(addressId);
         customerRepository.save(customer);
+        log.info("Address deleted successfully for customer ID: {} with address ID: {}", customer.getId(), addressId);
         return messageSource.getMessage("success.address.deleted", null, getCurrentLocale());
     }
 
-    public String updateCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId, CustomerAddressDTO customerAddressDTO) throws BadRequestException {
+    public String updateCustomerAddress(UserDetailsImpl userDetailsImpl, String addressId, CustomerAddressDTO customerAddressDTO) {
+        log.debug("Updating address ID: {} for customer: {}", addressId, userDetailsImpl.getUsername());
+
         Customer customer = customerRepository.findByEmail(userDetailsImpl.getUsername())
-                .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("error.customer.not.found", null, getCurrentLocale())));
+                .orElseThrow(() -> {
+                    log.error("Customer not found with email: {}", userDetailsImpl.getUsername());
+                    return new UserNotFoundException(messageSource.getMessage("error.customer.not.found", null, getCurrentLocale()));
+                });
 
         Address addressToUpdate = customer.getAddresses().stream()
-                .filter(addr -> addr.getId().equals(addressId))
+                .filter(addr -> addr.getId().equals(addressId) && !addr.isDeleted())
                 .findFirst()
-                .orElseThrow(() -> new BadRequestException(messageSource.getMessage("error.address.not.found.id", null, getCurrentLocale())));
+                .orElseThrow(() -> {
+                    log.error("Address not found with ID: {} for customer ID: {}", addressId, customer.getId());
+                    return new ResourceNotFoundException(messageSource.getMessage("error.address.not.found.id", null, getCurrentLocale()));
+                });
 
         if (customerAddressDTO.getCity() != null) addressToUpdate.setCity(customerAddressDTO.getCity());
         if (customerAddressDTO.getState() != null) addressToUpdate.setState(customerAddressDTO.getState());
@@ -161,8 +210,9 @@ public class CustomerService {
             customer.setDefaultAddressId(addressToUpdate.getId());
         }
 
+        addressRepository.save(addressToUpdate);
         customerRepository.save(customer);
+        log.info("Address updated successfully for customer ID: {} with address ID: {}", customer.getId(), addressId);
         return messageSource.getMessage("success.address.updated", null, getCurrentLocale());
     }
-
 }

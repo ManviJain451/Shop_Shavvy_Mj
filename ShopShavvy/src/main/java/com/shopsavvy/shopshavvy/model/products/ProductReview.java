@@ -4,8 +4,8 @@ import com.shopsavvy.shopshavvy.model.users.Customer;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@EntityListeners(AuditingEntityListener.class)
 public class ProductReview {
 
     @Id
@@ -34,12 +35,3 @@ public class ProductReview {
     private LocalDateTime dateCreated;
 }
 
-@EqualsAndHashCode
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
-class ProductReviewId implements Serializable {
-    private Customer customer;
-    private Product product;
-}

@@ -1,26 +1,29 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
-import com.shopsavvy.shopshavvy.exception.EmailAlreadyExistsException;
 import com.shopsavvy.shopshavvy.exception.PasswordMismatchException;
-import com.shopsavvy.shopshavvy.dto.sellerDto.SellerRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.seller_dto.SellerRegistrationDTO;
 import com.shopsavvy.shopshavvy.model.users.*;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Locale;
 import java.util.Set;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SellerAuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -37,9 +40,10 @@ public class SellerAuthenticationService {
 
 
     public String registerSeller(SellerRegistrationDTO sellerRegistrationDTO) throws Exception {
+        log.info("Registering seller: {}", sellerRegistrationDTO.getEmail());
 
         if(userRepository.existsByEmail(sellerRegistrationDTO.getEmail())){
-            throw new EmailAlreadyExistsException(
+            throw new DuplicateEntryExistsException(
                     messageSource.getMessage("error.emailExists", null, getCurrentLocale()));
         }
         if (userRepository.existsByCompanyName(sellerRegistrationDTO.getCompanyName())) {
@@ -77,6 +81,8 @@ public class SellerAuthenticationService {
                 .gst(sellerRegistrationDTO.getGst())
                 .addresses(Set.of(address))
                 .defaultAddressId(address.getId())
+                .isActive(false)
+                .isDeleted(false)
                 .build();
 
 
@@ -89,6 +95,7 @@ public class SellerAuthenticationService {
                     "Account Created",
                     "Seller Account has been created. Waiting for Approval");
         } catch (Exception e) {
+            log.error("Email verification failed: {}", e.getMessage());
             throw new Exception(
                     messageSource.getMessage("error.verification.email.not.sent", null, getCurrentLocale()));
         }

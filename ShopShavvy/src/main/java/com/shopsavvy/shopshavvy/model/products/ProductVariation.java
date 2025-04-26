@@ -2,6 +2,14 @@ package com.shopsavvy.shopshavvy.model.products;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -10,22 +18,37 @@ import lombok.*;
 @Builder
 @Entity
 @Table(name = "product_variations")
+@EntityListeners(AuditingEntityListener.class)
 public class ProductVariation {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id", nullable = false)
     private Product product;
 
-    @Column(nullable = false)
-    private String variation;
+    @JdbcTypeCode(SqlTypes.JSON)
+    private Map<String, Object> metadata;
 
-    @Column(nullable = false)
+    @Column(name = "price", nullable = false)
     private Double price;
 
-    @Column(nullable = false)
+    @Column(name = "quantity", nullable = false)
     private Integer quantity;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive=true;
+
+    @Column(name = "primary_image", nullable = false)
+    private String primaryImage;
+
+    @CreatedDate
+    @Column(name = "date_created", nullable = false)
+    private LocalDateTime dateCreated;
+
+    @LastModifiedDate
+    @Column(name = "last_updated_date", nullable = false)
+    private LocalDateTime lastUpdated;
 }

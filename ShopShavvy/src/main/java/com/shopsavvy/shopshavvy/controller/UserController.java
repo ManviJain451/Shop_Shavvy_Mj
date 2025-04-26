@@ -1,13 +1,14 @@
 package com.shopsavvy.shopshavvy.controller;
 
-import com.shopsavvy.shopshavvy.dto.passwordDto.PasswordDTO;
-import com.shopsavvy.shopshavvy.security.configurations.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.dto.password_dto.UpdatePasswordDTO;
+import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.service.FileStorageService;
 import com.shopsavvy.shopshavvy.service.UserService;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import jakarta.mail.MessagingException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,14 +18,14 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/shop-shavvy/users")
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class UserController {
 
     private final FileStorageService fileStorageService;
     private final UserService userService;
 
-    @PostMapping("/{userId}/upload-photo")
+    @PostMapping("/{userId}/photos")
     public ResponseEntity<?> uploadUserPhoto(@PathVariable String userId, @RequestParam("file") MultipartFile file) {
         try {
             String message = fileStorageService.saveOrUpdateUserPhoto(userId, file);
@@ -36,18 +37,18 @@ public class UserController {
         }
     }
 
-    @DeleteMapping("/{userId}/delete-photo")
+    @DeleteMapping("/{userId}/photos")
     public ResponseEntity<SuccessMessageResponse<String>> deleteProfilePhoto(@PathVariable String userId) throws IOException {
         String message = fileStorageService.deleteUserPhoto(userId);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
 
     }
 
-    @PutMapping("/update-password")
+    @PutMapping("/password")
     public ResponseEntity<SuccessMessageResponse<String>> updatePassword(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-                                            @Valid @RequestBody PasswordDTO passwordUpdateDTO) throws MessagingException {
+                                                                         @Valid @RequestBody UpdatePasswordDTO updatePasswordDTO) throws MessagingException, BadRequestException {
 
-        String message = userService.updatePassword(userDetailsImpl, passwordUpdateDTO);
+        String message = userService.updatePassword(userDetailsImpl, updatePasswordDTO);
         return ResponseEntity.ok(SuccessMessageResponse.success(message));
     }
 }
