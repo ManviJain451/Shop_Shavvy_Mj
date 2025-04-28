@@ -13,12 +13,10 @@ import java.util.Map;
 @NoArgsConstructor
 @Builder
 public class ProductVariationUpdateDTO {
-    @NotNull(message = "{validation.price.mandatory}")
+
     @Min(value = 0, message = "{validation.price.value}")
     private Double price;
 
-    @NotNull(message = "{validation.quantity.mandatory}")
-    @Min(value = 0, message = "{validation.quantity.value}")
     private Integer quantity;
 
     @NotEmpty(message = "{validation.metadata.mandatory}")
