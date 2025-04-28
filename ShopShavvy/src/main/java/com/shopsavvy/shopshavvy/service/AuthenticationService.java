@@ -19,6 +19,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
@@ -109,7 +110,7 @@ public class AuthenticationService {
         return messageSource.getMessage("admin.register.success", null, getCurrentLocale());
     }
 
-    public LoginResponseDTO authenticate(LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse, String expectedRole) throws InvalidRoleException, MessagingException {
+    public LoginResponseDTO authenticate(LoginRequestDTO loginRequestDTO, HttpServletResponse httpServletResponse, String expectedRole) throws InvalidRoleException, MessagingException, BadRequestException {
         log.info("Authentication attempt for user: {}", loginRequestDTO.getEmail());
         User user = userRepository.findByEmail(loginRequestDTO.getEmail())
                 .orElseThrow(() -> new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale())));
@@ -125,7 +126,11 @@ public class AuthenticationService {
         }
 
         if (Boolean.FALSE.equals(user.getIsActive())) {
-            throw new AlreadyDeactivatedException(messageSource.getMessage("account.not.activated", null, getCurrentLocale()));
+            throw new BadRequestException(messageSource.getMessage("account.not.activated", null, getCurrentLocale()));
+        }
+
+        if(Boolean.TRUE.equals(user.getIsDeleted())){
+            throw new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale()));
         }
 
         if (isPasswordCredentialExpired(loginRequestDTO.getEmail())) {

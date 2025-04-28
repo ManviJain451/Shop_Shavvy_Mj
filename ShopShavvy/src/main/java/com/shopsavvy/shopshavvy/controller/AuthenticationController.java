@@ -20,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -79,7 +80,7 @@ public class AuthenticationController {
     @PostMapping("/login/customer")
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateCustomer(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
-            HttpServletResponse httpServletResponse) throws MessagingException {
+            HttpServletResponse httpServletResponse) throws MessagingException, BadRequestException {
         LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse, "ROLE_CUSTOMER");
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }
@@ -87,7 +88,7 @@ public class AuthenticationController {
     @PostMapping("/login/seller")
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateSeller(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
-            HttpServletResponse httpServletResponse) throws MessagingException {
+            HttpServletResponse httpServletResponse) throws MessagingException, BadRequestException {
         LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse, "ROLE_SELLER");
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }
@@ -95,7 +96,7 @@ public class AuthenticationController {
     @PostMapping("/login/admin")
     public ResponseEntity<SuccessMessageResponse<LoginResponseDTO>> authenticateAdmin(
             @Valid @RequestBody LoginRequestDTO loginRequestDTO,
-            HttpServletResponse httpServletResponse) throws MessagingException {
+            HttpServletResponse httpServletResponse) throws MessagingException, BadRequestException {
         LoginResponseDTO loginResponseDTO = authenticationService.authenticate(loginRequestDTO, httpServletResponse, "ROLE_ADMIN");
         return ResponseEntity.ok(SuccessMessageResponse.success(loginResponseDTO));
     }

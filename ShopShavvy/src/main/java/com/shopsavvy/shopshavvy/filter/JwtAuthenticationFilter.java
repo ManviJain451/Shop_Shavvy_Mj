@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.filter;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.service.JwtService;
 import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -9,9 +10,11 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.lang.NonNull;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -76,6 +79,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 if(!userDetails.isAccountNonLocked()){
                     throw new LockedException(messageSource.getMessage("error.user.locked", null, getCurrentLocale()));
+                }
+                if(!userDetails.isEnabled()){
+                    throw new BadRequestException(messageSource.getMessage("error.user.inactive", null, getCurrentLocale()));
+                }
+                if(userDetails.isAccountDeleted()){
+                    throw new UserNotFoundException(messageSource.getMessage("user.not.found", null, getCurrentLocale()));
                 }
             }
 

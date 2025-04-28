@@ -48,6 +48,8 @@ public class UserDetailsImpl implements UserDetails {
         return user.getIsActive();
     }
 
+    public Boolean isAccountDeleted() { return user.getIsDeleted();}
+
     public String getId(){
         return user.getId();
     }
