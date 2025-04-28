@@ -98,11 +98,11 @@ public class SellerController {
     }
 
     @PostMapping("/products/variations")
-    public ResponseEntity<SuccessMessageResponse<String>> addProductVariation(@RequestPart("productData") @Valid ProductVariationDTO dto,
+    public ResponseEntity<SuccessMessageResponse<String>> addProductVariation(@AuthenticationPrincipal UserDetailsImpl userDetails, @RequestPart("productData") @Valid ProductVariationDTO dto,
             @RequestPart("primaryImage") MultipartFile primaryImage,
             @RequestPart(value = "secondaryImages", required = false) List<MultipartFile> secondaryImages
     ) throws IOException {
-    String message = productVariationService.addProductVariations(dto,primaryImage,secondaryImages);
+    String message = productVariationService.addProductVariations(userDetails, dto,primaryImage,secondaryImages);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }
 

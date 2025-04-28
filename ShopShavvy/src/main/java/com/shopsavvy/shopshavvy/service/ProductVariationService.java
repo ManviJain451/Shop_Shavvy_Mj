@@ -7,6 +7,7 @@ import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationResponseDTO;
 import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationUpdateDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
+import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -47,13 +48,17 @@ public class ProductVariationService {
         return LocaleContextHolder.getLocale();
     }
 
-    public String addProductVariations(ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws IOException , ResourceNotFoundException{
+    public String addProductVariations(UserDetailsImpl userDetails, ProductVariationDTO dto, MultipartFile primaryImage, List<MultipartFile> secondaryImages) throws IOException , ResourceNotFoundException{
         log.info("Adding product variation for product ID: {}", dto.getProductId());
         Product product = productRepository.findById(dto.getProductId())
                 .orElseThrow(() -> new ResourceNotFoundException(messageSource.getMessage("product.not.found", new Object[]{dto.getProductId()}, getCurrentLocale())));
 
         if (!product.isActive()) {
             throw new BadRequestException(messageSource.getMessage("product.inactive", null, getCurrentLocale()));
+        }
+        if(!userDetails.getUsername().equals(product.getSeller().getEmail())){
+            throw new BadRequestException(
+                    messageSource.getMessage("error.product.not.authorized", null, getCurrentLocale()));
         }
         Category category = product.getCategory();
 
