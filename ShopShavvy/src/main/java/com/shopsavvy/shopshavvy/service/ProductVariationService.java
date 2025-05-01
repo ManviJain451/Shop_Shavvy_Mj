@@ -7,7 +7,6 @@ import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationResponseDTO;
 import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationUpdateDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
-import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
 import com.shopsavvy.shopshavvy.model.products.Product;
@@ -43,6 +42,7 @@ public class ProductVariationService {
     private final ProductRepository productRepository;
     private final FileStorageService fileStorageService;
     private final ProductVariationRepository productVariationRepository;
+    private final CategoryMetadataFieldRepository categoryMetadataFieldRepository;
     private final CategoryMetadataFieldValuesRepository categoryMetadataFieldValuesRepository;
     private Locale getCurrentLocale() {
         return LocaleContextHolder.getLocale();
@@ -68,11 +68,12 @@ public class ProductVariationService {
             throw new DuplicateEntryExistsException(messageSource.getMessage("product.variation.duplicate", null, getCurrentLocale()));
         }
 
-        validateMetadata(dto.getMetadata(), category, product);
+        Map<String, Object> transformedMetadata = transformMetadata(dto.getMetadata());
+        validateMetadata(transformedMetadata, category, product);
 
         ProductVariation variation = new ProductVariation();
         variation.setProduct(product);
-        variation.setMetadata(dto.getMetadata());
+        variation.setMetadata(transformedMetadata);
         variation.setQuantity(dto.getQuantity());
         variation.setPrice(dto.getPrice());
         variation.setActive(true);
@@ -95,6 +96,21 @@ public class ProductVariationService {
 
         return messageSource.getMessage("success.created.product.variation", null, getCurrentLocale());
 
+    }
+
+    private Map<String, Object> transformMetadata(Map<String, Object> metadata){
+        Map<String, Object> transformedMetadata = new HashMap<>();
+        for (Map.Entry<String, Object> entry : metadata.entrySet()) {
+            String keyId = entry.getKey();
+            Object value = entry.getValue();
+
+            String newKey = categoryMetadataFieldRepository.findById(keyId)
+                    .orElseThrow(() -> new RuntimeException("Metadata field not found: " + keyId))
+                    .getName();
+
+            transformedMetadata.put(newKey, value);
+        }
+        return transformedMetadata;
     }
 
     private void validateMetadata(Map<String, Object> metadata, Category category, Product product) throws BadRequestException {
@@ -257,8 +273,9 @@ public class ProductVariationService {
                 variation.setActive(updateDTO.getActive());
             }
             if (updateDTO.getMetadata() != null) {
-                validateMetadata(updateDTO.getMetadata(), product.getCategory(), product);
-                variation.setMetadata(updateDTO.getMetadata());
+                Map<String, Object> transformedMetadata = transformMetadata(updateDTO.getMetadata());
+                validateMetadata(transformedMetadata, product.getCategory(), product);
+                variation.setMetadata(transformedMetadata);
             }
         }
 
