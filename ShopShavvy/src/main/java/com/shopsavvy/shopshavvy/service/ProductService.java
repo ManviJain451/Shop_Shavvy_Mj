@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.domain.Page;
@@ -45,6 +46,9 @@ public class ProductService {
         return LocaleContextHolder.getLocale();
     }
 
+    @Value("${admin.email}")
+    private String adminEmail;
+
     //admin
     public ProductDTO viewProduct(String productId) throws BadRequestException, ResourceNotFoundException{
         log.info("Admin viewing product: {}", productId);
@@ -73,6 +77,11 @@ public class ProductService {
 
         product.setActive(!currentlyActive);
         productRepository.save(product);
+        if (currentlyActive) {
+            product.getProductVariations()
+                    .stream()
+                    .forEach(variation -> variation.setActive(false));
+        }
 
         emailService.sendProductStatusUpdateEmail(
                 product.getSeller().getEmail(),
@@ -97,7 +106,6 @@ public class ProductService {
         Page<Product> productsPage = productRepository.findAll(specification, pageable);
 
         return productsPage.getContent().stream()
-                .filter(Product::isActive)
                 .map(this::mapProductVariationsAndProductToProductDto)
                 .toList();
     }
@@ -180,7 +188,6 @@ public class ProductService {
         }
 
         return products.stream()
-                .filter(Product::isActive)
                 .map(this::mapProductVariationsWithImagesToProduction)
                 .toList();
     }
@@ -246,7 +253,7 @@ public class ProductService {
     }
 
     //seller
-    public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException, ResourceNotFoundException {
+    public String addProduct(UserDetailsImpl userDetailsImpl, ProductDTO dto) throws BadRequestException, ResourceNotFoundException, SendFailedException {
         log.info("Seller adding new product: {}", dto.getProductName());
         Seller seller = sellerRepository.findByEmail(userDetailsImpl.getUsername())
                 .orElseThrow(() -> new UserNotFoundException(messageSource
@@ -289,6 +296,12 @@ public class ProductService {
         seller.setProducts(existingProductsOfSeller);
         sellerRepository.save(seller);
 
+        emailService.sendAddProductEmail(
+                adminEmail,
+                product.getName(),
+                product.isActive(),
+                product.getBrand(),
+                product.getDescription());
         return messageSource.getMessage("success.product.added", null, getCurrentLocale());
     }
 
@@ -327,6 +340,8 @@ public class ProductService {
     public String deleteProduct(UserDetailsImpl userDetails, String productId) throws BadRequestException {
         log.info("Seller deleting product: {}", productId);
         Product product = getProductAndValidateWithSeller(userDetails, productId);
+        product.getProductVariations()
+                        .forEach(productVariation -> productVariation.setIsDeleted(true));
         product.setDeleted(true);
         productRepository.save(product);
         return messageSource.getMessage("success.product.deleted", null, getCurrentLocale());
