@@ -1,5 +1,6 @@
 package com.shopsavvy.shopshavvy.dto.address_dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.shopsavvy.shopshavvy.validation.groups.OnCreate;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.validation.constraints.NotBlank;
@@ -15,6 +16,9 @@ import lombok.Setter;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AddressDTO {
+
+    @JsonProperty(access=JsonProperty.Access.READ_ONLY)
+    private String id;
 
     @NotBlank(groups = OnCreate.class, message = "{validation.address.city.required}")
     @Size(min = 2, max = 50, message = "{validation.address.city.size}", groups = {OnCreate.class, OnUpdate.class})

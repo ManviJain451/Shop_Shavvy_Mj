@@ -73,6 +73,7 @@ public class CustomerService {
                 .stream()
                 .filter(address -> !address.isDeleted())
                 .map(address -> new AddressDTO(
+                        address.getId(),
                         address.getCity(),
                         address.getState(),
                         address.getCountry(),

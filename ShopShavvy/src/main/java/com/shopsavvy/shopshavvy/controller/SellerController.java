@@ -9,6 +9,7 @@ import com.shopsavvy.shopshavvy.service.*;
 import com.shopsavvy.shopshavvy.utilities.SuccessMessageResponse;
 import com.shopsavvy.shopshavvy.validation.groups.OnUpdate;
 import jakarta.mail.MessagingException;
+import jakarta.mail.SendFailedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -74,7 +75,7 @@ public class SellerController {
 
     @PostMapping("/products")
     public ResponseEntity<SuccessMessageResponse<String>> addProduct(@AuthenticationPrincipal UserDetailsImpl userDetailsImpl,
-                                                                     @Valid @RequestBody ProductDTO productDTO) throws BadRequestException {
+                                                                     @Valid @RequestBody ProductDTO productDTO) throws BadRequestException, SendFailedException {
         String message = productService.addProduct(userDetailsImpl, productDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(SuccessMessageResponse.success(message));
     }

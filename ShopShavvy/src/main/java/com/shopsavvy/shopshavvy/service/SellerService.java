@@ -44,6 +44,7 @@ public class SellerService {
 
         Set<AddressDTO> addressDTOs = seller.getAddresses().stream()
                 .map(address -> new AddressDTO(
+                        address.getId(),
                         address.getCity(),
                         address.getState(),
                         address.getCountry(),
