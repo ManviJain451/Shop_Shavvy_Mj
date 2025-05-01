@@ -4,6 +4,7 @@ import com.shopsavvy.shopshavvy.model.users.User;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.annotations.Where;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -20,7 +21,7 @@ import java.util.Set;
 @Entity
 @Table(name = "products")
 @EntityListeners(AuditingEntityListener.class)
-@Where(clause = "is_deleted = false")
+@SQLRestriction("is_deleted = false")
 public class Product {
 
     @Id

@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.model.products;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -19,6 +20,7 @@ import java.util.Map;
 @Entity
 @Table(name = "product_variations")
 @EntityListeners(AuditingEntityListener.class)
+@SQLRestriction("is_deleted = false")
 public class ProductVariation {
 
     @Id
@@ -51,4 +53,7 @@ public class ProductVariation {
     @LastModifiedDate
     @Column(name = "last_updated_date", nullable = false)
     private LocalDateTime lastUpdated;
+
+    @Column(name = "is_deleted", nullable = false)
+    private Boolean isDeleted=false;
 }

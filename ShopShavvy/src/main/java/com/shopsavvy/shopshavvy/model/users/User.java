@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.model.users;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLRestriction;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedBy;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -21,13 +22,14 @@ import java.util.*;
 @Table(name = "users")
 @Inheritance(strategy = InheritanceType.JOINED)
 @EntityListeners(AuditingEntityListener.class)
+@SQLRestriction("is_deleted = false")
 public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
 
-    @Column(name = "email", unique = true, nullable = false)
+    @Column(name = "email", nullable = false)
     private String email;
 
     @Column(name = "first_name", nullable = false)
