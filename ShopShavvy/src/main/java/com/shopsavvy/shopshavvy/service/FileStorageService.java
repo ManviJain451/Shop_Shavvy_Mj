@@ -102,7 +102,7 @@ public class FileStorageService {
 
             if (imageFile.isPresent()) {
                 String fileName = imageFile.get().getFileName().toString();
-                return "/users/" + userId + "/" + fileName;
+                return "http://localhost:8080" + "/users/" + userId + "/" + fileName;
             }
         } catch (IOException e) {
             log.error("Failed to access image directory for user {}", userId);
@@ -212,7 +212,7 @@ public class FileStorageService {
         if (!Files.exists(imagePath)) {
             return null;
         }
-        return "/products/" + productId + "/variations/" + variationId + "/" + imageName;
+        return "http://localhost:8080" + "/products/" + productId + "/variations/" + variationId + "/" + imageName;
     }
 
     public List<String> getProductVariationSecondaryImageUrls(String productId, String variationId, String primaryImageName) throws IOException {
@@ -227,7 +227,7 @@ public class FileStorageService {
             for (Path file : stream) {
                 String fileName = file.getFileName().toString();
                 if (!fileName.equals(primaryImageName)) {
-                    String url = "/products/" + productId + "/variations/" + variationId + "/" + fileName;
+                    String url = "http://localhost:8080" + "/products/" + productId + "/variations/" + variationId + "/" + fileName;
                     secondaryImageUrls.add(url);
                 }
             }
