@@ -73,11 +73,13 @@ public class CategoryService {
 
     public String addCategory(String categoryName, String parentId) throws BadRequestException {
         log.info("Attempting to add category: '{}' with parentId: {}", categoryName, parentId);
+        if(parentId != null){
+            if(!categoryRepository.existsById(parentId)){
+                throw new ResourceNotFoundException(messageSource.getMessage("error.category.not.found", null, getCurrentLocale()));
 
-        if(!categoryRepository.existsById(parentId)){
-            throw new ResourceNotFoundException(messageSource.getMessage("error.category.not.found", null, getCurrentLocale()));
-
+            }
         }
+
         categoryName = categoryName.trim();
         validateRootCategoriesNameUniqueness(categoryName);
 
@@ -127,19 +129,23 @@ public class CategoryService {
     private void validateParentAndSiblingCategoriesNameUniqueness(String categoryName, Category parentCategory) {
         log.debug("Validating parent and sibling category name uniqueness for: {}", categoryName);
         Category currentParentCategory = parentCategory;
-        while (currentParentCategory.getParentCategory() != null) {
-            if (currentParentCategory.getName().trim().equalsIgnoreCase(categoryName)) {
-                log.warn("Category with name '{}' already exists in parent hierarchy", categoryName);
-                throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+        if(currentParentCategory != null){
+            while (currentParentCategory.getParentCategory() != null) {
+                if (currentParentCategory.getName().trim().equalsIgnoreCase(categoryName)) {
+                    log.warn("Category with name '{}' already exists in parent hierarchy", categoryName);
+                    throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+                }
+                currentParentCategory = currentParentCategory.getParentCategory();
             }
-            currentParentCategory = currentParentCategory.getParentCategory();
-        }
-        for (Category category : parentCategory.getSubCategories()) {
-            if (category.getName().equalsIgnoreCase(categoryName)) {
-                log.warn("Category with name '{}' already exists as sibling", categoryName);
-                throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+
+            for (Category category : parentCategory.getSubCategories()) {
+                if (category.getName().equalsIgnoreCase(categoryName)) {
+                    log.warn("Category with name '{}' already exists as sibling", categoryName);
+                    throw new DuplicateEntryExistsException(messageSource.getMessage("error.category.already.exists", null, getCurrentLocale()));
+                }
             }
         }
+
         log.debug("Category name '{}' validation passed", categoryName);
     }
 
@@ -303,7 +309,7 @@ public class CategoryService {
                     .id(categoryMetadataFieldValueId)
                     .category(category)
                     .categoryMetadataField(metadataField)
-                    .values(values)
+                    .values(values.replaceAll("[,\\s]+$", ""))
                     .build();
 
             categoryMetadataFieldValuesRepository.save(fieldValues);
@@ -331,16 +337,25 @@ public class CategoryService {
                     "error.metadata.values.required", null, getCurrentLocale()));
         }
 
-        Set<String> uniqueValues = Arrays.stream(values.split(","))
-                .map(String::trim)
-                .collect(Collectors.toSet());
+        String[] rawValues = values.split(",");
+        Set<String> uniqueValues = new HashSet<>();
 
-        if (uniqueValues.size() != values.split(",").length) {
-            log.warn("Duplicate metadata values found in: {}", values);
-            throw new BadRequestException(messageSource.getMessage(
-                    "error.metadata.values.duplicate", null, getCurrentLocale()));
+        for (String value : rawValues) {
+            String trimmed = value.trim();
+            if (trimmed.isEmpty()) {
+                log.warn("Empty value found in metadata values: {}", values);
+                throw new BadRequestException(messageSource.getMessage(
+                        "error.metadata.values.empty", null, getCurrentLocale()));
+            }
+
+            if (!uniqueValues.add(trimmed)) {
+                log.warn("Duplicate metadata value found: {}", trimmed);
+                throw new BadRequestException(messageSource.getMessage(
+                        "error.metadata.values.duplicate", null, getCurrentLocale()));
+            }
         }
     }
+
 
     public String updateMetadataFieldToCategory(CategoryMetadataFieldValueDTO dto) throws BadRequestException {
         log.info("Updating metadata field for category: {}", dto.getCategoryId());
