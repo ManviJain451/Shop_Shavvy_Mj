@@ -1,8 +1,8 @@
 package com.shopsavvy.shopshavvy.repository;
 
-import com.shopsavvy.shopshavvy.model.categories.Category;
-import com.shopsavvy.shopshavvy.model.products.Product;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.category.Category;
+import com.shopsavvy.shopshavvy.model.product.Product;
+import com.shopsavvy.shopshavvy.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;

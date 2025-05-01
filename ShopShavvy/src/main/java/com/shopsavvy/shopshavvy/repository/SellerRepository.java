@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.repository;
 
-import com.shopsavvy.shopshavvy.model.users.Seller;
+import com.shopsavvy.shopshavvy.model.user.Seller;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

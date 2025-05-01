@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.repository;
 
-import com.shopsavvy.shopshavvy.model.products.ProductVariation;
+import com.shopsavvy.shopshavvy.model.product.ProductVariation;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;

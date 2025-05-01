@@ -1,10 +1,10 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.seller_dto.SellerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.address.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.seller.SellerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
-import com.shopsavvy.shopshavvy.model.users.Address;
-import com.shopsavvy.shopshavvy.model.users.Seller;
+import com.shopsavvy.shopshavvy.model.user.Address;
+import com.shopsavvy.shopshavvy.model.user.Seller;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;

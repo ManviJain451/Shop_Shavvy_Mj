@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.user.User;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;

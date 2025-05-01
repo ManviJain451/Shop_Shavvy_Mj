@@ -1,7 +1,7 @@
 package com.shopsavvy.shopshavvy.repository;
 
-import com.shopsavvy.shopshavvy.model.users.Role;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.user.Role;
+import com.shopsavvy.shopshavvy.model.user.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,14 +1,14 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
-import com.shopsavvy.shopshavvy.dto.category_dto.CategoryDTO;
-import com.shopsavvy.shopshavvy.dto.product_dto.*;
+import com.shopsavvy.shopshavvy.dto.category.CategoryDTO;
+import com.shopsavvy.shopshavvy.dto.product.*;
 import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
-import com.shopsavvy.shopshavvy.model.categories.Category;
-import com.shopsavvy.shopshavvy.model.products.Product;
-import com.shopsavvy.shopshavvy.model.products.ProductVariation;
-import com.shopsavvy.shopshavvy.model.users.Seller;
+import com.shopsavvy.shopshavvy.model.category.Category;
+import com.shopsavvy.shopshavvy.model.product.Product;
+import com.shopsavvy.shopshavvy.model.product.ProductVariation;
+import com.shopsavvy.shopshavvy.model.user.Seller;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductSpecification;
 import jakarta.mail.SendFailedException;

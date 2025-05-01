@@ -1,8 +1,8 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.password_dto.UpdatePasswordDTO;
+import com.shopsavvy.shopshavvy.dto.password.UpdatePasswordDTO;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.user.User;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import jakarta.mail.MessagingException;

@@ -1,8 +1,8 @@
 package com.shopsavvy.shopshavvy.specification;
 
-import com.shopsavvy.shopshavvy.model.categories.Category;
-import com.shopsavvy.shopshavvy.model.products.Product;
-import com.shopsavvy.shopshavvy.model.users.Seller;
+import com.shopsavvy.shopshavvy.model.category.Category;
+import com.shopsavvy.shopshavvy.model.product.Product;
+import com.shopsavvy.shopshavvy.model.user.Seller;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;

@@ -1,7 +1,7 @@
 package com.shopsavvy.shopshavvy.bootstrap;
 
-import com.shopsavvy.shopshavvy.model.users.Role;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.user.Role;
+import com.shopsavvy.shopshavvy.model.user.User;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;
 import lombok.RequiredArgsConstructor;

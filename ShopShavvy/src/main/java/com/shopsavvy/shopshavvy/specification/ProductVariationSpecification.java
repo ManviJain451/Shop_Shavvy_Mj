@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.specification;
 
-import com.shopsavvy.shopshavvy.model.products.ProductVariation;
+import com.shopsavvy.shopshavvy.model.product.ProductVariation;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 

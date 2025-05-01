@@ -5,7 +5,7 @@ import com.shopsavvy.shopshavvy.exception.TokenExpiredException;
 import com.shopsavvy.shopshavvy.exception.TokenNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.user.User;
 import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.UserRepository;

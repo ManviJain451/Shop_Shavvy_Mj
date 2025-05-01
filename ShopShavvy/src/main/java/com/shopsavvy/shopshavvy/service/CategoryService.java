@@ -1,14 +1,14 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.category_dto.*;
+import com.shopsavvy.shopshavvy.dto.category.*;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
-import com.shopsavvy.shopshavvy.model.categories.Category;
-import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
-import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValueId;
-import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
-import com.shopsavvy.shopshavvy.model.products.Product;
-import com.shopsavvy.shopshavvy.model.products.ProductVariation;
+import com.shopsavvy.shopshavvy.model.category.Category;
+import com.shopsavvy.shopshavvy.model.category.CategoryMetadataField;
+import com.shopsavvy.shopshavvy.model.category.CategoryMetadataFieldValueId;
+import com.shopsavvy.shopshavvy.model.category.CategoryMetadataFieldValues;
+import com.shopsavvy.shopshavvy.model.product.Product;
+import com.shopsavvy.shopshavvy.model.product.ProductVariation;
 import com.shopsavvy.shopshavvy.repository.CategoryMetadataFieldRepository;
 import com.shopsavvy.shopshavvy.repository.CategoryMetadataFieldValuesRepository;
 import com.shopsavvy.shopshavvy.repository.CategoryRepository;

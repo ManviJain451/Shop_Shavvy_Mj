@@ -1,9 +1,8 @@
 package com.shopsavvy.shopshavvy.repository;
 
-import com.shopsavvy.shopshavvy.model.categories.Category;
-import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataField;
-import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValueId;
-import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
+import com.shopsavvy.shopshavvy.model.category.Category;
+import com.shopsavvy.shopshavvy.model.category.CategoryMetadataFieldValueId;
+import com.shopsavvy.shopshavvy.model.category.CategoryMetadataFieldValues;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

@@ -1,12 +1,12 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.user_dto.UserRegistrationDTO;
+import com.shopsavvy.shopshavvy.dto.user.UserRegistrationDTO;
 import com.shopsavvy.shopshavvy.exception.*;
-import com.shopsavvy.shopshavvy.dto.login_dto.LoginResponseDTO;
-import com.shopsavvy.shopshavvy.dto.login_dto.LoginRequestDTO;
+import com.shopsavvy.shopshavvy.dto.login.LoginResponseDTO;
+import com.shopsavvy.shopshavvy.dto.login.LoginRequestDTO;
 import com.shopsavvy.shopshavvy.model.token.AuthToken;
-import com.shopsavvy.shopshavvy.model.users.Role;
-import com.shopsavvy.shopshavvy.model.users.User;
+import com.shopsavvy.shopshavvy.model.user.Role;
+import com.shopsavvy.shopshavvy.model.user.User;
 import com.shopsavvy.shopshavvy.repository.BlackListedTokenRepository;
 import com.shopsavvy.shopshavvy.repository.AuthTokenRepository;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;

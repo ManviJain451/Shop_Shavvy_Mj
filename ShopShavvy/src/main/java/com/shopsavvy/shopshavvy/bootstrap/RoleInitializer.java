@@ -1,6 +1,6 @@
 package com.shopsavvy.shopshavvy.bootstrap;
 
-import com.shopsavvy.shopshavvy.model.users.Role;
+import com.shopsavvy.shopshavvy.model.user.Role;
 import com.shopsavvy.shopshavvy.repository.RoleRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;

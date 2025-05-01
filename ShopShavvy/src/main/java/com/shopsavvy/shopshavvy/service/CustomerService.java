@@ -1,17 +1,16 @@
 package com.shopsavvy.shopshavvy.service;
 
-import com.shopsavvy.shopshavvy.dto.address_dto.AddressDTO;
-import com.shopsavvy.shopshavvy.dto.address_dto.CustomerAddressDTO;
-import com.shopsavvy.shopshavvy.dto.customer_dto.CustomerProfileDTO;
+import com.shopsavvy.shopshavvy.dto.address.AddressDTO;
+import com.shopsavvy.shopshavvy.dto.address.CustomerAddressDTO;
+import com.shopsavvy.shopshavvy.dto.customer.CustomerProfileDTO;
 import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
-import com.shopsavvy.shopshavvy.model.users.Address;
-import com.shopsavvy.shopshavvy.model.users.Customer;
+import com.shopsavvy.shopshavvy.model.user.Address;
+import com.shopsavvy.shopshavvy.model.user.Customer;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;

@@ -1,16 +1,16 @@
 package com.shopsavvy.shopshavvy.service;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
-import com.shopsavvy.shopshavvy.dto.product_dto.ProductResponseDTO;
-import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationDTO;
-import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationResponseDTO;
-import com.shopsavvy.shopshavvy.dto.product_dto.ProductVariationUpdateDTO;
+import com.shopsavvy.shopshavvy.dto.product.ProductResponseDTO;
+import com.shopsavvy.shopshavvy.dto.product.ProductVariationDTO;
+import com.shopsavvy.shopshavvy.dto.product.ProductVariationResponseDTO;
+import com.shopsavvy.shopshavvy.dto.product.ProductVariationUpdateDTO;
 import com.shopsavvy.shopshavvy.exception.DuplicateEntryExistsException;
 import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
-import com.shopsavvy.shopshavvy.model.categories.Category;
-import com.shopsavvy.shopshavvy.model.categories.CategoryMetadataFieldValues;
-import com.shopsavvy.shopshavvy.model.products.Product;
-import com.shopsavvy.shopshavvy.model.products.ProductVariation;
+import com.shopsavvy.shopshavvy.model.category.Category;
+import com.shopsavvy.shopshavvy.model.category.CategoryMetadataFieldValues;
+import com.shopsavvy.shopshavvy.model.product.Product;
+import com.shopsavvy.shopshavvy.model.product.ProductVariation;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductVariationSpecification;
 import jakarta.transaction.Transactional;
