@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.specification;
 import com.shopsavvy.shopshavvy.model.categories.Category;
 import com.shopsavvy.shopshavvy.model.products.Product;
 import com.shopsavvy.shopshavvy.model.users.Seller;
+import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
@@ -41,29 +42,42 @@ public class ProductSpecification {
                 predicates.add(cb.equal(root.get("seller").get("id"), sellerId));
             }
 
-            if (filterMap.containsKey("active")) {
-                boolean isActive = Boolean.parseBoolean(filterMap.get("active"));
-                predicates.add(cb.equal(root.get("isActive"), isActive));
-            }
-
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
 
     public static Specification<Product> getAllByFilterWithCategory(Map<String, String> filter, Category category) {
         Specification<Product> baseSpec = getAllByFilterMap(filter);
+
         Specification<Product> categorySpec = (root, query, cb) ->
                 cb.equal(root.get("category"), category);
 
-        return baseSpec.and(categorySpec);
+        Specification<Product> activeSpec = getAllActive(true);
+
+        return baseSpec.and(categorySpec).and(activeSpec).and(hasVariations());
     }
 
     public static Specification<Product> getAllByFilterWithSeller(Map<String, String> filter, Seller seller) {
         Specification<Product> baseSpec = getAllByFilterMap(filter);
-        Specification<Product> categorySpec = (root, query, cb) ->
+
+        Specification<Product> sellerSpec = (root, query, cb) ->
                 cb.equal(root.get("seller"), seller);
 
-        return baseSpec.and(categorySpec);
+        Specification<Product> activeSpec = getAllActive(true);
+
+        return baseSpec.and(sellerSpec).and(activeSpec);
     }
+
+    public static Specification<Product> getAllActive(boolean isActive) {
+        return (root, query, cb) -> cb.equal(root.get("isActive"), isActive);
+    }
+
+    public static Specification<Product> hasVariations() {
+        return (root, query, cb) -> {
+            root.join("productVariations", JoinType.INNER);
+            return cb.conjunction();
+        };
+    }
+
 
 }
