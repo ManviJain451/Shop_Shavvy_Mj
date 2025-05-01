@@ -3,12 +3,14 @@ package com.shopsavvy.shopshavvy.service;
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
 import com.shopsavvy.shopshavvy.dto.category.CategoryDTO;
 import com.shopsavvy.shopshavvy.dto.product.*;
+import com.shopsavvy.shopshavvy.dto.seller.SellerResponseDTO;
 import com.shopsavvy.shopshavvy.exception.ResourceNotFoundException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.model.category.Category;
 import com.shopsavvy.shopshavvy.model.product.Product;
 import com.shopsavvy.shopshavvy.model.product.ProductVariation;
 import com.shopsavvy.shopshavvy.model.user.Seller;
+import com.shopsavvy.shopshavvy.model.user.User;
 import com.shopsavvy.shopshavvy.repository.*;
 import com.shopsavvy.shopshavvy.specification.ProductSpecification;
 import jakarta.mail.SendFailedException;
@@ -114,7 +116,7 @@ public class ProductService {
         return ProductDTO.builder()
                 .productId(product.getId())
                 .productName(product.getName())
-                .sellerId(product.getSeller().getId())
+                .seller(mapSellerResponseDTO((Seller) product.getSeller()))
                 .brand(product.getBrand())
                 .description(product.getDescription())
                 .active(product.isActive())
@@ -140,6 +142,19 @@ public class ProductService {
                 .build();
     }
 
+    private SellerResponseDTO mapSellerResponseDTO(Seller seller){
+        return new SellerResponseDTO(
+                seller.getId(),
+                seller.getFirstName() + " " +
+                        (seller.getMiddleName() != null ? seller.getMiddleName() + " " : "") +
+                        seller.getLastName(),
+                seller.getEmail(),
+                seller.getIsActive(),
+                seller.getCompanyName(),
+                seller.getAddresses(),
+                seller.getCompanyContact()
+        );
+    }
 
     //customer
     public ProductDTO viewProductCustomer(String productId) throws BadRequestException, ResourceNotFoundException {
@@ -238,7 +253,7 @@ public class ProductService {
         return ProductDTO.builder()
                 .productId(product.getId())
                 .productName(product.getName())
-                .sellerId(product.getSeller().getId())
+                .seller(mapSellerResponseDTO((Seller) product.getSeller()))
                 .brand(product.getBrand())
                 .description(product.getDescription())
                 .active(product.isActive())

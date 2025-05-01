@@ -3,6 +3,7 @@ package com.shopsavvy.shopshavvy.dto.product;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.shopsavvy.shopshavvy.dto.category.CategoryDTO;
+import com.shopsavvy.shopshavvy.dto.seller.SellerResponseDTO;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -49,6 +50,6 @@ public class ProductDTO {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private String sellerId;
+    private SellerResponseDTO seller;
 
 }
