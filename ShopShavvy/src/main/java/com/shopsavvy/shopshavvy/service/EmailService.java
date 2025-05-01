@@ -109,4 +109,29 @@ public class EmailService {
                     messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
         }
     }
+
+
+    @Async
+    public void sendAddProductEmail(String email, String productName, boolean isActive,
+                                             String brand, String description) throws SendFailedException {
+        try {
+            String subject = "Product Added";
+            String contentTitle = "Verify, and make it active.";
+            String body = """
+                <p>Product Details:</p>
+                <ul>
+                    <li><strong>Product Name:</strong> %s</li>
+                    <li><strong>Brand:</strong> %s</li>
+                    <li><strong>Description:</strong> %s</li>
+                </ul>
+                <p>%s</p>
+                """.formatted(productName, brand, description, "Verify its details and activate the product.");
+
+            sendVerificationEmail(email, subject, wrapWithEmailTemplate(contentTitle, body));
+
+        } catch (MessagingException e) {
+            throw new SendFailedException(
+                    messageSource.getMessage("error.email.not.send", null, getCurrentLocale()), e);
+        }
+    }
 }
