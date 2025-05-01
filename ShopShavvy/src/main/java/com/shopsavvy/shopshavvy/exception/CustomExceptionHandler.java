@@ -8,7 +8,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -37,15 +36,6 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
 
     }
 
-    @ExceptionHandler(LockedException.class)
-    public final ResponseEntity<ErrorDetails> handleLockedExceptions(LockedException exception, WebRequest request) {
-        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
-                exception.getMessage(), request.getDescription(false));
-
-        return new ResponseEntity<>(errorDetails, HttpStatus.LOCKED);
-
-    }
-
     @ExceptionHandler(UserNotFoundException.class)
     public final ResponseEntity<ErrorDetails> handleUserNotFoundException(Exception exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
@@ -59,7 +49,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorDetails> handleTokenNotFoundException(TokenNotFoundException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.GONE);
+        return new ResponseEntity<>(errorDetails, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler(TokenExpiredException.class)
@@ -73,7 +63,7 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorDetails> handleAlreadyActivatedException(AlreadyActivatedException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorDetails, HttpStatus.OK);
     }
 
     @ExceptionHandler(InvalidTokenException.class)
@@ -101,31 +91,37 @@ public class CustomExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ErrorDetails> handleAlreadyDeactivatedException(AlreadyDeactivatedException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(),
                 exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorDetails, HttpStatus.OK);
     }
 
     @ExceptionHandler(DuplicateEntryExistsException.class)
     public final ResponseEntity<ErrorDetails> handleDuplicateEntryExistsException(DuplicateEntryExistsException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MaximumUploadSizeExceededException.class)
     public ResponseEntity<String> handleMaximumUploadSizeExceededException(MaximumUploadSizeExceededException ex) {
-        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(messageSource.getMessage("file.size.exceeded", null, locale));
     }
 
     @ExceptionHandler(PasswordMismatchException.class)
     public final ResponseEntity<ErrorDetails> handlePasswordMismatchException(PasswordMismatchException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
-        return new ResponseEntity<>(errorDetails, HttpStatus.UNPROCESSABLE_ENTITY);
+        return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public final ResponseEntity<ErrorDetails> handleBadRequestException(BadRequestException exception, WebRequest request) {
         ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
         return new ResponseEntity<>(errorDetails, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(InvalidRoleException.class)
+    public final ResponseEntity<ErrorDetails> handleInvalidRolException(InvalidRoleException exception, WebRequest request) {
+        ErrorDetails errorDetails = new ErrorDetails(LocalDateTime.now(), exception.getMessage(), request.getDescription(false));
+        return new ResponseEntity<>(errorDetails, HttpStatus.FORBIDDEN);
     }
 
     @Override
