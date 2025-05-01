@@ -21,7 +21,6 @@ public class AdminInitializer implements CommandLineRunner {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
 
     @Value("${admin.first.name}")
     private String adminFirstName;
@@ -50,7 +49,7 @@ public class AdminInitializer implements CommandLineRunner {
         adminUser.setEmail(adminEmail);
         adminUser.setFirstName(adminFirstName);
         adminUser.setLastName(adminLastName);
-        adminUser.setPassword(passwordEncoder.encode(adminPassword));
+        adminUser.setPassword(new BCryptPasswordEncoder().encode(adminPassword));
         adminUser.setIsActive(true);
         adminUser.addRole(adminRole);
 
