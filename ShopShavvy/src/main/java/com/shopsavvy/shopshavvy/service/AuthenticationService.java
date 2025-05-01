@@ -26,7 +26,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -122,7 +121,7 @@ public class AuthenticationService {
         }
 
         if (user.isLocked()) {
-            throw new LockedException(messageSource.getMessage("account.locked", null, getCurrentLocale()));
+            throw new AccountLockedException(messageSource.getMessage("account.locked", null, getCurrentLocale()));
         }
 
         if (Boolean.FALSE.equals(user.getIsActive())) {
@@ -155,7 +154,7 @@ public class AuthenticationService {
                     throw e;
                 }
 
-                throw new LockedException(messageSource.getMessage("account.locked", null, getCurrentLocale()));
+                throw new AccountLockedException(messageSource.getMessage("account.locked", null, getCurrentLocale()));
             }
             userRepository.save(user);
             throw new BadCredentialsException(messageSource.getMessage("invalid.credentials", null, getCurrentLocale()));

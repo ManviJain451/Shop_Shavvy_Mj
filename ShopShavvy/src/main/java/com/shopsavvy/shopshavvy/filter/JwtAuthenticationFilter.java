@@ -1,6 +1,7 @@
 package com.shopsavvy.shopshavvy.filter;
 
 import com.shopsavvy.shopshavvy.configuration.UserDetailsImpl;
+import com.shopsavvy.shopshavvy.exception.AccountLockedException;
 import com.shopsavvy.shopshavvy.exception.UserNotFoundException;
 import com.shopsavvy.shopshavvy.service.JwtService;
 import com.shopsavvy.shopshavvy.service.UserDetailsServiceImpl;
@@ -14,8 +15,6 @@ import org.apache.coyote.BadRequestException;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.lang.NonNull;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -78,7 +77,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
 
                 if(!userDetails.isAccountNonLocked()){
-                    throw new LockedException(messageSource.getMessage("error.user.locked", null, getCurrentLocale()));
+                    throw new AccountLockedException(messageSource.getMessage("error.user.locked", null, getCurrentLocale()));
                 }
                 if(!userDetails.isEnabled()){
                     throw new BadRequestException(messageSource.getMessage("error.user.inactive", null, getCurrentLocale()));
